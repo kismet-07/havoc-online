@@ -8,6 +8,7 @@ from pathlib import Path
 TARGET_ANIMATIONS = {"walk.001", "run.001"}
 TARGET_NODE_NAME = "mixamorig:Hips"
 TARGET_AXIS = 2  # Z
+FLOAT_SIZE = 4
 
 
 def load_glb(path: Path):
@@ -131,8 +132,8 @@ def process(input_path: Path, output_path: Path):
         fixed_z = original_z[0]
 
         for i in range(len(values)):
-            offset = base + i * stride + TARGET_AXIS * 4
-            intended_offsets.add(offset)
+            offset = base + i * stride + TARGET_AXIS * FLOAT_SIZE
+            intended_offsets.update(range(offset, offset + FLOAT_SIZE))
             struct.pack_into("<f", data, offset, fixed_z)
 
         changed.append({
@@ -150,15 +151,10 @@ def process(input_path: Path, output_path: Path):
             f"modified {[item['animation'] for item in changed]}"
         )
 
-    output_path.write_bytes(data)
-
-    output_data, output_gltf, output_bin_start, output_bin_length = load_glb(output_path)
+    output_data = bytes(data)
     if len(output_data) != len(original):
         raise RuntimeError("Output GLB size changed unexpectedly")
 
-    # Only offsets whose actual byte values changed may be inside the targeted
-    # Walk/Run Hips-Z accessor locations. Some keyframes can already equal the
-    # first Z value, so not every targeted offset is expected to differ.
     differences = {
         i for i, (a, b) in enumerate(zip(original, output_data)) if a != b
     }
@@ -173,7 +169,8 @@ def process(input_path: Path, output_path: Path):
     if not differences:
         raise RuntimeError("Verification failed: no binary data changed")
 
-    for animation in output_gltf.get("animations", []):
+    # Validate the modified bytes in memory before writing the output file.
+    for animation in gltf.get("animations", []):
         if animation.get("name") not in TARGET_ANIMATIONS:
             continue
 
@@ -184,7 +181,7 @@ def process(input_path: Path, output_path: Path):
         )
         sampler = animation["samplers"][channel["sampler"]]
         values, _, _ = read_vec3_accessor(
-            output_gltf, sampler["output"], output_data, output_bin_start
+            gltf, sampler["output"], bytearray(output_data), bin_start
         )
         z_values = [v[TARGET_AXIS] for v in values]
         if max(z_values) - min(z_values) > 1e-6:
@@ -192,6 +189,9 @@ def process(input_path: Path, output_path: Path):
                 f"Verification failed for {animation.get('name')!r}: "
                 f"Z range is {min(z_values)} -> {max(z_values)}"
             )
+
+    # Only write after every verification has passed.
+    output_path.write_bytes(output_data)
 
     print(f"Input : {input_path}")
     print(f"Output: {output_path}")
