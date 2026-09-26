@@ -38,8 +38,8 @@
   "objectsGroups": [],
   "variables": [],
   "layouts": [{
-    "b": 241,"disableInputWhenNotFocused": true,"mangledName": "Untitled_32scene","name": "Untitled scene","r": 241,"standardSortMethod": true,"stopSoundsOnStartup": true,"title": "","v": 241,
-    "uiSettings": {"grid": false,"gridType": "rectangular","gridWidth": 32,"gridHeight": 32,"gridDepth": 32,"gridOffsetX": 0,"gridOffsetY": 0,"gridOffsetZ": 0,"gridColor": 10401023,"gridAlpha": 0.8,"snap": false,"zoomFactor": 0.546875,"windowMask": false,"selectedLayer": "","gameEditorMode": "embedded-game"},
+    "b": 241,"disableInputWhenNotFocused": true,"height": 0,"keepRatio": true,"r": 241,"standardSortMethod": true,"stopSoundsOnStartup": true,"title": "","v": 241,
+    "uiSettings": {"grid": false,"gridType": "rectangular","gridWidth": 32,"gridHeight": 32,"gridDepth": 32,"gridOffsetX": 0,"gridOffsetY": 0,"gridOffsetZ": 0,"gridColor": 10401023,"gridAlpha": 0.8,"snap": false,"windowMask": false,"selectedLayer": "","gameEditorMode": "embedded-game"},
     "objectsGroups": [],"variables": [],
     "instances": [
       {"angle": 0,"customSize": false,"height": 0,"keepRatio": true,"layer": "","name": "New3DModel","persistentUuid": "f8794530-e598-4621-aaf7-242b591c2c6d","width": 0,"x": 109,"y": 256,"z": 30,"zOrder": 1,"numberProperties": [],"stringProperties": [],"initialVariables": []},
@@ -100,8 +100,8 @@
         "const layer = runtimeScene.getLayer('');",
         "if (layer) {",
         "  const orbiting = input.isMouseButtonPressed(runtimeScene, 'Right');",
-        "  const mouseMovementX = input.getMouseMovementX();",
-        "  const mouseMovementY = input.getMouseMovementY();",
+        "  const mouseMovementX = runtimeScene.getGame().getInputManager().getMouseMovementX();",
+        "  const mouseMovementY = runtimeScene.getGame().getInputManager().getMouseMovementY();",
         "  if (orbiting) {",
         "    const deltaX = Math.max(-60, Math.min(60, mouseMovementX));",
         "    const deltaY = Math.max(-60, Math.min(60, mouseMovementY));",
