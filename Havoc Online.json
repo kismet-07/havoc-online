@@ -70,6 +70,18 @@
         "metadata": "",
         "name": "Brawler.glb",
         "userAdded": false
+      },
+      {
+        "file": "assets/ambientcg-asphalt-019-color2.jpg",
+        "kind": "image",
+        "metadata": "",
+        "name": "ambientcg-asphalt-019-color.jpg",
+        "smoothed": true,
+        "userAdded": false,
+        "origin": {
+          "identifier": "https://asset-resources.gdevelop.io/public-resources/3D Cubes/AmbientCG/9be2add79974e2a434bcd90903f7ede08a07f46941b0be1c6bf6d3c48a281000_ambientcg-asphalt-019-color.jpg",
+          "name": "ambientcg-asphalt-019-color.jpg"
+        }
       }
     ]
   },
@@ -81,15 +93,15 @@
   "variables": [],
   "layouts": [
     {
-      "b": 61,
+      "b": 241,
       "disableInputWhenNotFocused": true,
       "mangledName": "Untitled_32scene",
       "name": "Untitled scene",
-      "r": 61,
+      "r": 241,
       "standardSortMethod": true,
       "stopSoundsOnStartup": true,
       "title": "",
-      "v": 61,
+      "v": 241,
       "uiSettings": {
         "grid": false,
         "gridType": "rectangular",
@@ -119,10 +131,27 @@
           "name": "New3DModel",
           "persistentUuid": "f8794530-e598-4621-aaf7-242b591c2c6d",
           "width": 0,
-          "x": 249,
+          "x": 109,
           "y": 256,
-          "z": -288,
+          "z": 30,
           "zOrder": 1,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "depth": 50,
+          "height": 5000,
+          "layer": "",
+          "name": "Asphalt019Block",
+          "persistentUuid": "44b64b0b-fa41-4bd8-a3bc-e0a02db476c7",
+          "width": 5000,
+          "x": 8,
+          "y": 28,
+          "z": -28,
+          "zOrder": 0,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
@@ -190,6 +219,46 @@
               }
             ]
           }
+        },
+        {
+          "assetStoreId": "98e0b1ab2f5ff43f9a23361fe0b6dca0fbbe4ed6c6b513eac053b82b76721d67",
+          "name": "Asphalt019Block",
+          "persistentUuid": "1dbe3d02-7887-4c23-90d2-ce02ccb3eed7",
+          "type": "Scene3D::Cube3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "width": 100,
+            "height": 100,
+            "depth": 100,
+            "enableTextureTransparency": false,
+            "facesOrientation": "Y",
+            "frontFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "backFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "backFaceUpThroughWhichAxisRotation": "X",
+            "leftFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "rightFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "topFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "bottomFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "frontFaceVisible": true,
+            "backFaceVisible": true,
+            "leftFaceVisible": true,
+            "rightFaceVisible": true,
+            "topFaceVisible": true,
+            "bottomFaceVisible": true,
+            "frontFaceResourceRepeat": true,
+            "backFaceResourceRepeat": true,
+            "leftFaceResourceRepeat": true,
+            "rightFaceResourceRepeat": true,
+            "topFaceResourceRepeat": true,
+            "bottomFaceResourceRepeat": true,
+            "tileScale": 0.2,
+            "materialType": "StandardWithoutMetalness",
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "tint": "255;255;255"
+          }
         }
       ],
       "objectsFolderStructure": {
@@ -197,6 +266,9 @@
         "children": [
           {
             "objectName": "New3DModel"
+          },
+          {
+            "objectName": "Asphalt019Block"
           }
         ]
       },
