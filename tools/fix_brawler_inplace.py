@@ -100,6 +100,7 @@ def process(input_path: Path, output_path: Path):
     node_index = find_target_node(gltf)
     animations = gltf.get("animations", [])
     changed = []
+    intended_offsets = set()
 
     for animation in animations:
         if animation.get("name") not in TARGET_ANIMATIONS:
@@ -130,12 +131,9 @@ def process(input_path: Path, output_path: Path):
         fixed_z = original_z[0]
 
         for i in range(len(values)):
-            struct.pack_into(
-                "<f",
-                data,
-                base + i * stride + TARGET_AXIS * 4,
-                fixed_z,
-            )
+            offset = base + i * stride + TARGET_AXIS * 4
+            intended_offsets.add(offset)
+            struct.pack_into("<f", data, offset, fixed_z)
 
         changed.append({
             "animation": animation.get("name"),
@@ -152,45 +150,33 @@ def process(input_path: Path, output_path: Path):
             f"modified {[item['animation'] for item in changed]}"
         )
 
-    # The important difference from the previous implementation:
-    # write the modified bytes back into the ORIGINAL GLB byte stream.
-    # We do not reserialize the GLTF structure. This preserves meshes,
-    # textures, accessors, JSON, chunk layout, and all unrelated data byte-for-byte.
     output_path.write_bytes(data)
 
-    # Structural verification: JSON and GLB chunk layout remain unchanged.
     output_data, output_gltf, output_bin_start, output_bin_length = load_glb(output_path)
     if len(output_data) != len(original):
         raise RuntimeError("Output GLB size changed unexpectedly")
 
-    # Verify only the intended Z values changed in the binary payload.
-    changed_offsets = set()
-    for animation in animations:
-        if animation.get("name") not in TARGET_ANIMATIONS:
-            continue
-        channel = next(
-            c for c in animation["channels"]
-            if c["target"]["node"] == node_index
-            and c["target"]["path"] == "translation"
-        )
-        sampler = animation["samplers"][channel["sampler"]]
-        accessor = gltf["accessors"][sampler["output"]]
-        view = gltf["bufferViews"][accessor["bufferView"]]
-        stride = view.get("byteStride", 12)
-        base = output_bin_start + view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
-        for i in range(accessor["count"]):
-            changed_offsets.add(base + i * stride + TARGET_AXIS * 4)
-
-    differences = [i for i, (a, b) in enumerate(zip(original, output_data)) if a != b]
-    if set(differences) != changed_offsets:
+    # Only offsets whose actual byte values changed may be inside the targeted
+    # Walk/Run Hips-Z accessor locations. Some keyframes can already equal the
+    # first Z value, so not every targeted offset is expected to differ.
+    differences = {
+        i for i, (a, b) in enumerate(zip(original, output_data)) if a != b
+    }
+    if not differences.issubset(intended_offsets):
+        unexpected = sorted(differences - intended_offsets)
         raise RuntimeError(
             "Verification failed: output contains byte changes outside the "
-            "intended Walk/Run Hips Z values"
+            "intended Walk/Run Hips Z values. "
+            f"Unexpected offsets: {unexpected[:10]}"
         )
+
+    if not differences:
+        raise RuntimeError("Verification failed: no binary data changed")
 
     for animation in output_gltf.get("animations", []):
         if animation.get("name") not in TARGET_ANIMATIONS:
             continue
+
         channel = next(
             c for c in animation["channels"]
             if c["target"]["node"] == node_index
@@ -217,6 +203,7 @@ def process(input_path: Path, output_path: Path):
             f"Z {item['original_min_z']:.9f} -> {item['original_max_z']:.9f}, "
             f"fixed={item['fixed_z']:.9f}"
         )
+    print(f"Actual changed byte offsets: {len(differences)}")
     print()
     print("Verification passed: only Walk/Run Hips Z values were changed.")
 
