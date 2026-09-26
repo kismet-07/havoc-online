@@ -85,7 +85,6 @@
       "disableInputWhenNotFocused": true,
       "mangledName": "Untitled_32scene",
       "name": "Untitled scene",
-      "r": 247,
       "standardSortMethod": true,
       "stopSoundsOnStartup": true,
       "title": "",
@@ -108,7 +107,6 @@
         "gameEditorMode": "embedded-game"
       },
       "objectsGroups": [],
-      "variables": [],
       "instances": [
         {
           "angle": 0,
@@ -153,54 +151,28 @@
             "rotationZ": 90,
             "width": 500,
             "animations": [
-              {
-                "loop": true,
-                "name": "Idle",
-                "source": "idle.001"
-              },
-              {
-                "loop": false,
-                "name": "Run",
-                "source": "run.001"
-              },
-              {
-                "loop": false,
-                "name": "Attack1",
-                "source": "box_01.001"
-              },
-              {
-                "loop": false,
-                "name": "Baseball_punch_skill1",
-                "source": "pitch_baseball.001"
-              },
-              {
-                "loop": false,
-                "name": "Attack2",
-                "source": "box_03.001"
-              },
-              {
-                "loop": false,
-                "name": "Front_kick_skill2",
-                "source": "front_kick_02.001"
-              },
-              {
-                "loop": false,
-                "name": "Walk",
-                "source": "walk.001"
-              }
+              {"loop": true, "name": "Idle", "source": "idle.001"},
+              {"loop": true, "name": "Run", "source": "run.001"},
+              {"loop": false, "name": "Attack1", "source": "box_01.001"},
+              {"loop": false, "name": "Baseball_punch_skill1", "source": "pitch_baseball.001"},
+              {"loop": false, "name": "Attack2", "source": "box_03.001"},
+              {"loop": false, "name": "Front_kick_skill2", "source": "front_kick_02.001"},
+              {"loop": true, "name": "Walk", "source": "walk.001"}
             ]
           }
         }
       ],
-      "objectsFolderStructure": {
-        "folderName": "__ROOT",
-        "children": [
-          {
-            "objectName": "New3DModel"
-          }
-        ]
-      },
-      "events": [],
+      "objectsFolderStructure": {"folderName": "__ROOT", "children": [{"objectName": "New3DModel"}]},
+      "events": [
+        {
+          "type": "BuiltinCommonInstructions::JsCode",
+          "inlineCode": "const player = runtimeScene.getObjects('New3DModel')[0];\nif (!player) return;\n\nif (!runtimeScene.__fatePlayerMovement) {\n  runtimeScene.__fatePlayerMovement = { x: player.getX(), y: player.getY() };\n}\n\nif (!runtimeScene.__fateCamera) {\n  runtimeScene.__fateCamera = { yaw: 0, pitch: 22, distance: 900, initialized: false, lastMouseX: 0, lastMouseY: 0 };\n}\n\nconst movement = runtimeScene.__fatePlayerMovement;\nconst camera = runtimeScene.__fateCamera;\nconst dt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);\nconst input = gdjs.evtTools.input;\nconst left = input.isKeyPressed(runtimeScene, 'a');\nconst right = input.isKeyPressed(runtimeScene, 'd');\nconst forward = input.isKeyPressed(runtimeScene, 'w');\nconst backward = input.isKeyPressed(runtimeScene, 's');\nconst running = input.isKeyPressed(runtimeScene, 'LShift') || input.isKeyPressed(runtimeScene, 'RShift');\nlet moveX = 0;\nlet moveY = 0;\nif (left) moveX += 1;\nif (right) moveX -= 1;\nif (forward) moveY += 1;\nif (backward) moveY -= 1;\nconst moving = moveX !== 0 || moveY !== 0;\nif (moving) {\n  const length = Math.sqrt(moveX * moveX + moveY * moveY);\n  moveX /= length; moveY /= length;\n  const speed = running ? 600 : 300;\n  movement.x += moveX * speed * dt;\n  movement.y += moveY * speed * dt;\n  const targetAngle = Math.atan2(moveY, moveX) * 180 / Math.PI;\n  player.setAngle(targetAngle);\n  const animation = running ? 'Run' : 'Walk';\n  if (player.getAnimationName() !== animation) player.setAnimationName(animation);\n} else if (player.getAnimationName() !== 'Idle') {\n  player.setAnimationName('Idle');\n}\nplayer.setPosition(movement.x, movement.y);\n\nconst layer = runtimeScene.getLayer('');\nif (layer) {\n  const mouseX = input.getMouseX(runtimeScene);\n  const mouseY = input.getMouseY(runtimeScene);\n  const orbiting = input.isMouseButtonPressed(runtimeScene, 'Right');\n  if (!camera.initialized) { camera.lastMouseX = mouseX; camera.lastMouseY = mouseY; camera.initialized = true; }\n  if (orbiting) {\n    const deltaX = mouseX - camera.lastMouseX;\n    const deltaY = mouseY - camera.lastMouseY;\n    camera.yaw -= deltaX * 0.25;\n    camera.pitch -= deltaY * 0.20;\n    camera.pitch = Math.max(8, Math.min(55, camera.pitch));\n  }\n  camera.lastMouseX = mouseX; camera.lastMouseY = mouseY;\n  const wheel = input.getMouseWheelDelta(runtimeScene);\n  if (wheel !== 0) {\n    camera.distance += wheel * 0.5;\n    camera.distance = Math.max(500, Math.min(2200, camera.distance));\n  }\n  const yawRadians = camera.yaw * Math.PI / 180;\n  const pitchRadians = camera.pitch * Math.PI / 180;\n  const horizontalDistance = Math.cos(pitchRadians) * camera.distance;\n  const cameraX = movement.x + Math.sin(yawRadians) * horizontalDistance;\n  const cameraY = movement.y - Math.cos(yawRadians) * horizontalDistance;\n  const cameraZ = player.getZ() + Math.sin(pitchRadians) * camera.distance;\n  layer.setCameraX(cameraX); layer.setCameraY(cameraY);\n  gdjs.scene3d.camera.setCameraZ(runtimeScene, cameraZ, '', 0);\n  const targetZ = player.getZ() + 120;\n  gdjs.scene3d.camera.turnCameraTowardPosition(runtimeScene, movement.x, movement.y, targetZ, '', 0, false);\n}\n",
+          "useStrict": false,
+          "eventsSheetExpanded": true,
+          "disabled": false,
+          "folded": false
+        }
+      ],
       "layers": [
         {
           "ambientLightColorB": 200,
@@ -217,78 +189,19 @@
           "name": "",
           "renderingType": "",
           "visibility": true,
-          "cameras": [
-            {
-              "defaultSize": true,
-              "defaultViewport": true,
-              "height": 0,
-              "viewportBottom": 1,
-              "viewportLeft": 0,
-              "viewportRight": 1,
-              "viewportTop": 0,
-              "width": 0
-            }
-          ],
+          "cameras": [{"defaultSize": true, "defaultViewport": true, "height": 0, "viewportBottom": 1, "viewportLeft": 0, "viewportRight": 1, "viewportTop": 0, "width": 0}],
           "effects": [
-            {
-              "effectType": "Scene3D::HemisphereLight",
-              "name": "3D Ambient Hemisphere Light",
-              "doubleParameters": {
-                "elevation": 40,
-                "intensity": 0.33,
-                "rotation": 300
-              },
-              "stringParameters": {
-                "groundColor": "127;127;127",
-                "skyColor": "255;255;255",
-                "top": "Z+"
-              },
-              "booleanParameters": {}
-            },
-            {
-              "effectType": "Scene3D::DirectionalLight",
-              "name": "3D Sun Light",
-              "doubleParameters": {
-                "distanceFromCamera": 1500,
-                "elevation": 40,
-                "frustumSize": 4000,
-                "intensity": 0.75,
-                "minimumShadowBias": 0,
-                "rotation": 300
-              },
-              "stringParameters": {
-                "color": "255;255;255",
-                "shadowQuality": "medium",
-                "top": "Z+"
-              },
-              "booleanParameters": {
-                "isCastingShadow": true
-              }
-            }
+            {"effectType": "Scene3D::HemisphereLight", "name": "3D Ambient Hemisphere Light", "doubleParameters": {"elevation": 40, "intensity": 0.33, "rotation": 300}, "stringParameters": {"groundColor": "127;127;127", "skyColor": "255;255;255", "top": "Z+"}, "booleanParameters": {}},
+            {"effectType": "Scene3D::DirectionalLight", "name": "3D Sun Light", "doubleParameters": {"distanceFromCamera": 1500, "elevation": 40, "frustumSize": 4000, "intensity": 0.75, "minimumShadowBias": 0, "rotation": 300}, "stringParameters": {"color": "255;255;255", "shadowQuality": "medium", "top": "Z+"}, "booleanParameters": {"isCastingShadow": true}}
           ]
         }
       ],
       "behaviorsSharedData": [
-        {
-          "name": "Animation",
-          "type": "AnimatableCapability::AnimatableBehavior"
-        },
-        {
-          "name": "Flippable",
-          "type": "FlippableCapability::FlippableBehavior"
-        },
-        {
-          "name": "Object3D",
-          "type": "Scene3D::Base3DBehavior"
-        },
-        {
-          "name": "Resizable",
-          "type": "ResizableCapability::ResizableBehavior"
-        },
-        {
-          "name": "Scale",
-          "type": "ScalableCapability::ScalableBehavior"
-        }
+        {"name": "Animation", "type": "AnimatableCapability::AnimatableBehavior"},
+        {"name": "Flippable", "type": "FlippableCapability::FlippableBehavior"},
+        {"name": "Object3D", "type": "Scene3D::Base3DBehavior"},
+        {"name": "Resizable", "type": "ResizableCapability::ResizableBehavior"},
+        {"name": "Scale", "type": "ScalableCapability::ScalableBehavior"}
       ]
     }
   ],
