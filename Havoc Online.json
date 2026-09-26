@@ -38,7 +38,7 @@
   "objectsGroups": [],
   "variables": [],
   "layouts": [{
-    "b": 241,"disableInputWhenNotFocused": true,"height": 0,"keepRatio": true,"r": 241,"standardSortMethod": true,"stopSoundsOnStartup": true,"title": "","v": 241,
+    "b": 241,"disableInputWhenNotFocused": true,"height": 0,"keepRatio": true,"mangledName": "Untitled_32scene","name": "Untitled scene","r": 241,"standardSortMethod": true,"stopSoundsOnStartup": true,"title": "","v": 241,
     "uiSettings": {"grid": false,"gridType": "rectangular","gridWidth": 32,"gridHeight": 32,"gridDepth": 32,"gridOffsetX": 0,"gridOffsetY": 0,"gridOffsetZ": 0,"gridColor": 10401023,"gridAlpha": 0.8,"snap": false,"windowMask": false,"selectedLayer": "","gameEditorMode": "embedded-game"},
     "objectsGroups": [],"variables": [],
     "instances": [
