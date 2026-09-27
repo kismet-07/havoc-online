@@ -115,6 +115,7 @@
   "objectsFolderStructure": {
     "folderName": "__ROOT"
   },
+  "objectsGroups": [],
   "variables": [],
   "layouts": [
     {
@@ -145,6 +146,7 @@
         "gameEditorMode": "embedded-game"
       },
       "objectsGroups": [],
+      "variables": [],
       "instances": [
         {
           "angle": 0,
@@ -278,7 +280,7 @@
           }
         },
         {
-          "assetStoreId": "98e0b1ab2f5ff43f9a23361fe0b6dca0fbbe4ed7",
+          "assetStoreId": "98e0b1ab2f5ff43f9a233b82b76721d67",
           "name": "Floor",
           "persistentUuid": "1dbe3d02-7887-4c23-90d2-ce02ccb3eed7",
           "type": "Scene3D::Cube3DObject",
@@ -293,6 +295,7 @@
             "facesOrientation": "Y",
             "frontFaceResourceName": "ambientcg-asphalt-019-color.jpg",
             "backFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "backFaceUpThroughWhichAxisRotation": "X",
             "leftFaceResourceName": "ambientcg-asphalt-019-color.jpg",
             "rightFaceResourceName": "ambientcg-asphalt-019-color.jpg",
             "topFaceResourceName": "ambientcg-asphalt-019-color.jpg",
@@ -317,7 +320,7 @@
           }
         },
         {
-          "assetStoreId": "98e0b1ab2f5ff43f9a233ce6c6b513eac053b82b76721d67",
+          "assetStoreId": "98e0b1ab2f5ff43f9a233b82b76721d67",
           "name": "Asphalt019Block",
           "persistentUuid": "dbbdb86e-26e0-4a2c-8719-a181f7789ef4",
           "type": "Scene3D::Cube3DObject",
@@ -332,6 +335,7 @@
             "facesOrientation": "Y",
             "frontFaceResourceName": "ambientcg-asphalt-019-color.jpg",
             "backFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "backFaceUpThroughWhichAxisRotation": "X",
             "leftFaceResourceName": "ambientcg-asphalt-019-color.jpg",
             "rightFaceResourceName": "ambientcg-asphalt-019-color.jpg",
             "topFaceResourceName": "ambientcg-asphalt-019-color.jpg",
