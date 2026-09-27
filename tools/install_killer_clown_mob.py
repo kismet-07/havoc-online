@@ -78,14 +78,14 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.4.')
-            print('Population          : 20')
-            print('Respawn             : 30 seconds')
+            print('Refreshed Killer Clown mob V1.5.')
+            print('Population          : 15')
+            print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
             print('Walk animation      : LOOPED')
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
-            print('Minimum separation  : 900')
+            print('Minimum separation  : 1000')
             print('Idle                : position locked')
             print('Rotation            : set once per wander target')
             return
@@ -102,14 +102,14 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.4.')
-        print('Population          : 20')
-        print('Respawn             : 30 seconds')
+        print('Installed Killer Clown mob V1.5.')
+        print('Population          : 15')
+        print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
         print('Walk animation      : LOOPED')
         print('Animation names     : GLB names preserved')
         print('Clone Z height      : inherited from placed Killer_clown')
-        print('Minimum separation  : 900')
+        print('Minimum separation  : 1000')
         print('Idle                : position locked')
         print('Rotation            : set once per wander target')
         return
