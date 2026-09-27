@@ -1,5 +1,9 @@
 /**
- * World-space target selection indicator.
+ * World-space target selection indicator and 3D target acquisition.
+ *
+ * Target selection uses the active 3D camera and a Three.js ray cast from the
+ * desktop/mobile pointer position. This avoids RuntimeObject3D.cursorOnObject,
+ * which is not reliable for our moving third-person 3D camera.
  *
  * The indicator uses the two pre-created TargetSelectionArrow objects in the
  * scene. No 3D objects are created at runtime.
@@ -21,7 +25,7 @@ function initializeHavocTargetSelection(runtimeScene) {
     runtimeScene.__havocTargetSelection = {
       indicatorSegments: [],
       indicatorTarget: null,
-      diagnosticLogged: false,
+      raycastLogged: false,
     };
   }
 
@@ -32,24 +36,6 @@ function initializeHavocTargetSelection(runtimeScene) {
       const objects = runtimeScene.getObjects(name);
       return objects.length > 0 ? objects[0] : null;
     });
-  }
-
-  if (!state.diagnosticLogged) {
-    state.diagnosticLogged = true;
-    console.log('[Havoc Target] Arrow lookup:',
-      HAVOC_TARGET_CONFIG.indicatorObjectNames.map((name, index) => {
-        const object = state.indicatorSegments[index];
-        return {
-          name,
-          found: !!object,
-          type: object ? object.type : null,
-          hasSetPosition: !!(object && typeof object.setPosition === 'function'),
-          hasSetZ: !!(object && typeof object.setZ === 'function'),
-          hasSetCenterZInScene: !!(object && typeof object.setCenterZInScene === 'function'),
-          hidden: !!(object && typeof object.isHidden === 'function' && object.isHidden()),
-        };
-      })
-    );
   }
 
   return state;
@@ -82,11 +68,15 @@ function clearHavocTargetIndicator(runtimeScene) {
 
   for (const segment of state.indicatorSegments) {
     if (!segment || segment.isDestroyed) continue;
+
     if (typeof segment.setPosition === 'function') {
       segment.setPosition(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY);
     }
+
     if (typeof segment.setZ === 'function') {
       segment.setZ(0);
+    } else if (typeof segment.setCenterZInScene === 'function') {
+      segment.setCenterZInScene(0);
     }
   }
 
@@ -113,18 +103,15 @@ function updateHavocTargetIndicator(runtimeScene, target) {
     ? target.getUnrotatedAABBMaxZ()
     : target.getZ();
 
-  const stem = state.indicatorSegments[0];
-  const head = state.indicatorSegments[1];
-
   const stemShown = setHavocIndicatorPosition(
-    stem,
+    state.indicatorSegments[0],
     x,
     y,
     targetTopZ + HAVOC_TARGET_CONFIG.arrowStemZOffset,
   );
 
   const headShown = setHavocIndicatorPosition(
-    head,
+    state.indicatorSegments[1],
     x,
     y,
     targetTopZ + HAVOC_TARGET_CONFIG.arrowHeadZOffset,
@@ -138,14 +125,77 @@ function updateHavocTargetIndicator(runtimeScene, target) {
   state.indicatorTarget = target;
 }
 
-function selectHavocTargetUnderCursor(runtimeScene) {
-  const mobs = runtimeScene.getObjects(HAVOC_TARGET_CONFIG.mobObjectName);
-
-  for (const mob of mobs) {
-    if (mob.cursorOnObject()) return mob;
+function getHavocPointerCoordinates(runtimeScene, input) {
+  if (Number.isFinite(input.targetTapX) && Number.isFinite(input.targetTapY)) {
+    return { x: input.targetTapX, y: input.targetTapY };
   }
 
-  return null;
+  return {
+    x: gdjs.evtTools.input.getCursorX(runtimeScene),
+    y: gdjs.evtTools.input.getCursorY(runtimeScene),
+  };
+}
+
+function selectHavocTargetUnderPointer(runtimeScene, input) {
+  // GDevelop's 3D renderer exposes the actual Three.js camera and renderer.
+  // Use the base gameplay layer because that is the camera driving the world.
+  const worldLayer = runtimeScene.getLayer('');
+  if (!worldLayer || !worldLayer.getRenderer || !worldLayer.getRenderer().getThreeCamera) {
+    return null;
+  }
+
+  const camera = worldLayer.getRenderer().getThreeCamera();
+  const renderer = runtimeScene.getGame().getRenderer().getThreeRenderer();
+  if (!camera || !renderer || typeof THREE === 'undefined' || typeof THREE.Raycaster !== 'function') {
+    return null;
+  }
+
+  const pointer = getHavocPointerCoordinates(runtimeScene, input);
+  const viewportWidth = runtimeScene.getViewportWidth();
+  const viewportHeight = runtimeScene.getViewportHeight();
+
+  if (!(viewportWidth > 0) || !(viewportHeight > 0)) return null;
+
+  const ndcX = (pointer.x / viewportWidth) * 2 - 1;
+  const ndcY = -((pointer.y / viewportHeight) * 2 - 1);
+
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+
+  const mobs = runtimeScene.getObjects(HAVOC_TARGET_CONFIG.mobObjectName);
+  let selectedTarget = null;
+  let nearestDistance = Infinity;
+
+  for (const mob of mobs) {
+    if (!mob || mob.isDestroyed || (typeof mob.isVisible === 'function' && !mob.isVisible())) continue;
+
+    const rendererObject = typeof mob.get3DRendererObject === 'function'
+      ? mob.get3DRendererObject()
+      : null;
+
+    if (!rendererObject) continue;
+
+    const hits = raycaster.intersectObject(rendererObject, true);
+    if (hits.length > 0 && hits[0].distance < nearestDistance) {
+      nearestDistance = hits[0].distance;
+      selectedTarget = mob;
+    }
+  }
+
+  if (!runtimeScene.__havocTargetSelection.raycastLogged) {
+    runtimeScene.__havocTargetSelection.raycastLogged = true;
+    console.log('[Havoc Target] 3D ray selection initialized.', {
+      mobs: mobs.length,
+      pointerX: pointer.x,
+      pointerY: pointer.y,
+      ndcX,
+      ndcY,
+      camera: camera.type,
+      rendererAvailable: !!renderer,
+    });
+  }
+
+  return selectedTarget;
 }
 
 function updateHavocTargetSelection(runtimeScene) {
@@ -154,7 +204,7 @@ function updateHavocTargetSelection(runtimeScene) {
   const selection = initializeHavocTargetSelection(runtimeScene);
 
   if (input.targetTapRequested) {
-    const selectedTarget = selectHavocTargetUnderCursor(runtimeScene);
+    const selectedTarget = selectHavocTargetUnderPointer(runtimeScene, input);
 
     if (selectedTarget) {
       combat.target = selectedTarget;
