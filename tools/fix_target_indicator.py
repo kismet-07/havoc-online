@@ -139,8 +139,6 @@ def indicator_object(name: str, width: int, height: int, depth: int) -> dict:
 
 
 def add_instance(layout: dict, name: str) -> None:
-    # Put indicator instances on the first/world layer. They are parked far
-    # outside the playable area until a target is selected.
     layers = layout.setdefault('layers', [])
     world = layers[0]
     instances = world.setdefault('instances', [])
@@ -160,15 +158,24 @@ def main() -> None:
     for layout in project.get('layouts', []):
         objects = layout.setdefault('objects', [])
         definitions = [
-            indicator_object('TargetSelectionRingTop', 520, 24, 24),
-            indicator_object('TargetSelectionRingBottom', 520, 24, 24),
-            indicator_object('TargetSelectionRingLeft', 24, 24, 520),
-            indicator_object('TargetSelectionRingRight', 24, 24, 520),
+            # X/Y are the ground plane in this project; Z is vertical.
+            indicator_object('TargetSelectionRingTop', 520, 20, 6),
+            indicator_object('TargetSelectionRingBottom', 520, 20, 6),
+            indicator_object('TargetSelectionRingLeft', 20, 520, 6),
+            indicator_object('TargetSelectionRingRight', 20, 520, 6),
         ]
         existing = {o.get('name') for o in objects}
         for definition in definitions:
             if definition['name'] not in existing:
                 objects.append(definition)
+            else:
+                # Update only these four indicator definitions. No combat,
+                # character, mob, camera, or other object definitions are touched.
+                for obj in objects:
+                    if obj.get('name') == definition['name']:
+                        obj.clear()
+                        obj.update(definition)
+                        break
         folder = layout.setdefault('objectsFolderStructure', {'folderName': '__ROOT'})
         children = folder.setdefault('children', [])
         child_names = {c.get('objectName') for c in children}
@@ -181,7 +188,7 @@ def main() -> None:
         add_instance(layout, 'TargetSelectionRingRight')
         break
     PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
-    print('Installed pre-created world-space target indicator.')
+    print('Installed corrected ground-plane target indicator geometry.')
     print('Target selection and Brawler combat logic were not changed.')
     print('Killer Clown event was not modified.')
 
