@@ -5,9 +5,9 @@
  * current 3D model objects. The selected target gets a world-space red
  * selection ring made from four pre-sized 3D box objects.
  *
- * The box dimensions are defined in the project rather than changed at
- * runtime. This avoids relying on 3D size mutators that are not exposed by
- * the preview runtime object returned by createObject().
+ * The box dimensions and red material are defined in the project rather
+ * than changed at runtime. This avoids relying on 3D mutator methods that
+ * are not exposed by the preview runtime objects returned by createObject().
  */
 
 const HAVOC_TARGET_CONFIG = {
@@ -47,8 +47,8 @@ function clearHavocTargetIndicator(runtimeScene) {
 function setHavocIndicatorZ(segment, z) {
   if (!segment) return;
 
-  // setCenterZInScene is the documented 3D position API. Keep a renderer
-  // fallback for preview/runtime differences.
+  // The red material, dimensions, and shadow settings are configured on the
+  // object definition. Only its world position changes at runtime.
   if (typeof segment.setCenterZInScene === 'function') {
     segment.setCenterZInScene(z);
     return;
@@ -84,9 +84,6 @@ function createHavocTargetIndicator(runtimeScene, target) {
 
     segment.setPosition(definition.x, definition.y);
     setHavocIndicatorZ(segment, z);
-    segment.setColor('#ff2020');
-    segment.setIsCastingShadow(false);
-    segment.setIsReceivingShadow(false);
     state.indicatorSegments.push(segment);
   }
 
