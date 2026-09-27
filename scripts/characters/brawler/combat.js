@@ -90,7 +90,10 @@ function updateBrawlerCombat(runtimeScene, dt) {
 
   combat.approaching = false;
 
-  if (mobileInput.attackRequested) {
+  const attackRequested = mobileInput.attackRequested ||
+    gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space');
+
+  if (attackRequested) {
     player.setAngle(player.getAngleToObject(activeTarget));
     startBrawlerBasicAttack(player, combat);
   }
