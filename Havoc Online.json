@@ -122,6 +122,13 @@
         "metadata": "",
         "name": "killer_clown.glb",
         "userAdded": false
+      },
+      {
+        "file": "havoc_flag_pole2.glb",
+        "kind": "model3D",
+        "metadata": "",
+        "name": "havoc_flag_pole2.glb",
+        "userAdded": false
       }
     ]
   },
@@ -197,24 +204,6 @@
         },
         {
           "angle": 0,
-          "customSize": true,
-          "depth": 150,
-          "flippedX": true,
-          "height": 500,
-          "layer": "",
-          "name": "Dragon",
-          "persistentUuid": "913557df-338a-4866-8d37-ba6e66205c90",
-          "width": 500,
-          "x": 4438,
-          "y": 2410,
-          "z": 521.9999999999999,
-          "zOrder": 0,
-          "numberProperties": [],
-          "stringProperties": [],
-          "initialVariables": []
-        },
-        {
-          "angle": 0,
           "customSize": false,
           "flippedX": true,
           "height": 39.97469748439186,
@@ -255,6 +244,25 @@
           "width": 352,
           "x": 3776,
           "y": 3776,
+          "z": 32,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "depth": 300,
+          "height": 300,
+          "layer": "",
+          "name": "FlagPole",
+          "persistentUuid": "20133b10-3bd8-4097-803a-c9356926d12a",
+          "rotationX": 270,
+          "rotationY": 270,
+          "width": 900,
+          "x": 4416,
+          "y": 2368,
           "z": 32,
           "zOrder": 0,
           "numberProperties": [],
@@ -367,38 +375,6 @@
         },
         {
           "assetStoreId": "",
-          "name": "Dragon",
-          "persistentUuid": "02716614-0ca8-4391-8f8e-ca205c7983ff",
-          "type": "Scene3D::Model3DObject",
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "content": {
-            "centerLocation": "CenteredOnZ",
-            "crossfadeDuration": 0.1000000014901161,
-            "depth": 100,
-            "height": 100,
-            "isCastingShadow": true,
-            "isReceivingShadow": true,
-            "keepAspectRatio": true,
-            "materialType": "StandardWithoutMetalness",
-            "modelResourceName": "dragon_idle.glb",
-            "originLocation": "ModelOrigin",
-            "rotationX": 90,
-            "rotationY": 0,
-            "rotationZ": 90,
-            "width": 100,
-            "animations": [
-              {
-                "loop": true,
-                "name": "Idle",
-                "source": "Idle"
-              }
-            ]
-          }
-        },
-        {
-          "assetStoreId": "",
           "name": "Nurse",
           "persistentUuid": "6f344457-978e-4532-812b-f6e587bff414",
           "type": "Scene3D::Model3DObject",
@@ -475,6 +451,32 @@
               }
             ]
           }
+        },
+        {
+          "assetStoreId": "",
+          "name": "FlagPole",
+          "persistentUuid": "762ffd66-ca85-4c0d-8369-41cd536d27e4",
+          "type": "Scene3D::Model3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "centerLocation": "CenteredOnZ",
+            "crossfadeDuration": 0.10000000149011612,
+            "depth": 500,
+            "height": 500,
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "keepAspectRatio": true,
+            "materialType": "StandardWithoutMetalness",
+            "modelResourceName": "havoc_flag_pole2.glb",
+            "originLocation": "ModelOrigin",
+            "rotationX": 90,
+            "rotationY": 90,
+            "rotationZ": 90,
+            "width": 500,
+            "animations": []
+          }
         }
       ],
       "objectsFolderStructure": {
@@ -490,10 +492,10 @@
             "objectName": "Nurse"
           },
           {
-            "objectName": "Dragon"
+            "objectName": "Killer_clown"
           },
           {
-            "objectName": "Killer_clown"
+            "objectName": "FlagPole"
           }
         ]
       },
