@@ -53,32 +53,41 @@ def replace_target_section(node, replacement):
                     raise RuntimeError('Found target-system start marker but not the brawler config end marker.')
                 prefix = value[:start]
                 suffix = value[end + len(END_MARKER):]
-                # Mutate the containing dictionary value directly.
                 key = next(k for k, v in node.items() if v is value)
                 node[key] = prefix + START_MARKER + '\n' + replacement + '\n' + END_MARKER + suffix
                 return 1
     return 0
 
 
-def remove_stale_folder_entries(node):
-    """Remove stale arrow entries only from objectsFolderStructure."""
+def remove_stale_references(node):
+    """Remove only exact stale target-arrow names from the GDevelop JSON tree."""
     removed = 0
     if isinstance(node, dict):
-        for key, value in list(node.items()):
+        for key in list(node.keys()):
+            value = node[key]
             if key in {'name', 'objectName'} and value in STALE_NAMES:
-                continue
-            removed += remove_stale_folder_entries(value)
-    elif isinstance(node, list):
+                return 1
+            if isinstance(value, (dict, list)):
+                cleaned = remove_stale_references(value)
+                if cleaned and isinstance(value, list):
+                    removed += cleaned
+                else:
+                    removed += cleaned
+        return removed
+
+    if isinstance(node, list):
         kept = []
         for value in node:
-            if isinstance(value, dict) and value.get('name') in STALE_NAMES:
+            if isinstance(value, dict) and (
+                value.get('name') in STALE_NAMES or value.get('objectName') in STALE_NAMES
+            ):
                 removed += 1
                 continue
             if isinstance(value, str) and value in STALE_NAMES:
                 removed += 1
                 continue
+            removed += remove_stale_references(value)
             kept.append(value)
-            removed += remove_stale_folder_entries(value)
         node[:] = kept
     return removed
 
@@ -104,11 +113,7 @@ def main():
     if replaced != 1:
         raise SystemExit(f'Safety check failed: expected exactly one target-system inline section, found {replaced}.')
 
-    removed = 0
-    # GDevelop stores each layout's object folder structure under the layout.
-    for layout in data.get('layouts', []):
-        if isinstance(layout, dict):
-            removed += remove_stale_folder_entries(layout.get('objectsFolderStructure', {}))
+    removed = remove_stale_references(data)
 
     output = json.dumps(data, indent=2, ensure_ascii=False) + '\n'
     PROJECT.write_text(output, encoding='utf-8', newline='\n')
@@ -124,7 +129,7 @@ def main():
 
     print('Target indicator inline-code synchronization complete.')
     print(f'Inline target-system sections replaced: {replaced}')
-    print(f'Stale folder entries removed: {removed}')
+    print(f'Stale target-arrow references removed: {removed}')
     print(f'Backup: {BACKUP}')
     print('TargetSelectionIcon was preserved.')
     print('No combat, movement, HP, damage, or Killer Clown logic was intentionally changed.')
