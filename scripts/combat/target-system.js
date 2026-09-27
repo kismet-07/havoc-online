@@ -40,6 +40,24 @@ function clearHavocTargetIndicator(runtimeScene) {
   state.indicatorTarget = null;
 }
 
+function setHavocIndicatorZ(segment, z) {
+  // The project editor defines TargetSelectionRingSegment as a Primitive3D::Box.
+  // Some GDevelop preview runtimes may expose a dynamically-created 3D object
+  // without the inherited setZ() helper. Prefer the public helper when present,
+  // then fall back to the object's renderer position for that runtime case.
+  if (segment && typeof segment.setZ === 'function') {
+    segment.setZ(z);
+    return;
+  }
+
+  if (segment && typeof segment.get3DRendererObject === 'function') {
+    const rendererObject = segment.get3DRendererObject();
+    if (rendererObject && rendererObject.position) {
+      rendererObject.position.z = z;
+    }
+  }
+}
+
 function createHavocTargetIndicator(runtimeScene, target) {
   const state = initializeHavocTargetSelection(runtimeScene);
   clearHavocTargetIndicator(runtimeScene);
@@ -55,8 +73,8 @@ function createHavocTargetIndicator(runtimeScene, target) {
   const definitions = [
     { x: x, y: y - radius, width: diameter, depth: height },
     { x: x, y: y + radius, width: diameter, depth: height },
-    { x: x - radius, y: y, width: thickness, depth: height, height },
-    { x: x + radius, y: y, width: thickness, depth: height, height },
+    { x: x - radius, y: y, width: thickness, depth: height },
+    { x: x + radius, y: y, width: thickness, depth: height },
   ];
 
   for (const definition of definitions) {
@@ -64,9 +82,9 @@ function createHavocTargetIndicator(runtimeScene, target) {
     if (!segment) continue;
 
     segment.setPosition(definition.x, definition.y);
-    segment.setZ(z);
+    setHavocIndicatorZ(segment, z);
     segment.setWidth(definition.width);
-    segment.setHeight(definition.height || thickness);
+    segment.setHeight(definition.height);
     segment.setDepth(definition.depth);
     segment.setColor('#ff2020');
     segment.setIsCastingShadow(false);
@@ -101,7 +119,7 @@ function updateHavocTargetIndicator(runtimeScene, target) {
   state.indicatorSegments[3].setPosition(x + radius, y);
 
   for (const segment of state.indicatorSegments) {
-    segment.setZ(z);
+    setHavocIndicatorZ(segment, z);
   }
 }
 
