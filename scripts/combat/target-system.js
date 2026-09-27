@@ -12,6 +12,7 @@ const HAVOC_TARGET_CONFIG = {
   mobObjectName: 'Killer_clown',
   indicatorObjectName: 'TargetSelectionIcon',
   arrowZOffset: 300,
+  indicatorScale: 0.4,
   hiddenX: -100000,
   hiddenY: -100000,
 };
@@ -23,12 +24,21 @@ function initializeHavocTargetSelection(runtimeScene) {
       indicatorTarget: null,
       raycastLogged: false,
       indicatorLogged: false,
+      indicatorConfigured: false,
     };
   }
 
   const state = runtimeScene.__havocTargetSelection;
   const objects = runtimeScene.getObjects(HAVOC_TARGET_CONFIG.indicatorObjectName);
   state.indicator = objects.length > 0 ? objects[0] : null;
+
+  if (state.indicator && !state.indicatorConfigured) {
+    if (typeof state.indicator.setScale === 'function') {
+      state.indicator.setScale(HAVOC_TARGET_CONFIG.indicatorScale);
+    }
+    state.indicatorConfigured = true;
+  }
+
   return state;
 }
 
@@ -129,6 +139,7 @@ function updateHavocTargetIndicator(runtimeScene, target) {
       indicatorZ: typeof indicator.getCenterZInScene === 'function' ? indicator.getCenterZInScene() : indicator.getZ(),
       indicatorVisible: typeof indicator.isVisible === 'function' ? indicator.isVisible() : 'unknown',
       indicatorLayer: indicator.layer,
+      indicatorScale: typeof indicator.getScale === 'function' ? indicator.getScale() : 'unknown',
       indicatorWidth: typeof indicator.getWidth === 'function' ? indicator.getWidth() : 'unknown',
       indicatorHeight: typeof indicator.getHeight === 'function' ? indicator.getHeight() : 'unknown',
       indicatorDepth: typeof indicator.getDepth === 'function' ? indicator.getDepth() : 'unknown',
@@ -230,7 +241,9 @@ function updateHavocTargetSelection(runtimeScene) {
     return;
   }
 
-  if (selection.indicatorTarget === combat.target) {
-    updateHavocTargetIndicator(runtimeScene, combat.target);
-  }
+  // Keep the indicator attached to the selected mob every frame. Do not gate
+  // this on indicatorTarget equality: the mob can move between frames and the
+  // target remains selected until the object is destroyed or another target is
+  // explicitly selected.
+  updateHavocTargetIndicator(runtimeScene, combat.target);
 }
