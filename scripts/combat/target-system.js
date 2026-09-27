@@ -1,20 +1,24 @@
 /**
  * Temporary target selection for the first Brawler combat test.
  *
- * GDevelop's RuntimeObject cursorOnObject() handles mouse/touch hit testing,
- * including the current 3D model objects. This keeps the test target system
- * small and avoids duplicating the camera projection math.
+ * GDevelop's cursorOnObject() handles mouse/touch hit testing, including
+ * current 3D model objects. The selected target gets a world-space red
+ * selection ring made from four pre-sized 3D box objects.
  *
- * The selected target also gets a small red 3D ring made from four thin boxes.
- * The indicator is world-space, so it follows the mob rather than the HUD.
+ * The box dimensions are defined in the project rather than changed at
+ * runtime. This avoids relying on 3D size mutators that are not exposed by
+ * the preview runtime object returned by createObject().
  */
 
 const HAVOC_TARGET_CONFIG = {
   mobObjectName: 'Killer_clown',
-  indicatorObjectName: 'TargetSelectionRingSegment',
+  indicatorObjectNames: [
+    'TargetSelectionRingTop',
+    'TargetSelectionRingBottom',
+    'TargetSelectionRingLeft',
+    'TargetSelectionRingRight',
+  ],
   indicatorRadius: 260,
-  indicatorThickness: 20,
-  indicatorHeight: 6,
   indicatorZOffset: 4,
 };
 
@@ -41,16 +45,16 @@ function clearHavocTargetIndicator(runtimeScene) {
 }
 
 function setHavocIndicatorZ(segment, z) {
-  // The project editor defines TargetSelectionRingSegment as a Primitive3D::Box.
-  // Some GDevelop preview runtimes may expose a dynamically-created 3D object
-  // without the inherited setZ() helper. Prefer the public helper when present,
-  // then fall back to the object's renderer position for that runtime case.
-  if (segment && typeof segment.setZ === 'function') {
-    segment.setZ(z);
+  if (!segment) return;
+
+  // setCenterZInScene is the documented 3D position API. Keep a renderer
+  // fallback for preview/runtime differences.
+  if (typeof segment.setCenterZInScene === 'function') {
+    segment.setCenterZInScene(z);
     return;
   }
 
-  if (segment && typeof segment.get3DRendererObject === 'function') {
+  if (typeof segment.get3DRendererObject === 'function') {
     const rendererObject = segment.get3DRendererObject();
     if (rendererObject && rendererObject.position) {
       rendererObject.position.z = z;
@@ -63,29 +67,23 @@ function createHavocTargetIndicator(runtimeScene, target) {
   clearHavocTargetIndicator(runtimeScene);
 
   const radius = HAVOC_TARGET_CONFIG.indicatorRadius;
-  const diameter = radius * 2;
-  const thickness = HAVOC_TARGET_CONFIG.indicatorThickness;
-  const height = HAVOC_TARGET_CONFIG.indicatorHeight;
   const z = target.getZ() + HAVOC_TARGET_CONFIG.indicatorZOffset;
   const x = target.getX();
   const y = target.getY();
 
   const definitions = [
-    { x: x, y: y - radius, width: diameter, depth: height },
-    { x: x, y: y + radius, width: diameter, depth: height },
-    { x: x - radius, y: y, width: thickness, depth: height },
-    { x: x + radius, y: y, width: thickness, depth: height },
+    { name: 'TargetSelectionRingTop', x: x, y: y - radius },
+    { name: 'TargetSelectionRingBottom', x: x, y: y + radius },
+    { name: 'TargetSelectionRingLeft', x: x - radius, y: y },
+    { name: 'TargetSelectionRingRight', x: x + radius, y: y },
   ];
 
   for (const definition of definitions) {
-    const segment = runtimeScene.createObject(HAVOC_TARGET_CONFIG.indicatorObjectName);
+    const segment = runtimeScene.createObject(definition.name);
     if (!segment) continue;
 
     segment.setPosition(definition.x, definition.y);
     setHavocIndicatorZ(segment, z);
-    segment.setWidth(definition.width);
-    segment.setHeight(definition.height);
-    segment.setDepth(definition.depth);
     segment.setColor('#ff2020');
     segment.setIsCastingShadow(false);
     segment.setIsReceivingShadow(false);
