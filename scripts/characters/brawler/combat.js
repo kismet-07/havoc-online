@@ -12,6 +12,9 @@ function initializeBrawlerCombat(runtimeScene) {
       attacking: false,
       approaching: false,
       attackQueued: false,
+      diagnosticLastTarget: null,
+      diagnosticLastAttackQueued: false,
+      diagnosticLastAttacking: false,
     };
   }
 
@@ -24,6 +27,30 @@ function brawlerTargetIsValid(target) {
   // Target validity therefore follows object lifetime here. The target system
   // already performs the actual 3D raycast and only selects visible mobs.
   return !!target && !target.isDestroyed;
+}
+
+function havocCombatDiagnosticTargetName(target) {
+  if (!target) return null;
+  try {
+    if (typeof target.getName === 'function') return target.getName();
+  } catch (e) {
+    // Diagnostic helper only; never allow logging to affect gameplay.
+  }
+  return 'target-object';
+}
+
+function havocCombatLog(runtimeScene, event, data) {
+  const combat = runtimeScene.__havocBrawlerCombat;
+  if (!combat) return;
+
+  console.log('[Havoc Combat][DIAG]', event, {
+    ...data,
+    target: combat.target ? havocCombatDiagnosticTargetName(combat.target) : null,
+    targetDestroyed: !!(combat.target && combat.target.isDestroyed),
+    attackQueued: combat.attackQueued,
+    attacking: combat.attacking,
+    approaching: combat.approaching,
+  });
 }
 
 function startBrawlerBasicAttack(player, combat) {
@@ -45,7 +72,22 @@ function updateBrawlerCombat(runtimeScene, dt) {
 
   updateHavocTargetSelection(runtimeScene);
 
+  if (combat.diagnosticLastTarget !== combat.target) {
+    havocCombatLog(runtimeScene, 'TARGET_STATE_CHANGED_AFTER_SELECTION', {
+      previousTarget: combat.diagnosticLastTarget
+        ? havocCombatDiagnosticTargetName(combat.diagnosticLastTarget)
+        : null,
+      currentTarget: combat.target
+        ? havocCombatDiagnosticTargetName(combat.target)
+        : null,
+    });
+    combat.diagnosticLastTarget = combat.target;
+  }
+
   if (!brawlerTargetIsValid(combat.target)) {
+    if (combat.target) {
+      havocCombatLog(runtimeScene, 'TARGET_INVALIDATED_IN_COMBAT_UPDATE', {});
+    }
     combat.target = null;
     combat.approaching = false;
     combat.attackQueued = false;
@@ -56,6 +98,7 @@ function updateBrawlerCombat(runtimeScene, dt) {
       combat.attacking = false;
       combat.approaching = false;
       setBrawlerAnimation(player, BRAWLER_CONFIG.animations.idle);
+      havocCombatLog(runtimeScene, 'ATTACK_ANIMATION_ENDED', {});
     }
     return;
   }
@@ -67,6 +110,10 @@ function updateBrawlerCombat(runtimeScene, dt) {
     gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space');
 
   if (attackRequested) {
+    havocCombatLog(runtimeScene, 'ATTACK_REQUESTED', {
+      mobileAttackRequested: !!mobileInput.attackRequested,
+      spacePressed: gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space'),
+    });
     combat.attackQueued = true;
   }
 
@@ -74,6 +121,12 @@ function updateBrawlerCombat(runtimeScene, dt) {
 
   const distance = player.getDistanceToObject(activeTarget);
   const attackRange = BRAWLER_CONFIG.combat.attackRange;
+
+  havocCombatLog(runtimeScene, 'ATTACK_RANGE_CHECK', {
+    distance,
+    attackRange,
+    withinRange: distance <= attackRange,
+  });
 
   if (distance > attackRange) {
     combat.approaching = true;
@@ -100,5 +153,9 @@ function updateBrawlerCombat(runtimeScene, dt) {
 
   combat.approaching = false;
   player.setAngle(player.getAngleToObject(activeTarget));
+  havocCombatLog(runtimeScene, 'STARTING_ATTACK', {
+    attackIndex: combat.attackIndex,
+    target: havocCombatDiagnosticTargetName(activeTarget),
+  });
   startBrawlerBasicAttack(player, combat);
 }
