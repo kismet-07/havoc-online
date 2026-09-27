@@ -9,8 +9,7 @@ TARGET = ROOT / 'scripts' / 'combat' / 'target-system.js'
 
 TARGET_SOURCE = r'''/**
  * Temporary world-space target arrow diagnostic.
- * This intentionally keeps the arrow visible in the scene after startup so
- * we can verify that the pre-created Primitive3D::Box objects actually render.
+ * Keeps a pre-created Primitive3D::Box arrow visible at a known world position.
  */
 const HAVOC_TARGET_CONFIG = {
   mobObjectName: 'Killer_clown',
@@ -82,15 +81,11 @@ function showDiagnosticArrow(runtimeScene) {
     return;
   }
 
-  // Put the arrow at the world origin first. This removes target selection,
-  // AABB calculations, and mob movement from the rendering test.
-  setHavocIndicatorPosition(runtimeScene.__havocTargetSelection.indicatorSegments[0], 0, 0, HAVOC_TARGET_CONFIG.debugZ);
-  setHavocIndicatorPosition(runtimeScene.__havocTargetSelection.indicatorSegments[1], 0, 0, HAVOC_TARGET_CONFIG.debugZ - 120);
+  setHavocIndicatorPosition(stem, 0, 0, HAVOC_TARGET_CONFIG.debugZ);
+  setHavocIndicatorPosition(head, 0, 0, HAVOC_TARGET_CONFIG.debugZ - 120);
 
   if (!state.diagnosticShown) {
     console.log('[Havoc Target] Diagnostic arrow placed at world origin.');
-    console.log('[Havoc Target] Stem:', stem);
-    console.log('[Havoc Target] Head:', head);
     state.diagnosticShown = true;
   }
 }
@@ -117,13 +112,12 @@ function updateHavocTargetSelection(runtimeScene) {
       updateHavocTargetIndicator(runtimeScene, selectedTarget);
     } else {
       combat.target = null;
-      clearHavocTargetIndicator(runtimeScene);
+      // Diagnostic arrow intentionally remains visible.
     }
   }
 
   if (!brawlerTargetIsValid(combat.target)) {
     combat.target = null;
-    // Keep the diagnostic arrow visible until we confirm the object renders.
     return;
   }
 
@@ -133,12 +127,9 @@ function updateHavocTargetSelection(runtimeScene) {
 }
 '''
 
-# Replace the inline source file used by the current project.
-TARGET.write_text(TARGET_SOURCE, encoding='utf-8', newline='\\n')
-
+TARGET.write_text(TARGET_SOURCE, encoding='utf-8', newline='\n')
 project = json.loads(PROJECT.read_text(encoding='utf-8'))
 for layout in project.get('layouts', []):
-    # Ensure the two arrow definitions and instances exist.
     objects = layout.setdefault('objects', [])
     for name, width, height, depth in [
         ('TargetSelectionArrowStem', 32, 32, 180),
@@ -146,9 +137,7 @@ for layout in project.get('layouts', []):
     ]:
         if not any(o.get('name') == name for o in objects):
             objects.append({
-                'name': name,
-                'tags': 'HavocCombatUI',
-                'type': 'Primitive3D::Box',
+                'name': name, 'tags': 'HavocCombatUI', 'type': 'Primitive3D::Box',
                 'variables': [], 'effects': [], 'behaviors': [],
                 'content': {
                     'width': width, 'height': height, 'depth': depth,
@@ -178,7 +167,6 @@ for layout in project.get('layouts', []):
                 'numberProperties': [], 'stringProperties': [], 'initialVariables': [],
             })
     break
-
-PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\\n')
+PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
 print('Installed target-arrow render diagnostic.')
 print('Arrow is forced visible at world origin; target selection remains available.')
