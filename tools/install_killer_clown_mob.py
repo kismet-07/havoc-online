@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / 'Havoc Online.json'
 SOURCE = ROOT / 'scripts' / 'mobs' / 'killer_clown' / 'killer-clown.js'
 MARKER = '// HAVOC_KILLER_CLOWN_MOB_V1'
+DEFAULT_CAMERA_DISTANCE = 2200
 
 
 def install() -> None:
@@ -28,61 +29,105 @@ def install() -> None:
     content = killer_object.setdefault('content', {})
     animations = content.setdefault('animations', [])
     required = {
-        'Idle': 'Idle_Sword',
-        'Walk': 'Walk_Large',
-        'Run': 'Run_Stealth',
-        'Attack': 'Sword_Attack',
+        'Idle_Sword': True,
+        'Walk_Large': True,
+        'Run_Stealth': True,
+        'Sword_Attack': False,
     }
-    existing_sources = {a.get('source') for a in animations}
-    for display_name, source_name in required.items():
-        if source_name not in existing_sources:
-            animations.append({
-                'loop': display_name != 'Attack',
-                'name': display_name,
-                'source': source_name,
-            })
 
-    inline = [MARKER]
-    inline.extend(source.splitlines())
-    inline.extend([
-        '',
-        'const killerClownDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
-        'updateKillerClowns(runtimeScene, killerClownDt);',
-    ])
+    # Keep the GDevelop animation name identical to the GLB source name.
+    # The runtime script calls setAnimationName() with these exact names.
+    # Do not rename them to display aliases such as "Walk" or "Run".
+    existing_by_source = {a.get('source'): a for a in animations}
+    for animation_name, should_loop in required.items():
+        animation = existing_by_source.get(animation_name)
+        if animation is None:
+            animation = {
+                'loop': should_loop,
+                'name': animation_name,
+                'source': animation_name,
+            }
+            animations.append(animation)
+        else:
+            animation['loop'] = should_loop
+            animation['name'] = animation_name
+            animation['source'] = animation_name
 
-    installed = False
+    camera_updated = False
+
     for layout in project.get('layouts', []):
         events = layout.get('events', [])
+        replacement = [MARKER]
+        replacement.extend(source.splitlines())
+        replacement.extend([
+            '',
+            'const killerClownDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
+            'updateKillerClowns(runtimeScene, killerClownDt);',
+        ])
+
+        found = False
         for event in events:
-            if event.get('type') == 'BuiltinCommonInstructions::JsCode' and MARKER in '\n'.join(event.get('inlineCode', [])):
-                event['inlineCode'] = inline
-                installed = True
-                break
-        if installed:
-            break
-
-    if not installed:
-        for layout in project.get('layouts', []):
-            if layout.get('name') != 'Untitled scene':
+            if event.get('type') != 'BuiltinCommonInstructions::JsCode':
                 continue
-            layout.setdefault('events', []).append({
-                'type': 'BuiltinCommonInstructions::JsCode',
-                'inlineCode': inline,
-            })
-            installed = True
-            break
+            inline = event.get('inlineCode', [])
+            joined = '\n'.join(inline)
 
-    if not installed:
-        raise RuntimeError("Untitled scene layout was not found")
+            if MARKER in joined:
+                event['inlineCode'] = replacement
+                found = True
 
-    PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
-    print('Installed Killer Clown mob V1.1.')
-    print('Population          : 20')
-    print('Respawn             : 30 seconds')
-    print('Initial idle chance : 40%')
-    print('Minimum spawn gap   : 650')
-    print('Idle                 : stationary')
-    print('Behavior             : idle -> wander; no automatic aggression')
+            if 'runtimeScene.__fateCamera' in joined and 'distance: 900' in joined:
+                event['inlineCode'] = [
+                    line.replace('distance: 900', f'distance: {DEFAULT_CAMERA_DISTANCE}')
+                    for line in event.get('inlineCode', [])
+                ]
+                camera_updated = True
+
+        if found:
+            PROJECT.write_text(
+                json.dumps(project, indent=2, ensure_ascii=False),
+                encoding='utf-8',
+                newline='\n',
+            )
+            print('Refreshed Killer Clown mob V1.6.')
+            print('Population          : 15')
+            print('Respawn             : 15 seconds')
+            print('Walk duration       : 10-15 seconds')
+            print('Walk animation      : LOOPED')
+            print('Animation names     : GLB names preserved')
+            print('Clone Z height      : inherited from placed Killer_clown')
+            print('Minimum separation  : 1000')
+            print('Idle                : position locked')
+            print('Rotation            : set once per wander target')
+            print('Default camera      : maximum zoom out (2200)')
+            return
+
+        if layout.get('name') != 'Untitled scene':
+            continue
+
+        events.append({
+            'type': 'BuiltinCommonInstructions::JsCode',
+            'inlineCode': replacement,
+        })
+        PROJECT.write_text(
+            json.dumps(project, indent=2, ensure_ascii=False),
+            encoding='utf-8',
+            newline='\n',
+        )
+        print('Installed Killer Clown mob V1.6.')
+        print('Population          : 15')
+        print('Respawn             : 15 seconds')
+        print('Walk duration       : 10-15 seconds')
+        print('Walk animation      : LOOPED')
+        print('Animation names     : GLB names preserved')
+        print('Clone Z height      : inherited from placed Killer_clown')
+        print('Minimum separation  : 1000')
+        print('Idle                : position locked')
+        print('Rotation            : set once per wander target')
+        print('Default camera      : maximum zoom out (2200)')
+        return
+
+    raise RuntimeError("Untitled scene layout was not found")
 
 
 if __name__ == '__main__':
