@@ -11,6 +11,9 @@ TARGET = ROOT / 'scripts' / 'combat' / 'target-system.js'
 TARGET_SOURCE = r'''/**
  * World-space target selection indicator.
  * Uses two pre-created 3D boxes: a vertical stem and a wider arrow head.
+ *
+ * Important: the indicator objects are placed in the scene ahead of time.
+ * We only move/show them at runtime; no 3D objects are created dynamically.
  */
 const HAVOC_TARGET_CONFIG = {
   mobObjectName: 'Killer_clown',
@@ -18,17 +21,21 @@ const HAVOC_TARGET_CONFIG = {
     'TargetSelectionArrowStem',
     'TargetSelectionArrowHead',
   ],
-  arrowHeight: 520,
-  arrowHeadZOffset: 300,
-  arrowStemZOffset: 430,
+  arrowHeadZOffset: 80,
+  arrowStemZOffset: 250,
   hiddenX: -100000,
   hiddenY: -100000,
 };
 
 function initializeHavocTargetSelection(runtimeScene) {
   if (!runtimeScene.__havocTargetSelection) {
-    runtimeScene.__havocTargetSelection = { indicatorSegments: [], indicatorTarget: null };
+    runtimeScene.__havocTargetSelection = {
+      indicatorSegments: [],
+      indicatorTarget: null,
+      warnedMissingIndicator: false,
+    };
   }
+
   const state = runtimeScene.__havocTargetSelection;
   if (state.indicatorSegments.length !== HAVOC_TARGET_CONFIG.indicatorObjectNames.length) {
     state.indicatorSegments = HAVOC_TARGET_CONFIG.indicatorObjectNames.map((name) => {
@@ -36,50 +43,96 @@ function initializeHavocTargetSelection(runtimeScene) {
       return objects.length > 0 ? objects[0] : null;
     });
   }
+
+  if (!state.warnedMissingIndicator && state.indicatorSegments.some((segment) => !segment)) {
+    console.warn('[Havoc Target] Target arrow objects are missing from the scene.');
+    state.warnedMissingIndicator = true;
+  }
+
   return state;
 }
 
-function setHavocIndicatorZ(segment, z) {
-  if (!segment || segment.isDestroyed) return;
-  segment.setZ(z);
+function setHavocIndicatorPosition(segment, x, y, z) {
+  if (!segment || segment.isDestroyed) return false;
+
+  // Use the documented 3D center-position API when available. The fallback
+  // keeps the indicator compatible with runtimes exposing only setPosition/setZ.
+  if (typeof segment.setCenterPositionInScene === 'function') {
+    segment.setCenterPositionInScene(x, y);
+  } else {
+    segment.setPosition(x, y);
+  }
+
+  if (typeof segment.setCenterZInScene === 'function') {
+    segment.setCenterZInScene(z);
+  } else if (typeof segment.setZ === 'function') {
+    segment.setZ(z);
+  }
+
+  segment.hidden = false;
+  return true;
 }
 
 function clearHavocTargetIndicator(runtimeScene) {
   const state = initializeHavocTargetSelection(runtimeScene);
+
   for (const segment of state.indicatorSegments) {
     if (!segment || segment.isDestroyed) continue;
+    segment.hidden = true;
     segment.setPosition(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY);
-    setHavocIndicatorZ(segment, 0);
   }
+
   state.indicatorTarget = null;
 }
 
 function updateHavocTargetIndicator(runtimeScene, target) {
   const state = initializeHavocTargetSelection(runtimeScene);
+
   if (!brawlerTargetIsValid(target)) {
     clearHavocTargetIndicator(runtimeScene);
     return;
   }
-  if (state.indicatorSegments.some((segment) => !segment)) return;
+
+  if (state.indicatorSegments.some((segment) => !segment || segment.isDestroyed)) {
+    return;
+  }
 
   const x = target.getX();
   const y = target.getY();
-  const baseZ = target.getZ();
+
+  // Anchor the arrow to the actual top of the selected 3D model instead of
+  // assuming a fixed character height.
+  const targetTopZ = typeof target.getUnrotatedAABBMaxZ === 'function'
+    ? target.getUnrotatedAABBMaxZ()
+    : target.getZ();
 
   const stem = state.indicatorSegments[0];
   const head = state.indicatorSegments[1];
-  stem.setPosition(x, y);
-  head.setPosition(x, y);
-  setHavocIndicatorZ(stem, baseZ + HAVOC_TARGET_CONFIG.arrowStemZOffset);
-  setHavocIndicatorZ(head, baseZ + HAVOC_TARGET_CONFIG.arrowHeadZOffset);
+
+  setHavocIndicatorPosition(
+    stem,
+    x,
+    y,
+    targetTopZ + HAVOC_TARGET_CONFIG.arrowStemZOffset,
+  );
+
+  setHavocIndicatorPosition(
+    head,
+    x,
+    y,
+    targetTopZ + HAVOC_TARGET_CONFIG.arrowHeadZOffset,
+  );
+
   state.indicatorTarget = target;
 }
 
 function selectHavocTargetUnderCursor(runtimeScene) {
   const mobs = runtimeScene.getObjects(HAVOC_TARGET_CONFIG.mobObjectName);
+
   for (const mob of mobs) {
     if (mob.cursorOnObject()) return mob;
   }
+
   return null;
 }
 
@@ -90,6 +143,7 @@ function updateHavocTargetSelection(runtimeScene) {
 
   if (input.targetTapRequested) {
     const selectedTarget = selectHavocTargetUnderCursor(runtimeScene);
+
     if (selectedTarget) {
       combat.target = selectedTarget;
       updateHavocTargetIndicator(runtimeScene, selectedTarget);
@@ -187,8 +241,8 @@ def main() -> None:
         break
     PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
     TARGET.write_text(TARGET_SOURCE, encoding='utf-8', newline='\n')
-    print('Replaced the ground target ring with a red world-space target arrow.')
-    print('Removed the old TargetSelectionRing objects and instances.')
+    print('Installed corrected world-space Brawler target arrow.')
+    print('Arrow uses pre-created 3D objects and anchors to the selected mob top Z.')
     print('No HP, damage, hitbox, death, database, locomotion, or Killer Clown AI logic was changed.')
 
 
