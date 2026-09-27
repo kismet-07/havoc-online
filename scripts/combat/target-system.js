@@ -17,6 +17,38 @@ const HAVOC_TARGET_CONFIG = {
   hiddenY: -100000,
 };
 
+function havocTargetDiagnosticObjectName(object) {
+  if (!object) return null;
+  try {
+    if (typeof object.getName === 'function') return object.getName();
+  } catch (e) {
+    // Diagnostic helper only; never allow logging to affect gameplay.
+  }
+  return HAVOC_TARGET_CONFIG.mobObjectName;
+}
+
+function havocTargetLogState(runtimeScene, event, data) {
+  const state = runtimeScene.__havocTargetSelection;
+  if (!state) return;
+
+  const target = state.indicatorTarget;
+  const combat = runtimeScene.__havocBrawlerCombat;
+  const indicator = state.indicator;
+
+  console.log('[Havoc Target][DIAG]', event, {
+    ...data,
+    combatTarget: combat && combat.target ? havocTargetDiagnosticObjectName(combat.target) : null,
+    combatTargetDestroyed: !!(combat && combat.target && combat.target.isDestroyed),
+    indicatorTarget: target ? havocTargetDiagnosticObjectName(target) : null,
+    indicatorTargetDestroyed: !!(target && target.isDestroyed),
+    indicatorExists: !!indicator,
+    indicatorDestroyed: !!(indicator && indicator.isDestroyed),
+    indicatorVisible: indicator && typeof indicator.isVisible === 'function'
+      ? indicator.isVisible()
+      : 'unknown',
+  });
+}
+
 function initializeHavocTargetSelection(runtimeScene) {
   if (!runtimeScene.__havocTargetSelection) {
     runtimeScene.__havocTargetSelection = {
@@ -25,6 +57,9 @@ function initializeHavocTargetSelection(runtimeScene) {
       raycastLogged: false,
       indicatorLogged: false,
       indicatorConfigured: false,
+      diagnosticLastTarget: null,
+      diagnosticLastIndicatorVisible: null,
+      diagnosticLastIndicatorTarget: null,
     };
   }
 
@@ -100,9 +135,11 @@ function setHavocIndicatorPosition(indicator, x, y, z) {
   return true;
 }
 
-function clearHavocTargetIndicator(runtimeScene) {
+function clearHavocTargetIndicator(runtimeScene, reason = 'unspecified') {
   const state = initializeHavocTargetSelection(runtimeScene);
   const indicator = state.indicator;
+
+  havocTargetLogState(runtimeScene, 'CLEAR_INDICATOR', { reason });
 
   if (indicator && !indicator.isDestroyed) {
     if (typeof indicator.setPosition === 'function') {
@@ -126,13 +163,18 @@ function updateHavocTargetIndicator(runtimeScene, target) {
   const state = initializeHavocTargetSelection(runtimeScene);
 
   if (!brawlerTargetIsValid(target)) {
-    clearHavocTargetIndicator(runtimeScene);
+    havocTargetLogState(runtimeScene, 'INDICATOR_TARGET_INVALID', {
+      suppliedTarget: !!target,
+      suppliedTargetDestroyed: !!(target && target.isDestroyed),
+    });
+    clearHavocTargetIndicator(runtimeScene, 'indicator-target-invalid');
     return;
   }
 
   const indicator = state.indicator;
   if (!indicator || indicator.isDestroyed) {
     console.warn('[Havoc Target] TargetSelectionIcon instance is missing from the scene.');
+    havocTargetLogState(runtimeScene, 'INDICATOR_INSTANCE_MISSING', {});
     return;
   }
 
@@ -147,10 +189,39 @@ function updateHavocTargetIndicator(runtimeScene, target) {
 
   if (!shown) {
     console.warn('[Havoc Target] TargetSelectionIcon does not expose the required 3D positioning API.');
+    havocTargetLogState(runtimeScene, 'INDICATOR_POSITION_FAILED', {
+      targetX: x,
+      targetY: y,
+      targetTopZ,
+      indicatorZ,
+    });
     return;
   }
 
   state.indicatorTarget = target;
+
+  const visible = typeof indicator.isVisible === 'function' ? indicator.isVisible() : 'unknown';
+  const targetChanged = state.diagnosticLastTarget !== target;
+  const indicatorTargetChanged = state.diagnosticLastIndicatorTarget !== target;
+  const visibilityChanged = state.diagnosticLastIndicatorVisible !== visible;
+
+  if (targetChanged || indicatorTargetChanged || visibilityChanged) {
+    havocTargetLogState(runtimeScene, 'INDICATOR_UPDATED', {
+      targetChanged,
+      indicatorTargetChanged,
+      visibilityChanged,
+      targetX: x,
+      targetY: y,
+      targetTopZ,
+      indicatorZ,
+      indicatorVisible: visible,
+      indicatorLayer: indicator.layer,
+    });
+
+    state.diagnosticLastTarget = target;
+    state.diagnosticLastIndicatorTarget = target;
+    state.diagnosticLastIndicatorVisible = visible;
+  }
 
   if (!state.indicatorLogged) {
     state.indicatorLogged = true;
@@ -185,12 +256,19 @@ function getHavocPointerCoordinates(runtimeScene, input) {
 function selectHavocTargetUnderPointer(runtimeScene, input) {
   const worldLayer = runtimeScene.getLayer('');
   if (!worldLayer || !worldLayer.getRenderer || !worldLayer.getRenderer().getThreeCamera) {
+    havocTargetLogState(runtimeScene, 'RAYCAST_UNAVAILABLE', { reason: 'world-layer-camera-unavailable' });
     return null;
   }
 
   const camera = worldLayer.getRenderer().getThreeCamera();
   const renderer = runtimeScene.getGame().getRenderer().getThreeRenderer();
   if (!camera || !renderer || typeof THREE === 'undefined' || typeof THREE.Raycaster !== 'function') {
+    havocTargetLogState(runtimeScene, 'RAYCAST_UNAVAILABLE', {
+      reason: 'camera-renderer-three-unavailable',
+      cameraAvailable: !!camera,
+      rendererAvailable: !!renderer,
+      threeAvailable: typeof THREE !== 'undefined',
+    });
     return null;
   }
 
@@ -198,7 +276,14 @@ function selectHavocTargetUnderPointer(runtimeScene, input) {
   const viewportWidth = runtimeScene.getViewportWidth();
   const viewportHeight = runtimeScene.getViewportHeight();
 
-  if (!(viewportWidth > 0) || !(viewportHeight > 0)) return null;
+  if (!(viewportWidth > 0) || !(viewportHeight > 0)) {
+    havocTargetLogState(runtimeScene, 'RAYCAST_UNAVAILABLE', {
+      reason: 'invalid-viewport',
+      viewportWidth,
+      viewportHeight,
+    });
+    return null;
+  }
 
   const ndcX = (pointer.x / viewportWidth) * 2 - 1;
   const ndcY = -((pointer.y / viewportHeight) * 2 - 1);
@@ -239,6 +324,16 @@ function selectHavocTargetUnderPointer(runtimeScene, input) {
     });
   }
 
+  havocTargetLogState(runtimeScene, selectedTarget ? 'RAYCAST_SELECTED' : 'RAYCAST_MISS', {
+    pointerX: pointer.x,
+    pointerY: pointer.y,
+    ndcX,
+    ndcY,
+    mobCount: mobs.length,
+    selectedTarget: selectedTarget ? havocTargetDiagnosticObjectName(selectedTarget) : null,
+    nearestDistance: Number.isFinite(nearestDistance) ? nearestDistance : null,
+  });
+
   return selectedTarget;
 }
 
@@ -248,20 +343,30 @@ function updateHavocTargetSelection(runtimeScene) {
   const selection = initializeHavocTargetSelection(runtimeScene);
 
   if (input.targetTapRequested) {
+    havocTargetLogState(runtimeScene, 'TARGET_TAP_REQUESTED', {
+      targetTapX: input.targetTapX,
+      targetTapY: input.targetTapY,
+    });
+
     const selectedTarget = selectHavocTargetUnderPointer(runtimeScene, input);
 
     if (selectedTarget) {
       combat.target = selectedTarget;
+      havocTargetLogState(runtimeScene, 'COMBAT_TARGET_ASSIGNED', {
+        target: havocTargetDiagnosticObjectName(selectedTarget),
+      });
       updateHavocTargetIndicator(runtimeScene, selectedTarget);
     } else {
       combat.target = null;
-      clearHavocTargetIndicator(runtimeScene);
+      havocTargetLogState(runtimeScene, 'COMBAT_TARGET_CLEARED_BY_MISS', {});
+      clearHavocTargetIndicator(runtimeScene, 'target-selection-miss');
     }
   }
 
   if (!brawlerTargetIsValid(combat.target)) {
+    havocTargetLogState(runtimeScene, 'COMBAT_TARGET_INVALIDATED', {});
     combat.target = null;
-    clearHavocTargetIndicator(runtimeScene);
+    clearHavocTargetIndicator(runtimeScene, 'combat-target-invalid');
     return;
   }
 
