@@ -5,17 +5,13 @@
  * desktop/mobile pointer position. This avoids RuntimeObject3D.cursorOnObject,
  * which is not reliable for our moving third-person 3D camera.
  *
- * The indicator uses the two pre-created TargetSelectionArrow objects in the
- * scene. No 3D objects are created at runtime.
+ * The indicator is one pre-created TargetSelectionIcon 3D model instance.
+ * The model's first embedded GLB animation plays automatically.
  */
 const HAVOC_TARGET_CONFIG = {
   mobObjectName: 'Killer_clown',
-  indicatorObjectNames: [
-    'TargetSelectionArrowStem',
-    'TargetSelectionArrowHead',
-  ],
-  arrowStemZOffset: 260,
-  arrowHeadZOffset: 170,
+  indicatorObjectName: 'TargetSelectionIcon',
+  arrowZOffset: 260,
   hiddenX: -100000,
   hiddenY: -100000,
 };
@@ -23,39 +19,33 @@ const HAVOC_TARGET_CONFIG = {
 function initializeHavocTargetSelection(runtimeScene) {
   if (!runtimeScene.__havocTargetSelection) {
     runtimeScene.__havocTargetSelection = {
-      indicatorSegments: [],
+      indicator: null,
       indicatorTarget: null,
       raycastLogged: false,
     };
   }
 
   const state = runtimeScene.__havocTargetSelection;
-
-  if (state.indicatorSegments.length !== HAVOC_TARGET_CONFIG.indicatorObjectNames.length) {
-    state.indicatorSegments = HAVOC_TARGET_CONFIG.indicatorObjectNames.map((name) => {
-      const objects = runtimeScene.getObjects(name);
-      return objects.length > 0 ? objects[0] : null;
-    });
-  }
-
+  const objects = runtimeScene.getObjects(HAVOC_TARGET_CONFIG.indicatorObjectName);
+  state.indicator = objects.length > 0 ? objects[0] : null;
   return state;
 }
 
-function setHavocIndicatorPosition(segment, x, y, z) {
-  if (!segment || segment.isDestroyed) return false;
+function setHavocIndicatorPosition(indicator, x, y, z) {
+  if (!indicator || indicator.isDestroyed) return false;
 
-  if (typeof segment.setCenterPositionInScene === 'function') {
-    segment.setCenterPositionInScene(x, y);
-  } else if (typeof segment.setPosition === 'function') {
-    segment.setPosition(x, y);
+  if (typeof indicator.setCenterPositionInScene === 'function') {
+    indicator.setCenterPositionInScene(x, y);
+  } else if (typeof indicator.setPosition === 'function') {
+    indicator.setPosition(x, y);
   } else {
     return false;
   }
 
-  if (typeof segment.setCenterZInScene === 'function') {
-    segment.setCenterZInScene(z);
-  } else if (typeof segment.setZ === 'function') {
-    segment.setZ(z);
+  if (typeof indicator.setCenterZInScene === 'function') {
+    indicator.setCenterZInScene(z);
+  } else if (typeof indicator.setZ === 'function') {
+    indicator.setZ(z);
   } else {
     return false;
   }
@@ -65,18 +55,16 @@ function setHavocIndicatorPosition(segment, x, y, z) {
 
 function clearHavocTargetIndicator(runtimeScene) {
   const state = initializeHavocTargetSelection(runtimeScene);
+  const indicator = state.indicator;
 
-  for (const segment of state.indicatorSegments) {
-    if (!segment || segment.isDestroyed) continue;
-
-    if (typeof segment.setPosition === 'function') {
-      segment.setPosition(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY);
+  if (indicator && !indicator.isDestroyed) {
+    if (typeof indicator.setPosition === 'function') {
+      indicator.setPosition(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY);
     }
-
-    if (typeof segment.setZ === 'function') {
-      segment.setZ(0);
-    } else if (typeof segment.setCenterZInScene === 'function') {
-      segment.setCenterZInScene(0);
+    if (typeof indicator.setCenterZInScene === 'function') {
+      indicator.setCenterZInScene(0);
+    } else if (typeof indicator.setZ === 'function') {
+      indicator.setZ(0);
     }
   }
 
@@ -91,9 +79,9 @@ function updateHavocTargetIndicator(runtimeScene, target) {
     return;
   }
 
-  const missing = state.indicatorSegments.some((segment) => !segment || segment.isDestroyed);
-  if (missing) {
-    console.warn('[Havoc Target] Arrow indicator object missing at runtime.');
+  const indicator = state.indicator;
+  if (!indicator || indicator.isDestroyed) {
+    console.warn('[Havoc Target] TargetSelectionIcon instance is missing from the scene.');
     return;
   }
 
@@ -103,22 +91,15 @@ function updateHavocTargetIndicator(runtimeScene, target) {
     ? target.getUnrotatedAABBMaxZ()
     : target.getZ();
 
-  const stemShown = setHavocIndicatorPosition(
-    state.indicatorSegments[0],
+  const shown = setHavocIndicatorPosition(
+    indicator,
     x,
     y,
-    targetTopZ + HAVOC_TARGET_CONFIG.arrowStemZOffset,
+    targetTopZ + HAVOC_TARGET_CONFIG.arrowZOffset,
   );
 
-  const headShown = setHavocIndicatorPosition(
-    state.indicatorSegments[1],
-    x,
-    y,
-    targetTopZ + HAVOC_TARGET_CONFIG.arrowHeadZOffset,
-  );
-
-  if (!stemShown || !headShown) {
-    console.warn('[Havoc Target] Arrow object does not expose the required 3D positioning API.');
+  if (!shown) {
+    console.warn('[Havoc Target] TargetSelectionIcon does not expose the required 3D positioning API.');
     return;
   }
 
@@ -137,8 +118,6 @@ function getHavocPointerCoordinates(runtimeScene, input) {
 }
 
 function selectHavocTargetUnderPointer(runtimeScene, input) {
-  // GDevelop's 3D renderer exposes the actual Three.js camera and renderer.
-  // Use the base gameplay layer because that is the camera driving the world.
   const worldLayer = runtimeScene.getLayer('');
   if (!worldLayer || !worldLayer.getRenderer || !worldLayer.getRenderer().getThreeCamera) {
     return null;
