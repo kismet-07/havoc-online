@@ -89,6 +89,25 @@
         "metadata": "",
         "name": "Brawler_inplace.glb",
         "userAdded": false
+      },
+      {
+        "file": "assets/ambientcg-asphalt-010-color.jpg",
+        "kind": "image",
+        "metadata": "",
+        "name": "ambientcg-asphalt-010-color.jpg",
+        "smoothed": true,
+        "userAdded": false,
+        "origin": {
+          "identifier": "https://asset-resources.gdevelop.io/public-resources/3D Cubes/AmbientCG/fc2b10be6f0be3f8d09f2deacfab59fdfb575734e18e6724b3d1f9ae9bbb2e00_ambientcg-asphalt-010-color.jpg",
+          "name": "ambientcg-asphalt-010-color.jpg"
+        }
+      },
+      {
+        "file": "dragon_idle.glb",
+        "kind": "model3D",
+        "metadata": "",
+        "name": "dragon_idle.glb",
+        "userAdded": false
       }
     ]
   },
@@ -100,17 +119,17 @@
   "variables": [],
   "layouts": [
     {
-      "b": 241,
+      "b": 85,
       "disableInputWhenNotFocused": true,
       "mangledName": "Untitled_32scene",
       "name": "Untitled scene",
-      "r": 241,
+      "r": 87,
       "standardSortMethod": true,
       "stopSoundsOnStartup": true,
       "title": "",
-      "v": 241,
+      "v": 85,
       "uiSettings": {
-        "grid": false,
+        "grid": true,
         "gridType": "rectangular",
         "gridWidth": 32,
         "gridHeight": 32,
@@ -120,7 +139,7 @@
         "gridOffsetZ": 0,
         "gridColor": 10401023,
         "gridAlpha": 0.8,
-        "snap": false,
+        "snap": true,
         "zoomFactor": 0.546875,
         "windowMask": false,
         "selectedLayer": "",
@@ -135,9 +154,9 @@
           "depth": 50,
           "height": 5000,
           "layer": "",
-          "name": "Asphalt019Block",
+          "name": "Floor",
           "persistentUuid": "44b64b0b-fa41-4bd8-a3bc-e0a02db476c7",
-          "width": 5000,
+          "width": 13780,
           "x": 8,
           "y": 28,
           "z": -28,
@@ -151,12 +170,46 @@
           "customSize": false,
           "height": 234.733717591712,
           "layer": "",
-          "name": "New3DModel",
+          "name": "Character",
           "persistentUuid": "e828b67a-5607-4682-99ff-29533b7dfada",
           "width": 83.29261053028817,
-          "x": 169,
-          "y": 286,
+          "x": 3008,
+          "y": 2304,
+          "z": 32,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 500,
+          "layer": "",
+          "name": "Asphalt019Block",
+          "persistentUuid": "3a2e915f-fb8c-4eb6-ab00-cc8cff93e8a0",
+          "width": 500,
+          "x": 4203,
+          "y": 2127,
           "z": 22,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "depth": 150,
+          "flippedX": true,
+          "height": 500,
+          "layer": "",
+          "name": "New3DModel",
+          "persistentUuid": "913557df-338a-4866-8d37-ba6e66205c90",
+          "width": 500,
+          "x": 4438,
+          "y": 2410,
+          "z": 521.9999999999999,
           "zOrder": 0,
           "numberProperties": [],
           "stringProperties": [],
@@ -166,7 +219,7 @@
       "objects": [
         {
           "assetStoreId": "",
-          "name": "New3DModel",
+          "name": "Character",
           "persistentUuid": "2addcba0-74ef-4371-9904-c0072bd97df4",
           "type": "Scene3D::Model3DObject",
           "variables": [],
@@ -228,7 +281,7 @@
         },
         {
           "assetStoreId": "98e0b1ab2f5ff43f9a23361fe0b6dca0fbbe4ed6c6b513eac053b82b76721d67",
-          "name": "Asphalt019Block",
+          "name": "Floor",
           "persistentUuid": "1dbe3d02-7887-4c23-90d2-ce02ccb3eed7",
           "type": "Scene3D::Cube3DObject",
           "variables": [],
@@ -265,16 +318,88 @@
             "isReceivingShadow": true,
             "tint": "255;255;255"
           }
+        },
+        {
+          "assetStoreId": "98e0b1ab2f5ff43f9a23361fe0b6dca0fbbe4ed6c6b513eac053b82b76721d67",
+          "name": "Asphalt019Block",
+          "persistentUuid": "dbbdb86e-26e0-4a2c-8719-a181f7789ef4",
+          "type": "Scene3D::Cube3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "width": 500,
+            "height": 500,
+            "depth": 500,
+            "enableTextureTransparency": false,
+            "facesOrientation": "Y",
+            "frontFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "backFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "backFaceUpThroughWhichAxisRotation": "X",
+            "leftFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "rightFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "topFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "bottomFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "frontFaceVisible": true,
+            "backFaceVisible": true,
+            "leftFaceVisible": true,
+            "rightFaceVisible": true,
+            "topFaceVisible": true,
+            "bottomFaceVisible": true,
+            "frontFaceResourceRepeat": true,
+            "backFaceResourceRepeat": true,
+            "leftFaceResourceRepeat": true,
+            "rightFaceResourceRepeat": true,
+            "topFaceResourceRepeat": true,
+            "bottomFaceResourceRepeat": true,
+            "tileScale": 0.2,
+            "materialType": "StandardWithoutMetalness",
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "tint": "255;255;255"
+          }
+        },
+        {
+          "assetStoreId": "",
+          "name": "New3DModel",
+          "persistentUuid": "02716614-0ca8-4391-8f8e-ca205c7983ff",
+          "type": "Scene3D::Model3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "centerLocation": "CenteredOnZ",
+            "crossfadeDuration": 0.10000000149011612,
+            "depth": 100,
+            "height": 100,
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "keepAspectRatio": true,
+            "materialType": "StandardWithoutMetalness",
+            "modelResourceName": "dragon_idle.glb",
+            "originLocation": "ModelOrigin",
+            "rotationX": 90,
+            "rotationY": 0,
+            "rotationZ": 90,
+            "width": 100,
+            "animations": []
+          }
         }
       ],
       "objectsFolderStructure": {
         "folderName": "__ROOT",
         "children": [
           {
-            "objectName": "New3DModel"
+            "objectName": "Character"
+          },
+          {
+            "objectName": "Floor"
           },
           {
             "objectName": "Asphalt019Block"
+          },
+          {
+            "objectName": "New3DModel"
           }
         ]
       },
