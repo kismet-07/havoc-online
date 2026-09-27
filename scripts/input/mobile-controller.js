@@ -32,6 +32,7 @@ function initializeHavocMobileInput(runtimeScene) {
       targetTapX: null,
       targetTapY: null,
       targetTapRequested: false,
+      mouseLeftWasPressed: false,
     };
   }
 
@@ -64,12 +65,17 @@ function updateHavocMobileInput(runtimeScene) {
     if (attackButton) attackButton.setPosition(attackLeft, attackTop);
   }
 
-  // Use the InputManager's explicit mouse transition for desktop preview.
-  // hasAnyTouchOrMouseStarted() can be affected by touch-to-mouse simulation;
-  // that made desktop target clicks unreliable in the preview.
-  const mouseClicked = inputManager.isMouseButtonReleased(gdjs.InputManager.MOUSE_LEFT_BUTTON);
+  // Desktop target selection must use the mouse press transition, not the
+  // release transition. A release was being interpreted as a second target
+  // selection and could raycast-miss, clearing the target immediately after
+  // the initial selection. Track the previous pressed state explicitly so the
+  // request is emitted exactly once on the press frame.
+  const mouseLeftPressed = inputManager.isMouseButtonPressed(gdjs.InputManager.MOUSE_LEFT_BUTTON);
+  const mouseLeftStarted = mouseLeftPressed && !state.mouseLeftWasPressed;
+  state.mouseLeftWasPressed = mouseLeftPressed;
+
   const touchStarted = inputManager.getStartedTouchIdentifiers().length > 0;
-  const pointerStarted = mouseClicked || touchStarted;
+  const pointerStarted = mouseLeftStarted || touchStarted;
 
   if (attackButton && pointerStarted && attackButton.cursorOnObject()) {
     state.attackRequested = true;
@@ -95,9 +101,9 @@ function updateHavocMobileInput(runtimeScene) {
     state.targetTapRequested = true;
   }
 
-  // Desktop preview: convert a fresh left mouse click into the same target
+  // Desktop preview: convert a fresh left mouse press into the same target
   // request used by mobile. The target system performs the 3D hit test.
-  if (mouseClicked && (!attackButton || !attackButton.cursorOnObject())) {
+  if (mouseLeftStarted && (!attackButton || !attackButton.cursorOnObject())) {
     const cursorX = gdjs.evtTools.input.getCursorX(runtimeScene);
     const cursorY = gdjs.evtTools.input.getCursorY(runtimeScene);
     const inJoystickRegion = cursorX <= width * 0.42 && cursorY >= height * 0.55;
