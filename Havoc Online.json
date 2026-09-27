@@ -108,6 +108,20 @@
         "metadata": "",
         "name": "dragon_idle.glb",
         "userAdded": false
+      },
+      {
+        "file": "nurse.glb",
+        "kind": "model3D",
+        "metadata": "",
+        "name": "nurse.glb",
+        "userAdded": false
+      },
+      {
+        "file": "killer_clown.glb",
+        "kind": "model3D",
+        "metadata": "",
+        "name": "killer_clown.glb",
+        "userAdded": false
       }
     ]
   },
@@ -204,12 +218,76 @@
           "flippedX": true,
           "height": 500,
           "layer": "",
-          "name": "New3DModel",
+          "name": "Dragon",
           "persistentUuid": "913557df-338a-4866-8d37-ba6e66205c90",
           "width": 500,
           "x": 4438,
           "y": 2410,
           "z": 521.9999999999999,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "flippedX": true,
+          "height": 39.97469748439186,
+          "layer": "",
+          "name": "Nurse",
+          "persistentUuid": "f72fe986-94b6-4815-b4ea-acee70d9ac2c",
+          "width": 43.83994894460461,
+          "x": 4032,
+          "y": 2368,
+          "z": 22,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 32,
+          "layer": "",
+          "name": "",
+          "persistentUuid": "b1a3b30c-5b2c-4717-aef4-c3b93092121f",
+          "width": 32,
+          "x": 0,
+          "y": 0,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 299.5303678843537,
+          "layer": "",
+          "name": "New3DModel",
+          "persistentUuid": "5a01bdd0-20a8-41f5-9dd8-050aa8f36d56",
+          "width": 453.18437642346754,
+          "x": 3488,
+          "y": 3136,
+          "z": 22,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 239.62429430748293,
+          "layer": "",
+          "name": "Killer_clown",
+          "persistentUuid": "17de947f-bdd5-4e51-a790-3086a15a77db",
+          "width": 362.547501138774,
+          "x": 3776,
+          "y": 3776,
+          "z": 22,
           "zOrder": 0,
           "numberProperties": [],
           "stringProperties": [],
@@ -361,7 +439,7 @@
         },
         {
           "assetStoreId": "",
-          "name": "New3DModel",
+          "name": "Dragon",
           "persistentUuid": "02716614-0ca8-4391-8f8e-ca205c7983ff",
           "type": "Scene3D::Model3DObject",
           "variables": [],
@@ -369,7 +447,7 @@
           "behaviors": [],
           "content": {
             "centerLocation": "CenteredOnZ",
-            "crossfadeDuration": 0.10000000149011612,
+            "crossfadeDuration": 0.1000000014901161,
             "depth": 100,
             "height": 100,
             "isCastingShadow": true,
@@ -382,7 +460,92 @@
             "rotationY": 0,
             "rotationZ": 90,
             "width": 100,
-            "animations": []
+            "animations": [
+              {
+                "loop": true,
+                "name": "Idle",
+                "source": "Idle"
+              }
+            ]
+          }
+        },
+        {
+          "assetStoreId": "",
+          "name": "Nurse",
+          "persistentUuid": "6f344457-978e-4532-812b-f6e587bff414",
+          "type": "Scene3D::Model3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "centerLocation": "CenteredOnZ",
+            "crossfadeDuration": 0.10000000149011612,
+            "depth": 400,
+            "height": 400,
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "keepAspectRatio": true,
+            "materialType": "StandardWithoutMetalness",
+            "modelResourceName": "nurse.glb",
+            "originLocation": "ModelOrigin",
+            "rotationX": 90,
+            "rotationY": 0,
+            "rotationZ": 90,
+            "width": 400,
+            "animations": [
+              {
+                "loop": true,
+                "name": "Idle_Subtle",
+                "source": "Idle_Subtle"
+              }
+            ]
+          }
+        },
+        {
+          "assetStoreId": "",
+          "name": "Killer_clown",
+          "persistentUuid": "3337d193-979a-4c9f-9ea4-4df59518f2a7",
+          "type": "Scene3D::Model3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "centerLocation": "CenteredOnZ",
+            "crossfadeDuration": 0.10000000149011612,
+            "depth": 400,
+            "height": 400,
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "keepAspectRatio": true,
+            "materialType": "StandardWithoutMetalness",
+            "modelResourceName": "killer_clown.glb",
+            "originLocation": "ModelOrigin",
+            "rotationX": 90,
+            "rotationY": 0,
+            "rotationZ": 90,
+            "width": 400,
+            "animations": [
+              {
+                "loop": true,
+                "name": "Idle_Sword",
+                "source": "Idle_Sword"
+              },
+              {
+                "loop": false,
+                "name": "Run_Stealth",
+                "source": "Run_Stealth"
+              },
+              {
+                "loop": false,
+                "name": "Sword_Attack",
+                "source": "Sword_Attack"
+              },
+              {
+                "loop": false,
+                "name": "Walk_Large",
+                "source": "Walk_Large"
+              }
+            ]
           }
         }
       ],
@@ -396,10 +559,16 @@
             "objectName": "Floor"
           },
           {
+            "objectName": "Nurse"
+          },
+          {
             "objectName": "Asphalt019Block"
           },
           {
-            "objectName": "New3DModel"
+            "objectName": "Dragon"
+          },
+          {
+            "objectName": "Killer_clown"
           }
         ]
       },
