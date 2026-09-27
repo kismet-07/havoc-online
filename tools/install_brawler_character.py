@@ -107,7 +107,9 @@ def ensure_mobile_ui(layout: dict) -> None:
             'ambientLightColorB': 0,
             'ambientLightColorG': 0,
             'ambientLightColorR': 0,
-            'followBaseLayerCamera': True,
+            # The mobile HUD must use its own 2D layer camera. It must not
+            # inherit the 3D gameplay camera's rotation/transform.
+            'followBaseLayerCamera': False,
             'isLightingLayer': False,
             'name': 'UI',
             'visibility': True,
@@ -126,7 +128,8 @@ def ensure_mobile_ui(layout: dict) -> None:
         }
         layers.append(ui_layer)
     else:
-        ui_layer['followBaseLayerCamera'] = True
+        # Never inherit the gameplay camera for screen-space controls.
+        ui_layer['followBaseLayerCamera'] = False
         ui_layer.setdefault('instances', [])
 
     # GDevelop stores scene instances inside their owning layer. The previous
