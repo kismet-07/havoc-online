@@ -60,18 +60,18 @@ def text_object(name: str, string: str, character_size: int) -> dict:
     }
 
 
-def target_indicator_object() -> dict:
+def target_indicator_object(name: str, width: int, height: int, depth: int) -> dict:
     return {
-        'name': 'TargetSelectionRingSegment',
+        'name': name,
         'tags': 'HavocCombatUI',
         'type': 'Primitive3D::Box',
         'variables': [],
         'effects': [],
         'behaviors': [],
         'content': {
-            'width': 1,
-            'height': 1,
-            'depth': 1,
+            'width': width,
+            'height': height,
+            'depth': depth,
             'materialType': 'Basic',
             'tint': '#ff2020',
             'frontFaceResourceName': '',
@@ -180,17 +180,32 @@ def ensure_mobile_ui(layout: dict) -> None:
             instances.append(item)
 
 
-def ensure_target_indicator_object(layout: dict) -> None:
+def ensure_target_indicator_objects(layout: dict) -> None:
     objects = layout.setdefault('objects', [])
-    if any(obj.get('name') == 'TargetSelectionRingSegment' for obj in objects):
-        return
 
-    objects.append(target_indicator_object())
+    radius = 260
+    thickness = 20
+    height = 6
+    diameter = radius * 2
+
+    definitions = [
+        target_indicator_object('TargetSelectionRingTop', diameter, height, thickness),
+        target_indicator_object('TargetSelectionRingBottom', diameter, height, thickness),
+        target_indicator_object('TargetSelectionRingLeft', thickness, height, diameter),
+        target_indicator_object('TargetSelectionRingRight', thickness, height, diameter),
+    ]
+
+    object_names = {obj.get('name') for obj in objects}
+    for definition in definitions:
+        if definition['name'] not in object_names:
+            objects.append(definition)
 
     folder = layout.setdefault('objectsFolderStructure', {'folderName': '__ROOT'})
     children = folder.setdefault('children', [])
-    if not any(child.get('objectName') == 'TargetSelectionRingSegment' for child in children):
-        children.append({'objectName': 'TargetSelectionRingSegment'})
+    child_names = {child.get('objectName') for child in children}
+    for definition in definitions:
+        if definition['name'] not in child_names:
+            children.append({'objectName': definition['name']})
 
 
 def install() -> None:
@@ -209,7 +224,7 @@ def install() -> None:
             if MARKER in joined or "runtimeScene.getObjects('Character')[0]" in joined:
                 event['inlineCode'] = replacement
                 ensure_mobile_ui(layout)
-                ensure_target_indicator_object(layout)
+                ensure_target_indicator_objects(layout)
                 found = True
                 break
 
