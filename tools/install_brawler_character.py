@@ -100,12 +100,14 @@ def ensure_mobile_ui(layout: dict) -> None:
             children.append({'objectName': definition['name']})
 
     layers = layout.setdefault('layers', [])
-    if not any(layer.get('name') == 'UI' for layer in layers):
-        layers.append({
+    ui_layer = next((layer for layer in layers if layer.get('name') == 'UI'), None)
+
+    if ui_layer is None:
+        ui_layer = {
             'ambientLightColorB': 0,
             'ambientLightColorG': 0,
             'ambientLightColorR': 0,
-            'followBaseLayerCamera': False,
+            'followBaseLayerCamera': True,
             'isLightingLayer': False,
             'name': 'UI',
             'visibility': True,
@@ -120,10 +122,19 @@ def ensure_mobile_ui(layout: dict) -> None:
                 'width': 0,
             }],
             'effects': [],
-        })
+            'instances': [],
+        }
+        layers.append(ui_layer)
+    else:
+        ui_layer['followBaseLayerCamera'] = True
+        ui_layer.setdefault('instances', [])
 
-    instances = layout.setdefault('instances', [])
+    # GDevelop stores scene instances inside their owning layer. The previous
+    # installer incorrectly wrote these to layout.instances, so the objects
+    # existed in the project definition but had no scene instances to render.
+    instances = ui_layer['instances']
     instance_names = {item.get('name') for item in instances}
+
     for item in [
         instance('MobileJoystickBase', 80, 500, 100),
         instance('MobileJoystickKnob', 105, 525, 101),
