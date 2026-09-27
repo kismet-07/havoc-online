@@ -64,10 +64,13 @@ function updateHavocMobileInput(runtimeScene) {
     if (attackButton) attackButton.setPosition(attackLeft, attackTop);
   }
 
-  // A pointer start covers both mobile touches and the desktop mouse. The
-  // attack button uses actual object hit testing so viewport scaling cannot
-  // make its hit area drift away from the visible button.
-  const pointerStarted = gdjs.evtTools.input.hasAnyTouchOrMouseStarted(runtimeScene);
+  // Use the InputManager's explicit mouse transition for desktop preview.
+  // hasAnyTouchOrMouseStarted() can be affected by touch-to-mouse simulation;
+  // that made desktop target clicks unreliable in the preview.
+  const mouseClicked = inputManager.isMouseButtonReleased(gdjs.InputManager.MOUSE_LEFT_BUTTON);
+  const touchStarted = inputManager.getStartedTouchIdentifiers().length > 0;
+  const pointerStarted = mouseClicked || touchStarted;
+
   if (attackButton && pointerStarted && attackButton.cursorOnObject()) {
     state.attackRequested = true;
   }
@@ -92,10 +95,9 @@ function updateHavocMobileInput(runtimeScene) {
     state.targetTapRequested = true;
   }
 
-  // Desktop GDevelop preview does not create a normal touch identifier for a
-  // left mouse click. Convert a fresh mouse click into the same target request
-  // used by mobile, excluding the joystick and attack-button regions.
-  if (pointerStarted && attackButton && !attackButton.cursorOnObject()) {
+  // Desktop preview: convert a fresh left mouse click into the same target
+  // request used by mobile. The target system performs the 3D hit test.
+  if (mouseClicked && (!attackButton || !attackButton.cursorOnObject())) {
     const cursorX = gdjs.evtTools.input.getCursorX(runtimeScene);
     const cursorY = gdjs.evtTools.input.getCursorY(runtimeScene);
     const inJoystickRegion = cursorX <= width * 0.42 && cursorY >= height * 0.55;
