@@ -12,7 +12,9 @@ const BRAWLER_CONFIG = {
     runSpeed: 600,
   },
   combat: {
-    attackRange: 300,
+    // 3D model centers can remain visually separated even when the character
+    // and mob are already in melee contact because their model bounds are large.
+    attackRange: 450,
   },
   animations: {
     idle: 'Idle',
