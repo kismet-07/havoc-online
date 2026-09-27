@@ -8,13 +8,6 @@ from pygltflib import GLTF2
 ROOT = Path(__file__).resolve().parents[1]
 GLB = ROOT / 'killer_clown.glb'
 TARGET_ANIMATIONS = {'Idle_Sword', 'Walk_Large', 'Run_Stealth'}
-TARGET_NODE_HINTS = (
-    'root', 'pelvis', 'hips', 'hip',
-    'leftfoot', 'left foot', 'lefttoe', 'left toe',
-    'rightfoot', 'right foot', 'righttoe', 'right toe',
-    'ankle', 'foot', 'toe',
-)
-
 
 def accessor_values(gltf: GLTF2, accessor_index: int):
     accessor = gltf.accessors[accessor_index]
@@ -47,109 +40,102 @@ def accessor_values(gltf: GLTF2, accessor_index: int):
         values.append(struct.unpack_from(fmt, blob, offset))
     return values
 
+def norm(name: str) -> str:
+    return ''.join(ch.lower() for ch in name if ch.isalnum())
 
-def node_label(node):
-    return (node.name or '').strip()
-
-
-def normalized(name: str) -> str:
-    return name.lower().replace('_', '').replace('-', '').replace(' ', '')
-
-
-def is_relevant_node(name: str) -> bool:
-    lowered = normalized(name)
-    return any(normalized(hint) in lowered for hint in TARGET_NODE_HINTS)
-
-
-def print_node_channels(gltf: GLTF2, animation):
-    relevant_nodes = {
-        i: node_label(node)
-        for i, node in enumerate(gltf.nodes)
-        if is_relevant_node(node_label(node))
-    }
-
-    channels_by_node = {index: [] for index in relevant_nodes}
-    for channel in animation.channels:
-        node_index = channel.target.node
-        if node_index in channels_by_node:
-            channels_by_node[node_index].append(channel)
-
-    order = ('root', 'pelvis', 'hip', 'leftfoot', 'lefttoe', 'rightfoot', 'righttoe', 'ankle', 'foot', 'toe')
-    ordered_nodes = sorted(
-        relevant_nodes.items(),
-        key=lambda item: (
-            next((i for i, token in enumerate(order) if token in normalized(item[1])), 99),
-            item[0],
-        ),
+def is_relevant(name: str) -> bool:
+    n = norm(name)
+    return (
+        n == 'root' or
+        n == 'pelvis' or
+        'foot' in n or
+        'toe' in n or
+        'ankle' in n or
+        'hip' in n
     )
 
-    found_translation = False
-
-    for node_index, name in ordered_nodes:
-        channels = channels_by_node[node_index]
-        paths = sorted({channel.target.path for channel in channels})
-        if not channels:
-            print(f'  {node_index}: {name} — NO animation channels')
+def print_animation(gltf: GLTF2, animation):
+    print(f"\nANIMATION: {animation.name}")
+    channel_map = {}
+    for channel in animation.channels:
+        node_index = channel.target.node
+        if node_index is None:
             continue
+        name = gltf.nodes[node_index].name or f"node_{node_index}"
+        if is_relevant(name):
+            channel_map.setdefault(node_index, []).append(channel)
 
-        print(f'  {node_index}: {name} — channels={", ".join(paths)}')
+    if not channel_map:
+        print("  No relevant nodes have animation channels.")
+        return
 
-        for channel in channels:
+    for node_index in sorted(channel_map):
+        name = gltf.nodes[node_index].name or f"node_{node_index}"
+        paths = sorted({c.target.path for c in channel_map[node_index]})
+        print(f"  {node_index}: {name} — channels={', '.join(paths)}")
+
+        for channel in channel_map[node_index]:
             if channel.target.path != 'translation':
                 continue
-
-            found_translation = True
             sampler = animation.samplers[channel.sampler]
             values = accessor_values(gltf, sampler.output)
             if not values:
-                print('    translation: unable to decode accessor')
+                print("    translation: unable to decode")
                 continue
-
-            ranges = [
-                (min(v[axis] for v in values), max(v[axis] for v in values))
-                for axis in range(3)
-            ]
             first = values[0]
             last = values[-1]
             delta = tuple(last[i] - first[i] for i in range(3))
-            print(f'    translation: keyframes={len(values)}')
-            print(f'      X: {ranges[0][0]:.9f} -> {ranges[0][1]:.9f}  delta={delta[0]:+.9f}')
-            print(f'      Y: {ranges[1][0]:.9f} -> {ranges[1][1]:.9f}  delta={delta[1]:+.9f}')
-            print(f'      Z: {ranges[2][0]:.9f} -> {ranges[2][1]:.9f}  delta={delta[2]:+.9f}')
+            ranges = [
+                (min(v[i] for v in values), max(v[i] for v in values))
+                for i in range(3)
+            ]
+            print(f"    translation keyframes={len(values)}")
+            print(f"      X range {ranges[0][0]:.9f} -> {ranges[0][1]:.9f}, delta={delta[0]:+.9f}")
+            print(f"      Y range {ranges[1][0]:.9f} -> {ranges[1][1]:.9f}, delta={delta[1]:+.9f}")
+            print(f"      Z range {ranges[2][0]:.9f} -> {ranges[2][1]:.9f}, delta={delta[2]:+.9f}")
 
-    if not found_translation:
-        print('  RESULT: No translation channels exist on the detected root/pelvis/foot/toe nodes.')
-
-
-def main() -> None:
+def main():
     gltf = GLTF2().load(GLB)
-
-    candidate_nodes = {
-        i: node_label(node)
-        for i, node in enumerate(gltf.nodes)
-        if is_relevant_node(node_label(node))
-    }
-
     print('=' * 72)
-    print('KILLER_CLOWN.GLB — ROOT / FOOT MOTION INSPECTION')
+    print('KILLER_CLOWN.GLB — FULL RELEVANT NODE MOTION INSPECTION')
     print('=' * 72)
-    print('Candidate nodes:')
-    for index, name in candidate_nodes.items():
-        print(f'  {index}: {name}')
+
+    candidate_nodes = [
+        (i, gltf.nodes[i].name or f'node_{i}')
+        for i in range(len(gltf.nodes))
+        if is_relevant(gltf.nodes[i].name or '')
+    ]
+    print(f'Candidate nodes: {len(candidate_nodes)}')
+    for i, name in candidate_nodes:
+        print(f'  {i}: {name}')
 
     for animation in gltf.animations or []:
-        if animation.name not in TARGET_ANIMATIONS:
+        if animation.name in TARGET_ANIMATIONS:
+            print_animation(gltf, animation)
+
+    print('\nNON-ROOT NODE TRANSLATION CHANNELS')
+    print('-' * 72)
+    found = False
+    for animation in gltf.animations or []:
+        if animation.name != 'Idle_Sword':
             continue
-        print('\nANIMATION:', animation.name)
-        print_node_channels(gltf, animation)
-
-    print('\nInterpretation:')
-    print('  - Root translation is the strongest indicator of baked locomotion.')
-    print('  - Pelvis translation alone is not proof of root motion.')
-    print('  - Foot/toe nodes may have rotation-only channels; that is normal.')
-    print('  - If the foot nodes have no translation channels, inspect the parent hierarchy and pelvis/root motion next.')
-    print('=' * 72)
-
+        for channel in animation.channels:
+            if channel.target.path != 'translation' or channel.target.node is None:
+                continue
+            name = gltf.nodes[channel.target.node].name or f'node_{channel.target.node}'
+            if norm(name) == 'root':
+                continue
+            sampler = animation.samplers[channel.sampler]
+            values = accessor_values(gltf, sampler.output)
+            if not values:
+                continue
+            found = True
+            first = values[0]
+            last = values[-1]
+            delta = tuple(last[i] - first[i] for i in range(3))
+            print(f'{channel.target.node}: {name} delta=({delta[0]:+.9f}, {delta[1]:+.9f}, {delta[2]:+.9f})')
+    if not found:
+        print('No non-root translation channels found for Idle_Sword.')
 
 if __name__ == '__main__':
     main()
