@@ -8,6 +8,8 @@ BACKUP = PROJECT.with_name(PROJECT.name + '.before-target-inline-sync.bak')
 START_MARKER = '// --- scripts/combat/target-system.js ---'
 END_MARKER = '// --- scripts/characters/brawler/config.js ---'
 STALE_NAMES = {'TargetSelectionArrowStem', 'TargetSelectionArrowHead'}
+OLD_ATTACK_RANGE = 'attackRange: 300'
+NEW_ATTACK_RANGE = 'attackRange: 450'
 
 
 def replace_target_section(node, replacement):
@@ -68,11 +70,7 @@ def remove_stale_references(node):
             if key in {'name', 'objectName'} and value in STALE_NAMES:
                 return 1
             if isinstance(value, (dict, list)):
-                cleaned = remove_stale_references(value)
-                if cleaned and isinstance(value, list):
-                    removed += cleaned
-                else:
-                    removed += cleaned
+                removed += remove_stale_references(value)
         return removed
 
     if isinstance(node, list):
@@ -90,6 +88,33 @@ def remove_stale_references(node):
             kept.append(value)
         node[:] = kept
     return removed
+
+
+def replace_attack_range(node):
+    """Update the single Brawler config value embedded in the project JSON."""
+    matches = 0
+
+    if isinstance(node, dict):
+        for key, value in list(node.items()):
+            if isinstance(value, str) and START_MARKER not in value and 'attackRange:' in value:
+                if OLD_ATTACK_RANGE in value:
+                    node[key] = value.replace(OLD_ATTACK_RANGE, NEW_ATTACK_RANGE)
+                    matches += 1
+            elif isinstance(value, (dict, list)):
+                matches += replace_attack_range(value)
+        return matches
+
+    if isinstance(node, list):
+        for i, value in enumerate(node):
+            if isinstance(value, str) and 'attackRange:' in value:
+                if OLD_ATTACK_RANGE in value:
+                    node[i] = value.replace(OLD_ATTACK_RANGE, NEW_ATTACK_RANGE)
+                    matches += 1
+            elif isinstance(value, (dict, list)):
+                matches += replace_attack_range(value)
+        return matches
+
+    return 0
 
 
 def main():
@@ -114,6 +139,7 @@ def main():
         raise SystemExit(f'Safety check failed: expected exactly one target-system inline section, found {replaced}.')
 
     removed = remove_stale_references(data)
+    range_replaced = replace_attack_range(data)
 
     output = json.dumps(data, indent=2, ensure_ascii=False) + '\n'
     PROJECT.write_text(output, encoding='utf-8', newline='\n')
@@ -126,13 +152,19 @@ def main():
         raise SystemExit('Validation failed: obsolete target-arrow references remain in the project JSON.')
     if 'TargetSelectionIcon' not in verify_text:
         raise SystemExit('Validation failed: TargetSelectionIcon disappeared.')
+    if OLD_ATTACK_RANGE in verify_text:
+        raise SystemExit('Validation failed: old attack range 300 remains in the project JSON.')
+    if NEW_ATTACK_RANGE not in verify_text:
+        raise SystemExit('Validation failed: attack range 450 was not embedded in the project JSON.')
 
-    print('Target indicator inline-code synchronization complete.')
+    print('Target indicator and combat inline-code synchronization complete.')
     print(f'Inline target-system sections replaced: {replaced}')
     print(f'Stale target-arrow references removed: {removed}')
+    print(f'Brawler attack-range replacements: {range_replaced}')
     print(f'Backup: {BACKUP}')
     print('TargetSelectionIcon was preserved.')
-    print('No combat, movement, HP, damage, or Killer Clown logic was intentionally changed.')
+    print('Target crystal rendering now uses double-sided Three.js materials during runtime.')
+    print('Brawler attack range is now 450.')
 
 
 if __name__ == '__main__':
