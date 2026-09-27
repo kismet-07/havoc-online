@@ -1,34 +1,80 @@
 /**
  * World-space target selection indicator.
- * Uses pre-created 3D box instances instead of runtime-created 3D objects.
+ *
+ * The indicator uses the two pre-created TargetSelectionArrow objects in the
+ * scene. No 3D objects are created at runtime.
  */
-
 const HAVOC_TARGET_CONFIG = {
   mobObjectName: 'Killer_clown',
   indicatorObjectNames: [
-    'TargetSelectionRingTop',
-    'TargetSelectionRingBottom',
-    'TargetSelectionRingLeft',
-    'TargetSelectionRingRight',
+    'TargetSelectionArrowStem',
+    'TargetSelectionArrowHead',
   ],
-  indicatorRadius: 260,
-  indicatorZOffset: 12,
+  arrowStemZOffset: 260,
+  arrowHeadZOffset: 170,
   hiddenX: -100000,
   hiddenY: -100000,
 };
 
 function initializeHavocTargetSelection(runtimeScene) {
   if (!runtimeScene.__havocTargetSelection) {
-    runtimeScene.__havocTargetSelection = { indicatorSegments: [], indicatorTarget: null };
+    runtimeScene.__havocTargetSelection = {
+      indicatorSegments: [],
+      indicatorTarget: null,
+      diagnosticLogged: false,
+    };
   }
+
   const state = runtimeScene.__havocTargetSelection;
-  if (state.indicatorSegments.length !== 4) {
+
+  if (state.indicatorSegments.length !== HAVOC_TARGET_CONFIG.indicatorObjectNames.length) {
     state.indicatorSegments = HAVOC_TARGET_CONFIG.indicatorObjectNames.map((name) => {
       const objects = runtimeScene.getObjects(name);
       return objects.length > 0 ? objects[0] : null;
     });
   }
+
+  if (!state.diagnosticLogged) {
+    state.diagnosticLogged = true;
+    console.log('[Havoc Target] Arrow lookup:',
+      HAVOC_TARGET_CONFIG.indicatorObjectNames.map((name, index) => {
+        const object = state.indicatorSegments[index];
+        return {
+          name,
+          found: !!object,
+          type: object ? object.type : null,
+          hasSetPosition: !!(object && typeof object.setPosition === 'function'),
+          hasSetZ: !!(object && typeof object.setZ === 'function'),
+          hasSetCenterZInScene: !!(object && typeof object.setCenterZInScene === 'function'),
+          hidden: !!(object && typeof object.isHidden === 'function' && object.isHidden()),
+        };
+      })
+    );
+  }
+
   return state;
+}
+
+function setHavocIndicatorPosition(segment, x, y, z) {
+  if (!segment || segment.isDestroyed) return false;
+
+  if (typeof segment.setCenterPositionInScene === 'function') {
+    segment.setCenterPositionInScene(x, y);
+  } else if (typeof segment.setPosition === 'function') {
+    segment.setPosition(x, y);
+  } else {
+    return false;
+  }
+
+  if (typeof segment.setCenterZInScene === 'function') {
+    segment.setCenterZInScene(z);
+  } else if (typeof segment.setZ === 'function') {
+    segment.setZ(z);
+  } else {
+    return false;
+  }
+
+  return true;
 }
 
 function clearHavocTargetIndicator(runtimeScene) {
@@ -36,16 +82,15 @@ function clearHavocTargetIndicator(runtimeScene) {
 
   for (const segment of state.indicatorSegments) {
     if (!segment || segment.isDestroyed) continue;
-    segment.setPosition(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY);
-    segment.setZ(0);
+    if (typeof segment.setPosition === 'function') {
+      segment.setPosition(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY);
+    }
+    if (typeof segment.setZ === 'function') {
+      segment.setZ(0);
+    }
   }
 
   state.indicatorTarget = null;
-}
-
-function setHavocIndicatorZ(segment, z) {
-  if (!segment || segment.isDestroyed) return;
-  segment.setZ(z);
 }
 
 function updateHavocTargetIndicator(runtimeScene, target) {
@@ -56,24 +101,38 @@ function updateHavocTargetIndicator(runtimeScene, target) {
     return;
   }
 
-  if (state.indicatorSegments.some((segment) => !segment)) return;
+  const missing = state.indicatorSegments.some((segment) => !segment || segment.isDestroyed);
+  if (missing) {
+    console.warn('[Havoc Target] Arrow indicator object missing at runtime.');
+    return;
+  }
 
-  const r = HAVOC_TARGET_CONFIG.indicatorRadius;
   const x = target.getX();
   const y = target.getY();
-  const z = target.getZ() + HAVOC_TARGET_CONFIG.indicatorZOffset;
-  const positions = [
-    [x, y - r],
-    [x, y + r],
-    [x - r, y],
-    [x + r, y],
-  ];
+  const targetTopZ = typeof target.getUnrotatedAABBMaxZ === 'function'
+    ? target.getUnrotatedAABBMaxZ()
+    : target.getZ();
 
-  for (let i = 0; i < 4; i += 1) {
-    const segment = state.indicatorSegments[i];
-    if (!segment || segment.isDestroyed) continue;
-    segment.setPosition(positions[i][0], positions[i][1]);
-    setHavocIndicatorZ(segment, z);
+  const stem = state.indicatorSegments[0];
+  const head = state.indicatorSegments[1];
+
+  const stemShown = setHavocIndicatorPosition(
+    stem,
+    x,
+    y,
+    targetTopZ + HAVOC_TARGET_CONFIG.arrowStemZOffset,
+  );
+
+  const headShown = setHavocIndicatorPosition(
+    head,
+    x,
+    y,
+    targetTopZ + HAVOC_TARGET_CONFIG.arrowHeadZOffset,
+  );
+
+  if (!stemShown || !headShown) {
+    console.warn('[Havoc Target] Arrow object does not expose the required 3D positioning API.');
+    return;
   }
 
   state.indicatorTarget = target;
