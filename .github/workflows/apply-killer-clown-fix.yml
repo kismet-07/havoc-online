@@ -1,0 +1,34 @@
+name: Apply verified Killer Clown fix
+
+on:
+  push:
+    branches:
+      - feature/killer-clown-mob-v1
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/killer-clown-mob-v1
+          fetch-depth: 0
+
+      - name: Apply verified Killer Clown configuration
+        run: python tools/install_killer_clown_mob.py
+
+      - name: Commit generated project when changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Havoc Online.json"
+          if git diff --cached --quiet; then
+            echo "Havoc Online.json already contains the verified Killer Clown state."
+            exit 0
+          fi
+          git commit -m "Apply verified Killer Clown mob fix"
+          git push origin HEAD:feature/killer-clown-mob-v1
