@@ -24,18 +24,8 @@ def accessor_values(gltf: GLTF2, accessor_index: int):
     blob = gltf.binary_blob()
     base = (view.byteOffset or 0) + (accessor.byteOffset or 0)
 
-    component_sizes = {
-        5126: 4,  # FLOAT
-        5125: 4,  # UNSIGNED_INT
-        5123: 2,  # UNSIGNED_SHORT
-        5121: 1,  # UNSIGNED_BYTE
-    }
-    component_counts = {
-        'SCALAR': 1,
-        'VEC2': 2,
-        'VEC3': 3,
-        'VEC4': 4,
-    }
+    component_sizes = {5126: 4, 5125: 4, 5123: 2, 5121: 1}
+    component_counts = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4}
     count = component_counts.get(accessor.type)
     component_size = component_sizes.get(accessor.componentType)
     if count is None or component_size is None:
@@ -62,45 +52,73 @@ def node_label(node):
     return (node.name or '').strip()
 
 
+def normalized(name: str) -> str:
+    return name.lower().replace('_', '').replace('-', '').replace(' ', '')
+
+
 def is_relevant_node(name: str) -> bool:
-    lowered = name.lower().replace('_', '').replace('-', '')
-    return any(hint.replace(' ', '').lower() in lowered for hint in TARGET_NODE_HINTS)
+    lowered = normalized(name)
+    return any(normalized(hint) in lowered for hint in TARGET_NODE_HINTS)
 
 
-def print_translation_report(gltf: GLTF2, animation):
-    relevant = []
+def print_node_channels(gltf: GLTF2, animation):
+    relevant_nodes = {
+        i: node_label(node)
+        for i, node in enumerate(gltf.nodes)
+        if is_relevant_node(node_label(node))
+    }
+
+    channels_by_node = {index: [] for index in relevant_nodes}
     for channel in animation.channels:
         node_index = channel.target.node
-        if node_index is None or channel.target.path != 'translation':
+        if node_index in channels_by_node:
+            channels_by_node[node_index].append(channel)
+
+    order = ('root', 'pelvis', 'hip', 'leftfoot', 'lefttoe', 'rightfoot', 'righttoe', 'ankle', 'foot', 'toe')
+    ordered_nodes = sorted(
+        relevant_nodes.items(),
+        key=lambda item: (
+            next((i for i, token in enumerate(order) if token in normalized(item[1])), 99),
+            item[0],
+        ),
+    )
+
+    found_translation = False
+
+    for node_index, name in ordered_nodes:
+        channels = channels_by_node[node_index]
+        paths = sorted({channel.target.path for channel in channels})
+        if not channels:
+            print(f'  {node_index}: {name} — NO animation channels')
             continue
-        name = node_label(gltf.nodes[node_index])
-        if is_relevant_node(name):
-            relevant.append((node_index, name, channel))
 
-    if not relevant:
-        print('  No root/pelvis/foot/toe translation channels found.')
-        return
+        print(f'  {node_index}: {name} — channels={", ".join(paths)}')
 
-    # Stable anatomical/root order makes comparisons between animations easier.
-    order = ('root', 'pelvis', 'hip', 'leftfoot', 'lefttoe', 'rightfoot', 'righttoe', 'foot', 'toe')
-    relevant.sort(key=lambda item: (next((i for i, token in enumerate(order) if token in item[1].lower().replace('_', '').replace('-', '')), 99), item[0]))
+        for channel in channels:
+            if channel.target.path != 'translation':
+                continue
 
-    for node_index, name, channel in relevant:
-        sampler = animation.samplers[channel.sampler]
-        values = accessor_values(gltf, sampler.output)
-        if not values:
-            continue
-        ranges = [
-            (min(v[axis] for v in values), max(v[axis] for v in values))
-            for axis in range(3)
-        ]
-        first = values[0]
-        last = values[-1]
-        delta = tuple(last[i] - first[i] for i in range(3))
-        print(f'  {node_index}: {name} translation: keyframes={len(values)}')
-        print(f'    X: {ranges[0][0]:.9f} -> {ranges[0][1]:.9f}  delta={delta[0]:+.9f}')
-        print(f'    Y: {ranges[1][0]:.9f} -> {ranges[1][1]:.9f}  delta={delta[1]:+.9f}')
-        print(f'    Z: {ranges[2][0]:.9f} -> {ranges[2][1]:.9f}  delta={delta[2]:+.9f}')
+            found_translation = True
+            sampler = animation.samplers[channel.sampler]
+            values = accessor_values(gltf, sampler.output)
+            if not values:
+                print('    translation: unable to decode accessor')
+                continue
+
+            ranges = [
+                (min(v[axis] for v in values), max(v[axis] for v in values))
+                for axis in range(3)
+            ]
+            first = values[0]
+            last = values[-1]
+            delta = tuple(last[i] - first[i] for i in range(3))
+            print(f'    translation: keyframes={len(values)}')
+            print(f'      X: {ranges[0][0]:.9f} -> {ranges[0][1]:.9f}  delta={delta[0]:+.9f}')
+            print(f'      Y: {ranges[1][0]:.9f} -> {ranges[1][1]:.9f}  delta={delta[1]:+.9f}')
+            print(f'      Z: {ranges[2][0]:.9f} -> {ranges[2][1]:.9f}  delta={delta[2]:+.9f}')
+
+    if not found_translation:
+        print('  RESULT: No translation channels exist on the detected root/pelvis/foot/toe nodes.')
 
 
 def main() -> None:
@@ -123,13 +141,13 @@ def main() -> None:
         if animation.name not in TARGET_ANIMATIONS:
             continue
         print('\nANIMATION:', animation.name)
-        print_translation_report(gltf, animation)
+        print_node_channels(gltf, animation)
 
     print('\nInterpretation:')
     print('  - Root translation is the strongest indicator of baked locomotion.')
-    print('  - Pelvis translation alone is NOT proof of root motion; idle body sway can be intentional.')
-    print('  - Foot/toe translation helps determine whether the visible idle slide is actually baked into the animation.')
-    print('  - Do not modify the GLB until the foot/toe results confirm the source of the slide.')
+    print('  - Pelvis translation alone is not proof of root motion.')
+    print('  - Foot/toe nodes may have rotation-only channels; that is normal.')
+    print('  - If the foot nodes have no translation channels, inspect the parent hierarchy and pelvis/root motion next.')
     print('=' * 72)
 
 
