@@ -407,7 +407,7 @@
         {
           "type": "BuiltinCommonInstructions::JsCode",
           "inlineCode": [
-            "const player = runtimeScene.getObjects('New3DModel')[0];",
+            "const player = runtimeScene.getObjects('Character')[0];",
             "if (!player) return;",
             "",
             "if (!runtimeScene.__fatePlayerMovement) {",
