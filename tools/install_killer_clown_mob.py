@@ -28,19 +28,28 @@ def install() -> None:
     content = killer_object.setdefault('content', {})
     animations = content.setdefault('animations', [])
     required = {
-        'Idle': 'Idle_Sword',
-        'Walk': 'Walk_Large',
-        'Run': 'Run_Stealth',
-        'Attack': 'Sword_Attack',
+        'Idle': ('Idle_Sword', True),
+        'Walk': ('Walk_Large', True),
+        'Run': ('Run_Stealth', True),
+        'Attack': ('Sword_Attack', False),
     }
-    existing_sources = {a.get('source') for a in animations}
-    for display_name, source_name in required.items():
-        if source_name not in existing_sources:
-            animations.append({
-                'loop': display_name != 'Attack',
+
+    # Enforce the runtime behavior on existing animation definitions too.
+    # The original Killer Clown object had Walk_Large with loop=false, which
+    # causes the animation to reach its final pose while the AI keeps moving.
+    existing_by_source = {a.get('source'): a for a in animations}
+    for display_name, (source_name, should_loop) in required.items():
+        animation = existing_by_source.get(source_name)
+        if animation is None:
+            animation = {
+                'loop': should_loop,
                 'name': display_name,
                 'source': source_name,
-            })
+            }
+            animations.append(animation)
+        else:
+            animation['loop'] = should_loop
+            animation['name'] = display_name
 
     for layout in project.get('layouts', []):
         events = layout.get('events', [])
@@ -68,12 +77,11 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.1.')
+            print('Refreshed Killer Clown mob V1.2.')
             print('Population          : 20')
             print('Respawn             : 30 seconds')
-            print('Initial distribution: 5 x 4 floor cells')
-            print('Minimum separation  : 900')
-            print('Idle                : position locked')
+            print('Walk duration       : 10-15 seconds')
+            print('Walk animation      : LOOPED')
             return
 
         if layout.get('name') != 'Untitled scene':
@@ -88,12 +96,11 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.1.')
+        print('Installed Killer Clown mob V1.2.')
         print('Population          : 20')
         print('Respawn             : 30 seconds')
-        print('Initial distribution: 5 x 4 floor cells')
-        print('Minimum separation  : 900')
-        print('Idle                : position locked')
+        print('Walk duration       : 10-15 seconds')
+        print('Walk animation      : LOOPED')
         return
 
     raise RuntimeError("Untitled scene layout was not found")
