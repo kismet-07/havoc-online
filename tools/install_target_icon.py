@@ -53,6 +53,7 @@ def main() -> None:
         raise SystemExit(f'Missing target icon: {GLB}')
 
     project = json.loads(PROJECT.read_text(encoding='utf-8'))
+    # Target icon setup is local-project-only until the full scene changes are committed.
     layout = project['layouts'][0]
 
     animation_source = read_glb_animation_name(GLB)
