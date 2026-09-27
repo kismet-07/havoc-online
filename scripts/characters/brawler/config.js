@@ -11,6 +11,9 @@ const BRAWLER_CONFIG = {
     walkSpeed: 300,
     runSpeed: 600,
   },
+  combat: {
+    attackRange: 300,
+  },
   animations: {
     idle: 'Idle',
     walk: 'Walk',
