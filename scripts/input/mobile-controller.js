@@ -64,6 +64,14 @@ function updateHavocMobileInput(runtimeScene) {
     if (attackButton) attackButton.setPosition(attackLeft, attackTop);
   }
 
+  // Use GDevelop's object hit testing for the attack button. This keeps the
+  // input tied to the actual rendered object instead of relying only on a
+  // manually calculated rectangle that can drift with viewport scaling.
+  const pointerStarted = gdjs.evtTools.input.hasAnyTouchOrMouseStarted(runtimeScene);
+  if (attackButton && pointerStarted && attackButton.cursorOnObject()) {
+    state.attackRequested = true;
+  }
+
   const touchIds = inputManager.getAllTouchIdentifiers();
   const startedIds = inputManager.getStartedTouchIdentifiers();
 
@@ -71,9 +79,7 @@ function updateHavocMobileInput(runtimeScene) {
     const x = inputManager.getTouchX(id);
     const y = inputManager.getTouchY(id);
 
-    if (x >= attackLeft && x <= width - HAVOC_MOBILE_INPUT_CONFIG.attackButtonRightMargin &&
-        y >= attackTop && y <= height - HAVOC_MOBILE_INPUT_CONFIG.attackButtonBottomMargin) {
-      state.attackRequested = true;
+    if (attackButton && attackButton.cursorOnObject()) {
       continue;
     }
 
