@@ -1,12 +1,6 @@
 /**
  * Brawler combat orchestration for the first combat presentation test.
  *
- * Responsibilities:
- * - hold the temporary selected target;
- * - approach a selected target when outside basic-attack range;
- * - execute the configured three Attack1 + one Attack2 sequence;
- * - return control to locomotion after a non-looping attack finishes.
- *
  * No damage, hitbox, HP, stats, death or server state exists here.
  */
 
@@ -17,6 +11,7 @@ function initializeBrawlerCombat(runtimeScene) {
       attackIndex: 0,
       attacking: false,
       approaching: false,
+      attackQueued: false,
     };
   }
 
@@ -32,6 +27,7 @@ function startBrawlerBasicAttack(player, combat) {
   combat.attackIndex += 1;
   combat.attacking = true;
   combat.approaching = false;
+  combat.attackQueued = false;
   setBrawlerAnimation(player, attackAnimation);
   player.setAnimationElapsedTime(0);
 }
@@ -48,6 +44,7 @@ function updateBrawlerCombat(runtimeScene, dt) {
   if (!brawlerTargetIsValid(combat.target)) {
     combat.target = null;
     combat.approaching = false;
+    combat.attackQueued = false;
   }
 
   if (combat.attacking) {
@@ -61,6 +58,15 @@ function updateBrawlerCombat(runtimeScene, dt) {
 
   const activeTarget = combat.target;
   if (!activeTarget) return;
+
+  const attackRequested = mobileInput.attackRequested ||
+    gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space');
+
+  if (attackRequested) {
+    combat.attackQueued = true;
+  }
+
+  if (!combat.attackQueued) return;
 
   const distance = player.getDistanceToObject(activeTarget);
   const attackRange = BRAWLER_CONFIG.combat.attackRange;
@@ -89,12 +95,6 @@ function updateBrawlerCombat(runtimeScene, dt) {
   }
 
   combat.approaching = false;
-
-  const attackRequested = mobileInput.attackRequested ||
-    gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space');
-
-  if (attackRequested) {
-    player.setAngle(player.getAngleToObject(activeTarget));
-    startBrawlerBasicAttack(player, combat);
-  }
+  player.setAngle(player.getAngleToObject(activeTarget));
+  startBrawlerBasicAttack(player, combat);
 }
