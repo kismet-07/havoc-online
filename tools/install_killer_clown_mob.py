@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / 'Havoc Online.json'
 SOURCE = ROOT / 'scripts' / 'mobs' / 'killer_clown' / 'killer-clown.js'
 MARKER = '// HAVOC_KILLER_CLOWN_MOB_V1'
+DEFAULT_CAMERA_DISTANCE = 2200
 
 
 def install() -> None:
@@ -52,6 +53,8 @@ def install() -> None:
             animation['name'] = animation_name
             animation['source'] = animation_name
 
+    camera_updated = False
+
     for layout in project.get('layouts', []):
         events = layout.get('events', [])
         replacement = [MARKER]
@@ -67,10 +70,18 @@ def install() -> None:
             if event.get('type') != 'BuiltinCommonInstructions::JsCode':
                 continue
             inline = event.get('inlineCode', [])
-            if MARKER in '\n'.join(inline):
+            joined = '\n'.join(inline)
+
+            if MARKER in joined:
                 event['inlineCode'] = replacement
                 found = True
-                break
+
+            if 'runtimeScene.__fateCamera' in joined and 'distance: 900' in joined:
+                event['inlineCode'] = [
+                    line.replace('distance: 900', f'distance: {DEFAULT_CAMERA_DISTANCE}')
+                    for line in event.get('inlineCode', [])
+                ]
+                camera_updated = True
 
         if found:
             PROJECT.write_text(
@@ -78,7 +89,7 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.5.')
+            print('Refreshed Killer Clown mob V1.6.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
@@ -88,6 +99,7 @@ def install() -> None:
             print('Minimum separation  : 1000')
             print('Idle                : position locked')
             print('Rotation            : set once per wander target')
+            print('Default camera      : maximum zoom out (2200)')
             return
 
         if layout.get('name') != 'Untitled scene':
@@ -102,7 +114,7 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.5.')
+        print('Installed Killer Clown mob V1.6.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
@@ -112,6 +124,7 @@ def install() -> None:
         print('Minimum separation  : 1000')
         print('Idle                : position locked')
         print('Rotation            : set once per wander target')
+        print('Default camera      : maximum zoom out (2200)')
         return
 
     raise RuntimeError("Untitled scene layout was not found")
