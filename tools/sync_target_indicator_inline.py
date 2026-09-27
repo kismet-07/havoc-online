@@ -104,7 +104,11 @@ def main():
     if replaced != 1:
         raise SystemExit(f'Safety check failed: expected exactly one target-system inline section, found {replaced}.')
 
-    removed = remove_stale_folder_entries(data.get('objectsFolderStructure', {}))
+    removed = 0
+    # GDevelop stores each layout's object folder structure under the layout.
+    for layout in data.get('layouts', []):
+        if isinstance(layout, dict):
+            removed += remove_stale_folder_entries(layout.get('objectsFolderStructure', {}))
 
     output = json.dumps(data, indent=2, ensure_ascii=False) + '\n'
     PROJECT.write_text(output, encoding='utf-8', newline='\n')
