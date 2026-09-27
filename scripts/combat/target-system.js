@@ -36,6 +36,30 @@ function initializeHavocTargetSelection(runtimeScene) {
     if (typeof state.indicator.setScale === 'function') {
       state.indicator.setScale(HAVOC_TARGET_CONFIG.indicatorScale);
     }
+
+    // target_icon.glb is a closed crystal, but its GLB material does not mark
+    // itself double-sided. During the embedded spin, back-face culling can make
+    // the entire icon disappear from this camera. Force the rendered material
+    // to render both sides while preserving the GLB's spin animation.
+    if (typeof state.indicator.get3DRendererObject === 'function' && typeof THREE !== 'undefined') {
+      const rendererObject = state.indicator.get3DRendererObject();
+      if (rendererObject && typeof rendererObject.traverse === 'function') {
+        rendererObject.traverse((child) => {
+          if (!child || !child.material) return;
+
+          const materials = Array.isArray(child.material)
+            ? child.material
+            : [child.material];
+
+          for (const material of materials) {
+            if (!material) continue;
+            material.side = THREE.DoubleSide;
+            material.needsUpdate = true;
+          }
+        });
+      }
+    }
+
     state.indicatorConfigured = true;
   }
 
