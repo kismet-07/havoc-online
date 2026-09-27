@@ -3,7 +3,7 @@
  *
  * This is presentation/input only. It does not own character state or damage.
  * The left touch area behaves as a virtual joystick and the right button emits
- * a BASIC_ATTACK request. Keyboard input remains available for desktop testing.
+ * a BASIC_ATTACK request. Keyboard and mouse input remain available for desktop testing.
  */
 
 const HAVOC_MOBILE_INPUT_CONFIG = {
@@ -64,9 +64,9 @@ function updateHavocMobileInput(runtimeScene) {
     if (attackButton) attackButton.setPosition(attackLeft, attackTop);
   }
 
-  // Use GDevelop's object hit testing for the attack button. This keeps the
-  // input tied to the actual rendered object instead of relying only on a
-  // manually calculated rectangle that can drift with viewport scaling.
+  // A pointer start covers both mobile touches and the desktop mouse. The
+  // attack button uses actual object hit testing so viewport scaling cannot
+  // make its hit area drift away from the visible button.
   const pointerStarted = gdjs.evtTools.input.hasAnyTouchOrMouseStarted(runtimeScene);
   if (attackButton && pointerStarted && attackButton.cursorOnObject()) {
     state.attackRequested = true;
@@ -79,9 +79,7 @@ function updateHavocMobileInput(runtimeScene) {
     const x = inputManager.getTouchX(id);
     const y = inputManager.getTouchY(id);
 
-    if (attackButton && attackButton.cursorOnObject()) {
-      continue;
-    }
+    if (attackButton && attackButton.cursorOnObject()) continue;
 
     if (x <= width * 0.42 && y >= height * 0.55 && state.joystickTouchId === null) {
       state.joystickTouchId = id;
@@ -92,6 +90,21 @@ function updateHavocMobileInput(runtimeScene) {
     state.targetTapX = x;
     state.targetTapY = y;
     state.targetTapRequested = true;
+  }
+
+  // Desktop GDevelop preview does not create a normal touch identifier for a
+  // left mouse click. Convert a fresh mouse click into the same target request
+  // used by mobile, excluding the joystick and attack-button regions.
+  if (pointerStarted && attackButton && !attackButton.cursorOnObject()) {
+    const cursorX = gdjs.evtTools.input.getCursorX(runtimeScene);
+    const cursorY = gdjs.evtTools.input.getCursorY(runtimeScene);
+    const inJoystickRegion = cursorX <= width * 0.42 && cursorY >= height * 0.55;
+
+    if (!inJoystickRegion) {
+      state.targetTapX = cursorX;
+      state.targetTapY = cursorY;
+      state.targetTapRequested = true;
+    }
   }
 
   if (state.joystickTouchId !== null) {
@@ -125,7 +138,6 @@ function updateHavocMobileInput(runtimeScene) {
     }
   }
 
-  // Desktop test input remains available until the mobile input is replaced.
   if (gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space')) {
     state.attackRequested = true;
   }
