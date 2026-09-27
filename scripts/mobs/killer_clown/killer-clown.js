@@ -1,5 +1,5 @@
 /**
- * Killer Clown V1.1 runtime behavior for GDevelop 5.
+ * Killer Clown V1.2 runtime behavior for GDevelop 5.
  *
  * The project is currently a single-file GDevelop project, so the installer
  * embeds this source into a JsCode event. Keep this file as the maintainable
@@ -19,8 +19,8 @@ const KILLER_CLOWN_CONFIG = {
   walkSpeed: 110,
   idleMinSeconds: 2,
   idleMaxSeconds: 5,
-  walkMinSeconds: 2,
-  walkMaxSeconds: 6,
+  walkMinSeconds: 10,
+  walkMaxSeconds: 15,
   boundaryMargin: 300,
   minimumSeparation: 900,
   initialIdleChance: 0.4,
@@ -66,9 +66,6 @@ function updateKillerClowns(runtimeScene, dt) {
     return true;
   };
 
-  // Initial population is deliberately distributed by floor cells instead of
-  // using a single random cloud. With 20 mobs, this guarantees broad coverage
-  // of the available floor while retaining randomized positions inside each cell.
   const buildInitialSpawnPositions = () => {
     const positions = [];
     const columns = Math.max(1, Math.min(KILLER_CLOWN_CONFIG.spawnColumns, KILLER_CLOWN_CONFIG.maxPopulation));
@@ -107,11 +104,43 @@ function updateKillerClowns(runtimeScene, dt) {
     };
   };
 
+  const randomWanderTarget = (mob, existing) => {
+    const availableWidth = floorMaxX - floorMinX;
+    const availableHeight = floorMaxY - floorMinY;
+    const maxTravelDistance = Math.max(1200, Math.min(availableWidth, availableHeight) * 0.45);
+    const minTravelDistance = Math.min(1100, maxTravelDistance * 0.75);
+
+    for (let attempt = 0; attempt < KILLER_CLOWN_CONFIG.spawnAttempts; attempt += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = randomBetween(minTravelDistance, maxTravelDistance);
+      const targetX = clamp(mob.getX() + Math.cos(angle) * distance, floorMinX, floorMaxX);
+      const targetY = clamp(mob.getY() + Math.sin(angle) * distance, floorMinY, floorMaxY);
+      const actualDistance = Math.sqrt(distanceSquared(targetX, targetY, mob.getX(), mob.getY()));
+
+      if (actualDistance < 700) continue;
+      if (!isFarEnough(targetX, targetY, existing, KILLER_CLOWN_CONFIG.minimumSeparation, mob)) continue;
+
+      return { x: targetX, y: targetY };
+    }
+
+    return randomFloorPosition(existing, mob);
+  };
+
   const holdIdlePosition = (mob, ai) => {
-    // Stop any movement state left by a previous wander/combat implementation.
     if (typeof mob.resetEstimatedVelocity === 'function') mob.resetEstimatedVelocity();
     mob.setPosition(ai.idleHoldX, ai.idleHoldY);
     mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.idle);
+    mob.setAnimationSpeedScale(1);
+  };
+
+  const beginWander = (mob, ai, allMobs) => {
+    const target = randomWanderTarget(mob, allMobs);
+    ai.targetX = target.x;
+    ai.targetY = target.y;
+    ai.state = 'wander';
+    ai.timer = randomBetween(KILLER_CLOWN_CONFIG.walkMinSeconds, KILLER_CLOWN_CONFIG.walkMaxSeconds);
+    mob.setAngle(Math.atan2(target.y - mob.getY(), target.x - mob.getX()) * 180 / Math.PI);
+    mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.walk);
     mob.setAnimationSpeedScale(1);
   };
 
@@ -139,12 +168,7 @@ function updateKillerClowns(runtimeScene, dt) {
       return;
     }
 
-    const target = randomFloorPosition(allMobs, mob);
-    mob.__killerClownAI.targetX = target.x;
-    mob.__killerClownAI.targetY = target.y;
-    mob.setAngle(Math.atan2(target.y - position.y, target.x - position.x) * 180 / Math.PI);
-    mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.walk);
-    mob.setAnimationSpeedScale(1);
+    beginWander(mob, mob.__killerClownAI, allMobs);
   };
 
   const createMob = (forcedPosition) => {
@@ -162,8 +186,6 @@ function updateKillerClowns(runtimeScene, dt) {
     const spawnPositions = buildInitialSpawnPositions();
     const existing = runtimeScene.getObjects(KILLER_CLOWN_CONFIG.objectName);
 
-    // The design-time template becomes the first mob. Reposition every initial
-    // instance using the same broad distribution rather than clustering them.
     for (let i = 0; i < existing.length && i < spawnPositions.length; i += 1) {
       initializeMob(existing[i], undefined, spawnPositions[i]);
     }
@@ -200,13 +222,7 @@ function updateKillerClowns(runtimeScene, dt) {
       holdIdlePosition(mob, ai);
 
       if (ai.timer <= 0) {
-        const target = randomFloorPosition(allMobs, mob);
-        ai.targetX = target.x;
-        ai.targetY = target.y;
-        ai.state = 'wander';
-        ai.timer = randomBetween(KILLER_CLOWN_CONFIG.walkMinSeconds, KILLER_CLOWN_CONFIG.walkMaxSeconds);
-        mob.setAngle(Math.atan2(target.y - mob.getY(), target.x - mob.getX()) * 180 / Math.PI);
-        mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.walk);
+        beginWander(mob, ai, allMobs);
       }
       continue;
     }
@@ -232,11 +248,9 @@ function updateKillerClowns(runtimeScene, dt) {
       const nextY = clamp(mob.getY() + ny * step, floorMinY, floorMaxY);
 
       if (!isFarEnough(nextX, nextY, allMobs, KILLER_CLOWN_CONFIG.minimumSeparation, mob)) {
-        ai.state = 'idle';
-        ai.timer = randomBetween(KILLER_CLOWN_CONFIG.idleMinSeconds, KILLER_CLOWN_CONFIG.idleMaxSeconds);
-        ai.idleHoldX = mob.getX();
-        ai.idleHoldY = mob.getY();
-        holdIdlePosition(mob, ai);
+        // Do not immediately enter idle because another mob crossed the path.
+        // Pick a fresh direction and keep the wander state alive.
+        beginWander(mob, ai, allMobs);
         continue;
       }
 
