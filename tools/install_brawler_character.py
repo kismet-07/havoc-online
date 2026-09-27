@@ -60,6 +60,45 @@ def text_object(name: str, string: str, character_size: int) -> dict:
     }
 
 
+def target_indicator_object() -> dict:
+    return {
+        'name': 'TargetSelectionRingSegment',
+        'tags': 'HavocCombatUI',
+        'type': 'Primitive3D::Box',
+        'variables': [],
+        'effects': [],
+        'behaviors': [],
+        'content': {
+            'width': 1,
+            'height': 1,
+            'depth': 1,
+            'materialType': 'Basic',
+            'tint': '#ff2020',
+            'frontFaceResourceName': '',
+            'backFaceResourceName': '',
+            'topFaceResourceName': '',
+            'bottomFaceResourceName': '',
+            'leftFaceResourceName': '',
+            'rightFaceResourceName': '',
+            'frontFaceVisible': True,
+            'backFaceVisible': True,
+            'topFaceVisible': True,
+            'bottomFaceVisible': True,
+            'leftFaceVisible': True,
+            'rightFaceVisible': True,
+            'frontFaceResourceRepeat': False,
+            'backFaceResourceRepeat': False,
+            'topFaceResourceRepeat': False,
+            'bottomFaceResourceRepeat': False,
+            'leftFaceResourceRepeat': False,
+            'rightFaceResourceRepeat': False,
+            'enableTextureTransparency': False,
+            'isCastingShadow': False,
+            'isReceivingShadow': False,
+        },
+    }
+
+
 def instance(name: str, x: float, y: float, z_order: int) -> dict:
     return {
         'angle': 0,
@@ -107,8 +146,6 @@ def ensure_mobile_ui(layout: dict) -> None:
             'ambientLightColorB': 0,
             'ambientLightColorG': 0,
             'ambientLightColorR': 0,
-            # The mobile HUD must use its own 2D layer camera. It must not
-            # inherit the 3D gameplay camera's rotation/transform.
             'followBaseLayerCamera': False,
             'isLightingLayer': False,
             'name': 'UI',
@@ -128,13 +165,9 @@ def ensure_mobile_ui(layout: dict) -> None:
         }
         layers.append(ui_layer)
     else:
-        # Never inherit the gameplay camera for screen-space controls.
         ui_layer['followBaseLayerCamera'] = False
         ui_layer.setdefault('instances', [])
 
-    # GDevelop stores scene instances inside their owning layer. The previous
-    # installer incorrectly wrote these to layout.instances, so the objects
-    # existed in the project definition but had no scene instances to render.
     instances = ui_layer['instances']
     instance_names = {item.get('name') for item in instances}
 
@@ -145,6 +178,19 @@ def ensure_mobile_ui(layout: dict) -> None:
     ]:
         if item['name'] not in instance_names:
             instances.append(item)
+
+
+def ensure_target_indicator_object(layout: dict) -> None:
+    objects = layout.setdefault('objects', [])
+    if any(obj.get('name') == 'TargetSelectionRingSegment' for obj in objects):
+        return
+
+    objects.append(target_indicator_object())
+
+    folder = layout.setdefault('objectsFolderStructure', {'folderName': '__ROOT'})
+    children = folder.setdefault('children', [])
+    if not any(child.get('objectName') == 'TargetSelectionRingSegment' for child in children):
+        children.append({'objectName': 'TargetSelectionRingSegment'})
 
 
 def install() -> None:
@@ -163,6 +209,7 @@ def install() -> None:
             if MARKER in joined or "runtimeScene.getObjects('Character')[0]" in joined:
                 event['inlineCode'] = replacement
                 ensure_mobile_ui(layout)
+                ensure_target_indicator_object(layout)
                 found = True
                 break
 
@@ -181,6 +228,7 @@ def install() -> None:
     print('Installed Brawler combat/input test source.')
     print('Added UI layer and temporary mobile controls.')
     print('Added target selection and target approach.')
+    print('Added red target selection indicator.')
     print('Added Attack1/Attack2 presentation sequence.')
     print('No HP, damage, hitbox, death or database logic added.')
     print('Killer Clown event was not modified.')
