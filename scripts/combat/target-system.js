@@ -11,7 +11,7 @@
 const HAVOC_TARGET_CONFIG = {
   mobObjectName: 'Killer_clown',
   indicatorObjectName: 'TargetSelectionIcon',
-  arrowZOffset: 260,
+  arrowZOffset: 300,
   hiddenX: -100000,
   hiddenY: -100000,
 };
@@ -22,6 +22,7 @@ function initializeHavocTargetSelection(runtimeScene) {
       indicator: null,
       indicatorTarget: null,
       raycastLogged: false,
+      indicatorLogged: false,
     };
   }
 
@@ -33,6 +34,18 @@ function initializeHavocTargetSelection(runtimeScene) {
 
 function setHavocIndicatorPosition(indicator, x, y, z) {
   if (!indicator || indicator.isDestroyed) return false;
+
+  // The target icon starts hidden far outside the scene. Explicitly unhide it
+  // before positioning because Model3DObject inherits RuntimeObject3D.hide().
+  if (typeof indicator.hide === 'function') {
+    indicator.hide(false);
+  }
+
+  // Keep the icon on the base 3D layer. The world camera is attached to this
+  // layer; putting the model on UI would make it invisible to the world camera.
+  if (typeof indicator.setLayer === 'function' && indicator.layer !== '') {
+    indicator.setLayer('');
+  }
 
   if (typeof indicator.setCenterPositionInScene === 'function') {
     indicator.setCenterPositionInScene(x, y);
@@ -66,6 +79,10 @@ function clearHavocTargetIndicator(runtimeScene) {
     } else if (typeof indicator.setZ === 'function') {
       indicator.setZ(0);
     }
+
+    if (typeof indicator.hide === 'function') {
+      indicator.hide(true);
+    }
   }
 
   state.indicatorTarget = null;
@@ -90,13 +107,9 @@ function updateHavocTargetIndicator(runtimeScene, target) {
   const targetTopZ = typeof target.getUnrotatedAABBMaxZ === 'function'
     ? target.getUnrotatedAABBMaxZ()
     : target.getZ();
+  const indicatorZ = targetTopZ + HAVOC_TARGET_CONFIG.arrowZOffset;
 
-  const shown = setHavocIndicatorPosition(
-    indicator,
-    x,
-    y,
-    targetTopZ + HAVOC_TARGET_CONFIG.arrowZOffset,
-  );
+  const shown = setHavocIndicatorPosition(indicator, x, y, indicatorZ);
 
   if (!shown) {
     console.warn('[Havoc Target] TargetSelectionIcon does not expose the required 3D positioning API.');
@@ -104,6 +117,23 @@ function updateHavocTargetIndicator(runtimeScene, target) {
   }
 
   state.indicatorTarget = target;
+
+  if (!state.indicatorLogged) {
+    state.indicatorLogged = true;
+    console.log('[Havoc Target] TargetSelectionIcon positioned.', {
+      targetX: x,
+      targetY: y,
+      targetTopZ,
+      indicatorX: typeof indicator.getCenterXInScene === 'function' ? indicator.getCenterXInScene() : indicator.getX(),
+      indicatorY: typeof indicator.getCenterYInScene === 'function' ? indicator.getCenterYInScene() : indicator.getY(),
+      indicatorZ: typeof indicator.getCenterZInScene === 'function' ? indicator.getCenterZInScene() : indicator.getZ(),
+      indicatorVisible: typeof indicator.isVisible === 'function' ? indicator.isVisible() : 'unknown',
+      indicatorLayer: indicator.layer,
+      indicatorWidth: typeof indicator.getWidth === 'function' ? indicator.getWidth() : 'unknown',
+      indicatorHeight: typeof indicator.getHeight === 'function' ? indicator.getHeight() : 'unknown',
+      indicatorDepth: typeof indicator.getDepth === 'function' ? indicator.getDepth() : 'unknown',
+    });
+  }
 }
 
 function getHavocPointerCoordinates(runtimeScene, input) {
