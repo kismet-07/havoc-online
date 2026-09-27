@@ -1,8 +1,9 @@
 /**
  * Brawler movement and camera runtime behavior for GDevelop 5.
  *
- * This is intentionally behavior-preserving. The existing movement state
- * names are retained so the verified locomotion baseline is not changed.
+ * The original WASD/camera behavior is preserved. Mobile joystick input is
+ * layered on top, while combat can temporarily lock manual movement during
+ * an attack or target approach.
  */
 
 function updateBrawlerMovement(runtimeScene, dt) {
@@ -21,11 +22,19 @@ function updateBrawlerMovement(runtimeScene, dt) {
   const camera = runtimeScene.__fateCamera;
   const input = gdjs.evtTools.input;
   const inputManager = runtimeScene.getGame().getInputManager();
-  const left = input.isKeyPressed(runtimeScene, 'a');
-  const right = input.isKeyPressed(runtimeScene, 'd');
-  const forward = input.isKeyPressed(runtimeScene, 'w');
-  const backward = input.isKeyPressed(runtimeScene, 's');
-  const running = input.isKeyPressed(runtimeScene, 'LShift') || input.isKeyPressed(runtimeScene, 'RShift');
+  const mobileInput = initializeHavocMobileInput(runtimeScene);
+  const combatState = initializeBrawlerCombat(runtimeScene);
+  const combatLocked = combatState.attacking || combatState.approaching;
+
+  const left = !combatLocked && input.isKeyPressed(runtimeScene, 'a');
+  const right = !combatLocked && input.isKeyPressed(runtimeScene, 'd');
+  const forward = !combatLocked && input.isKeyPressed(runtimeScene, 'w');
+  const backward = !combatLocked && input.isKeyPressed(runtimeScene, 's');
+  const running = !combatLocked && (
+    input.isKeyPressed(runtimeScene, 'LShift') ||
+    input.isKeyPressed(runtimeScene, 'RShift') ||
+    mobileInput.run
+  );
 
   let forwardInput = 0;
   let strafeInput = 0;
@@ -33,6 +42,11 @@ function updateBrawlerMovement(runtimeScene, dt) {
   if (backward) forwardInput -= 1;
   if (right) strafeInput += 1;
   if (left) strafeInput -= 1;
+
+  if (!combatLocked && mobileInput.joystickActive) {
+    forwardInput += mobileInput.moveY;
+    strafeInput += mobileInput.moveX;
+  }
 
   const layer = runtimeScene.getLayer('');
 
@@ -73,7 +87,7 @@ function updateBrawlerMovement(runtimeScene, dt) {
         player,
         running ? BRAWLER_CONFIG.animations.run : BRAWLER_CONFIG.animations.walk,
       );
-    } else if (player.getAnimationName() !== BRAWLER_CONFIG.animations.idle) {
+    } else if (!combatLocked && player.getAnimationName() !== BRAWLER_CONFIG.animations.idle) {
       setBrawlerAnimation(player, BRAWLER_CONFIG.animations.idle);
     }
 
