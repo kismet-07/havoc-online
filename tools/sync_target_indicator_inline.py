@@ -3,56 +3,82 @@ from pathlib import Path
 
 PROJECT = Path('Havoc Online.json')
 EXTERNAL = Path('scripts/combat/target-system.js')
-BACKUP = PROJECT.with_suffix('.json.before-target-inline-sync.bak')
+BACKUP = PROJECT.with_name(PROJECT.name + '.before-target-inline-sync.bak')
 
 START_MARKER = '// --- scripts/combat/target-system.js ---'
 END_MARKER = '// --- scripts/characters/brawler/config.js ---'
 STALE_NAMES = {'TargetSelectionArrowStem', 'TargetSelectionArrowHead'}
-KEEP_NAMES = {'TargetSelectionIcon'}
 
 
-def replace_in_list(node, replacement):
-    """Replace the target-system section inside the project's inlineCode list."""
-    if not isinstance(node, list):
+def replace_target_section(node, replacement):
+    """Replace exactly one target-system section, whether GDevelop stored it as
+    individual inlineCode lines or as one multiline inlineCode string."""
+    if isinstance(node, list):
+        for i, value in enumerate(node):
+            if isinstance(value, str) and value.strip() == START_MARKER:
+                end = next((j for j in range(i + 1, len(node))
+                            if isinstance(node[j], str) and node[j].strip() == END_MARKER), None)
+                if end is None:
+                    raise RuntimeError('Found target-system start marker but not the brawler config end marker.')
+                node[i:end] = [START_MARKER, *replacement.splitlines(), END_MARKER]
+                return 1
+
+            if isinstance(value, str) and START_MARKER in value:
+                start = value.find(START_MARKER)
+                end = value.find(END_MARKER, start + len(START_MARKER))
+                if end == -1:
+                    raise RuntimeError('Found target-system start marker but not the brawler config end marker.')
+                prefix = value[:start]
+                suffix = value[end + len(END_MARKER):]
+                node[i] = prefix + START_MARKER + '\n' + replacement + '\n' + END_MARKER + suffix
+                return 1
+
+        for value in node:
+            if isinstance(value, (dict, list)):
+                found = replace_target_section(value, replacement)
+                if found:
+                    return found
         return 0
 
-    for i, value in enumerate(node):
-        if value == START_MARKER:
-            end = None
-            for j in range(i + 1, len(node)):
-                if node[j] == END_MARKER:
-                    end = j
-                    break
-            if end is None:
-                raise RuntimeError('Found target-system start marker but not the brawler config end marker.')
-
-            node[i:end] = [START_MARKER, *replacement.splitlines(), END_MARKER]
-            return 1
-
-    for value in node:
-        if isinstance(value, (dict, list)) and replace_in_list(value, replacement):
-            return 1
+    if isinstance(node, dict):
+        for value in node.values():
+            if isinstance(value, (dict, list)):
+                found = replace_target_section(value, replacement)
+                if found:
+                    return found
+            elif isinstance(value, str) and START_MARKER in value:
+                start = value.find(START_MARKER)
+                end = value.find(END_MARKER, start + len(START_MARKER))
+                if end == -1:
+                    raise RuntimeError('Found target-system start marker but not the brawler config end marker.')
+                prefix = value[:start]
+                suffix = value[end + len(END_MARKER):]
+                # Mutate the containing dictionary value directly.
+                key = next(k for k, v in node.items() if v is value)
+                node[key] = prefix + START_MARKER + '\n' + replacement + '\n' + END_MARKER + suffix
+                return 1
     return 0
 
 
-def remove_stale_names(node):
+def remove_stale_folder_entries(node):
+    """Remove stale arrow entries only from objectsFolderStructure."""
     removed = 0
     if isinstance(node, dict):
         for key, value in list(node.items()):
             if key in {'name', 'objectName'} and value in STALE_NAMES:
-                return 0
-            removed += remove_stale_names(value)
+                continue
+            removed += remove_stale_folder_entries(value)
     elif isinstance(node, list):
         kept = []
         for value in node:
             if isinstance(value, dict) and value.get('name') in STALE_NAMES:
                 removed += 1
                 continue
-            if value in STALE_NAMES:
+            if isinstance(value, str) and value in STALE_NAMES:
                 removed += 1
                 continue
             kept.append(value)
-            removed += remove_stale_names(value)
+            removed += remove_stale_folder_entries(value)
         node[:] = kept
     return removed
 
@@ -72,34 +98,30 @@ def main():
         raise SystemExit('Safety check failed: external target-system.js still references obsolete arrow objects.')
 
     original = json.dumps(data, indent=2, ensure_ascii=False) + '\n'
-    backup = PROJECT.with_name(PROJECT.name + '.before-target-inline-sync.bak')
-    backup.write_text(original, encoding='utf-8', newline='\n')
+    BACKUP.write_text(original, encoding='utf-8', newline='\n')
 
-    replaced = replace_in_list(data, external)
+    replaced = replace_target_section(data, external)
     if replaced != 1:
         raise SystemExit(f'Safety check failed: expected exactly one target-system inline section, found {replaced}.')
 
-    # Remove only stale object-folder entries / references. Object definitions and instances
-    # are not blindly rewritten here; the installed TargetSelectionIcon remains untouched.
-    removed = remove_stale_names(data.get('objectsFolderStructure', {}))
+    removed = remove_stale_folder_entries(data.get('objectsFolderStructure', {}))
 
     output = json.dumps(data, indent=2, ensure_ascii=False) + '\n'
     PROJECT.write_text(output, encoding='utf-8', newline='\n')
 
-    # Post-write validation.
     verify = json.loads(PROJECT.read_text(encoding='utf-8'))
     verify_text = json.dumps(verify, ensure_ascii=False)
     if START_MARKER not in verify_text:
         raise SystemExit('Validation failed: target-system marker missing after write.')
     if 'TargetSelectionArrowStem' in verify_text or 'TargetSelectionArrowHead' in verify_text:
-        raise SystemExit('Validation failed: obsolete target-arrow references remain in objectsFolderStructure.')
+        raise SystemExit('Validation failed: obsolete target-arrow references remain in the project JSON.')
     if 'TargetSelectionIcon' not in verify_text:
         raise SystemExit('Validation failed: TargetSelectionIcon disappeared.')
 
     print('Target indicator inline-code synchronization complete.')
     print(f'Inline target-system sections replaced: {replaced}')
     print(f'Stale folder entries removed: {removed}')
-    print(f'Backup: {backup}')
+    print(f'Backup: {BACKUP}')
     print('TargetSelectionIcon was preserved.')
     print('No combat, movement, HP, damage, or Killer Clown logic was intentionally changed.')
 
