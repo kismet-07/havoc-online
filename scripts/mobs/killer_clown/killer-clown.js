@@ -1,5 +1,5 @@
 /**
- * Killer Clown V1.3 runtime behavior for GDevelop 5.
+ * Killer Clown V1.4 runtime behavior for GDevelop 5.
  *
  * The project is currently a single-file GDevelop project, so the installer
  * embeds this source into a JsCode event. Keep this file as the maintainable
@@ -269,7 +269,6 @@ function updateKillerClowns(runtimeScene, dt) {
 
       mob.setPosition(nextX, nextY);
       applySpawnHeight(mob);
-      mob.setAngle(Math.atan2(ny, nx) * 180 / Math.PI);
       mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.walk);
       mob.setAnimationSpeedScale(1);
     }
