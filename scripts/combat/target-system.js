@@ -3,11 +3,10 @@
  *
  * GDevelop's cursorOnObject() handles mouse/touch hit testing, including
  * current 3D model objects. The selected target gets a world-space red
- * selection ring made from four pre-sized 3D box objects.
+ * selection ring made from four pre-created 3D box objects.
  *
  * The box dimensions and red material are defined in the project rather
- * than changed at runtime. This avoids relying on 3D mutator methods that
- * are not exposed by the preview runtime objects returned by createObject().
+ * than changed at runtime. Only world position is changed at runtime.
  */
 
 const HAVOC_TARGET_CONFIG = {
@@ -20,6 +19,7 @@ const HAVOC_TARGET_CONFIG = {
   ],
   indicatorRadius: 260,
   indicatorZOffset: 4,
+  hiddenPosition: -100000,
 };
 
 function initializeHavocTargetSelection(runtimeScene) {
@@ -28,6 +28,13 @@ function initializeHavocTargetSelection(runtimeScene) {
       indicatorSegments: [],
       indicatorTarget: null,
     };
+
+    for (const objectName of HAVOC_TARGET_CONFIG.indicatorObjectNames) {
+      const objects = runtimeScene.getObjects(objectName);
+      if (objects.length > 0) {
+        runtimeScene.__havocTargetSelection.indicatorSegments.push(objects[0]);
+      }
+    }
   }
 
   return runtimeScene.__havocTargetSelection;
@@ -37,54 +44,51 @@ function clearHavocTargetIndicator(runtimeScene) {
   const state = initializeHavocTargetSelection(runtimeScene);
 
   for (const segment of state.indicatorSegments) {
-    if (segment && !segment.isDestroyed) segment.deleteFromScene();
+    if (!segment || segment.isDestroyed) continue;
+    segment.setPosition(
+      HAVOC_TARGET_CONFIG.hiddenPosition,
+      HAVOC_TARGET_CONFIG.hiddenPosition
+    );
+    segment.setZ(HAVOC_TARGET_CONFIG.hiddenPosition);
   }
 
-  state.indicatorSegments = [];
   state.indicatorTarget = null;
 }
 
 function setHavocIndicatorZ(segment, z) {
-  if (!segment) return;
+  if (!segment || segment.isDestroyed) return;
 
-  // The red material, dimensions, and shadow settings are configured on the
-  // object definition. Only its world position changes at runtime.
-  if (typeof segment.setCenterZInScene === 'function') {
-    segment.setCenterZInScene(z);
-    return;
-  }
-
-  if (typeof segment.get3DRendererObject === 'function') {
-    const rendererObject = segment.get3DRendererObject();
-    if (rendererObject && rendererObject.position) {
-      rendererObject.position.z = z;
-    }
-  }
+  // Use the same verified 3D positioning API already used by the working
+  // Killer Clown system. Do not manipulate renderer internals.
+  segment.setZ(z);
 }
 
 function createHavocTargetIndicator(runtimeScene, target) {
   const state = initializeHavocTargetSelection(runtimeScene);
   clearHavocTargetIndicator(runtimeScene);
 
+  if (state.indicatorSegments.length !== HAVOC_TARGET_CONFIG.indicatorObjectNames.length) {
+    return;
+  }
+
   const radius = HAVOC_TARGET_CONFIG.indicatorRadius;
   const z = target.getZ() + HAVOC_TARGET_CONFIG.indicatorZOffset;
   const x = target.getX();
   const y = target.getY();
 
-  const definitions = [
-    { name: 'TargetSelectionRingTop', x: x, y: y - radius },
-    { name: 'TargetSelectionRingBottom', x: x, y: y + radius },
-    { name: 'TargetSelectionRingLeft', x: x - radius, y: y },
-    { name: 'TargetSelectionRingRight', x: x + radius, y: y },
+  const positions = [
+    [x, y - radius],
+    [x, y + radius],
+    [x - radius, y],
+    [x + radius, y],
   ];
 
-  for (const definition of definitions) {
-    const segment = runtimeScene.createObject(definition.name);
-    if (!segment) continue;
+  for (let i = 0; i < state.indicatorSegments.length; i += 1) {
+    const segment = state.indicatorSegments[i];
+    if (!segment || segment.isDestroyed) continue;
 
-    segment.setPosition(definition.x, definition.y);
+    segment.setPosition(positions[i][0], positions[i][1]);
     setHavocIndicatorZ(segment, z);
-    state.indicatorSegments.push(segment);
   }
 
   state.indicatorTarget = target;
