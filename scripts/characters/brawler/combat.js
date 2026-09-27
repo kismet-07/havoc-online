@@ -19,7 +19,11 @@ function initializeBrawlerCombat(runtimeScene) {
 }
 
 function brawlerTargetIsValid(target) {
-  return !!target && !target.isDestroyed && !target.isHidden();
+  // A selected 3D mob can report itself as hidden through the generic
+  // RuntimeObject visibility state while its Model3D renderer is still active.
+  // Target validity therefore follows object lifetime here. The target system
+  // already performs the actual 3D raycast and only selects visible mobs.
+  return !!target && !target.isDestroyed;
 }
 
 function startBrawlerBasicAttack(player, combat) {
