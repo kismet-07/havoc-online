@@ -13,7 +13,6 @@ def install() -> None:
     project = json.loads(PROJECT.read_text(encoding='utf-8'))
     source = SOURCE.read_text(encoding='utf-8')
 
-    # Ensure the GDevelop object exposes the exact animation names supplied by the asset.
     killer_object = None
     for layout in project.get('layouts', []):
         for obj in layout.get('objects', []):
@@ -43,39 +42,61 @@ def install() -> None:
                 'source': source_name,
             })
 
-    # Add exactly one runtime event to the scene. We keep the source file as the
-    # maintainable version and embed it because this project is currently a plain
-    # single-file GDevelop project (folderProject=false).
     for layout in project.get('layouts', []):
         events = layout.get('events', [])
-        if any(MARKER in '\n'.join(e.get('inlineCode', [])) for e in events if e.get('type') == 'BuiltinCommonInstructions::JsCode'):
-            print('Killer Clown mob is already installed.')
+        replacement = [MARKER]
+        replacement.extend(source.splitlines())
+        replacement.extend([
+            '',
+            'const killerClownDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
+            'updateKillerClowns(runtimeScene, killerClownDt);',
+        ])
+
+        found = False
+        for event in events:
+            if event.get('type') != 'BuiltinCommonInstructions::JsCode':
+                continue
+            inline = event.get('inlineCode', [])
+            if MARKER in '\n'.join(inline):
+                event['inlineCode'] = replacement
+                found = True
+                break
+
+        if found:
+            PROJECT.write_text(
+                json.dumps(project, indent=2, ensure_ascii=False),
+                encoding='utf-8',
+                newline='\n',
+            )
+            print('Refreshed Killer Clown mob V1.1.')
+            print('Population          : 20')
+            print('Respawn             : 30 seconds')
+            print('Initial distribution: 5 x 4 floor cells')
+            print('Minimum separation  : 900')
+            print('Idle                : position locked')
             return
 
         if layout.get('name') != 'Untitled scene':
             continue
 
-        inline = [MARKER]
-        inline.extend(source.splitlines())
-        inline.extend([
-            '',
-            'const killerClownDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
-            'updateKillerClowns(runtimeScene, killerClownDt);',
-        ])
         events.append({
             'type': 'BuiltinCommonInstructions::JsCode',
-            'inlineCode': inline,
+            'inlineCode': replacement,
         })
-        break
-    else:
-        raise RuntimeError("Untitled scene layout was not found")
+        PROJECT.write_text(
+            json.dumps(project, indent=2, ensure_ascii=False),
+            encoding='utf-8',
+            newline='\n',
+        )
+        print('Installed Killer Clown mob V1.1.')
+        print('Population          : 20')
+        print('Respawn             : 30 seconds')
+        print('Initial distribution: 5 x 4 floor cells')
+        print('Minimum separation  : 900')
+        print('Idle                : position locked')
+        return
 
-    PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
-    print('Installed Killer Clown mob V1.')
-    print('Population : 20')
-    print('Respawn    : 30 seconds')
-    print('Animations : Idle_Sword / Walk_Large / Run_Stealth / Sword_Attack')
-    print('Behavior   : idle -> wander; no automatic aggression')
+    raise RuntimeError("Untitled scene layout was not found")
 
 
 if __name__ == '__main__':
