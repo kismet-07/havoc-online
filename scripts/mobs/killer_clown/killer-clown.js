@@ -1,5 +1,5 @@
 /**
- * Killer Clown V1.4 runtime behavior for GDevelop 5.
+ * Killer Clown V1.5 runtime behavior for GDevelop 5.
  *
  * The project is currently a single-file GDevelop project, so the installer
  * embeds this source into a JsCode event. Keep this file as the maintainable
@@ -8,8 +8,8 @@
 
 const KILLER_CLOWN_CONFIG = {
   objectName: 'Killer_clown',
-  maxPopulation: 20,
-  respawnSeconds: 30,
+  maxPopulation: 15,
+  respawnSeconds: 15,
   animations: {
     idle: 'Idle_Sword',
     walk: 'Walk_Large',
@@ -22,7 +22,7 @@ const KILLER_CLOWN_CONFIG = {
   walkMinSeconds: 10,
   walkMaxSeconds: 15,
   boundaryMargin: 300,
-  minimumSeparation: 900,
+  minimumSeparation: 1000,
   initialIdleChance: 0.4,
   spawnColumns: 5,
   spawnRows: 4,
