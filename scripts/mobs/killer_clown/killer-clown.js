@@ -38,8 +38,9 @@ const KILLER_CLOWN_CONFIG = {
   spawnRows: 3,
   spawnSpacing: 1100,
   spawnAttempts: 120,
-  attackRange: 450,
+  attackRange: 600,
   attackCooldownSeconds: 0.8,
+  combatHardSeparation: 220,
   leashDistance: 3200,
   homeArrivalDistance: 12,
 };
@@ -157,21 +158,11 @@ function killerClownGetCombatMoveVector(mob, target, allMobs, nx, ny, distance) 
   }
 
   if (distance <= KILLER_CLOWN_CONFIG.attackRange) {
-    let tangentX = -ny;
-    let tangentY = nx;
-    const tangentDot = separation.x * tangentX + separation.y * tangentY;
-
-    if (Math.abs(tangentDot) < 0.08) {
-      tangentX = separation.x;
-      tangentY = separation.y;
-    } else if (tangentDot < 0) {
-      tangentX = -tangentX;
-      tangentY = -tangentY;
-    }
-
+    // Attack range is a hard movement boundary. Once inside it, do not orbit,
+    // strafe, or chase because of crowd separation. The mob stops and attacks.
     return {
-      x: tangentX,
-      y: tangentY,
+      x: 0,
+      y: 0,
       separationMagnitude: separation.magnitude,
     };
   }
@@ -498,18 +489,40 @@ function killerClownUpdateAggressive(mob, dt, ai, allMobs) {
     return;
   }
 
-  if (move.separationMagnitude > 0) {
-    const separationStep = Math.min(
-      KILLER_CLOWN_CONFIG.combatSeparationSpeed * dt * move.separationMagnitude,
-      KILLER_CLOWN_CONFIG.combatSeparationSpeed * dt,
-    );
-    mob.setPosition(
-      mob.getX() + move.x * separationStep,
-      mob.getY() + move.y * separationStep,
-    );
-    killerClownApplySpawnHeight(mob, ai.homeZ);
+  // Do not move merely because another attacker is within the normal combat
+  // spacing. Only resolve a genuine hard overlap, otherwise the mob remains
+  // stationary in attack range.
+  if (move.separationMagnitude > 0 && move.separationMagnitude >= 0.95) {
+    const hardSeparation = KILLER_CLOWN_CONFIG.combatHardSeparation || 220;
+    let nearestOverlap = Infinity;
+
+    for (const other of allMobs) {
+      if (other === mob) continue;
+      const otherAI = other.__killerClownAI;
+      if (!otherAI || !otherAI.aggressive || otherAI.target !== target || otherAI.state === 'return') continue;
+
+      const otherDistance = Math.hypot(
+        mob.getX() - other.getX(),
+        mob.getY() - other.getY(),
+      );
+      nearestOverlap = Math.min(nearestOverlap, otherDistance);
+    }
+
+    if (nearestOverlap < hardSeparation) {
+      const separationStep = Math.min(
+        KILLER_CLOWN_CONFIG.combatSeparationSpeed * dt,
+        KILLER_CLOWN_CONFIG.combatSeparationSpeed * dt,
+      );
+      mob.setPosition(
+        mob.getX() + move.x * separationStep,
+        mob.getY() + move.y * separationStep,
+      );
+      killerClownApplySpawnHeight(mob, ai.homeZ);
+    }
   }
 
+  // Attack orientation is based only on the mob-to-player vector. The player's
+  // facing direction has no bearing on whether this attack can hit.
   mob.setAngle(Math.atan2(dy, dx) * 180 / Math.PI);
   ai.state = 'attack';
   killerClownSetAnimation(mob, KILLER_CLOWN_CONFIG.animations.attack, false);
