@@ -152,13 +152,15 @@ function updateBrawlerCombat(runtimeScene, dt) {
         runtimeScene.__fatePlayerMovement = { x: player.getX(), y: player.getY() };
       }
       const movement = runtimeScene.__fatePlayerMovement;
-      const speed = BRAWLER_CONFIG.movement.walkSpeed;
+      const speed = BRAWLER_CONFIG.movement.runSpeed;
 
+      // Auto-approach is combat movement, so use the character's run speed
+      // and run animation instead of making the Brawler walk toward the target.
       movement.x += moveX * speed * dt;
       movement.y += moveY * speed * dt;
       player.setPosition(movement.x, movement.y);
       player.setAngle(Math.atan2(moveY, moveX) * 180 / Math.PI);
-      setBrawlerAnimation(player, BRAWLER_CONFIG.animations.walk);
+      setBrawlerAnimation(player, BRAWLER_CONFIG.animations.run);
     }
 
     return;
