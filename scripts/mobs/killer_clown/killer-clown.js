@@ -1,13 +1,21 @@
 /**
- * Killer Clown V1.5 runtime behavior for GDevelop 5.
+ * Killer Clown V2 runtime behavior for GDevelop 5.
  *
  * The project is currently a single-file GDevelop project, so the installer
  * embeds this source into a JsCode event. Keep this file as the maintainable
  * source of truth.
+ *
+ * Combat prototype:
+ *   idle/wander -> aggro -> chase -> attack
+ *                           \-> leash exceeded -> return home -> idle/wander
+ *
+ * No HP, damage, death, stats, networking or database state is implemented.
+ * Those belong to the future authoritative FATE game server.
  */
 
 const KILLER_CLOWN_CONFIG = {
   objectName: 'Killer_clown',
+  targetObjectName: 'Character',
   maxPopulation: 15,
   respawnSeconds: 15,
   animations: {
@@ -17,6 +25,8 @@ const KILLER_CLOWN_CONFIG = {
     attack: 'Sword_Attack',
   },
   walkSpeed: 110,
+  chaseSpeed: 180,
+  returnSpeed: 140,
   idleMinSeconds: 2,
   idleMaxSeconds: 5,
   walkMinSeconds: 10,
@@ -28,7 +38,18 @@ const KILLER_CLOWN_CONFIG = {
   spawnRows: 4,
   spawnJitter: 0.28,
   spawnAttempts: 80,
+  attackRange: 450,
+  attackCooldownSeconds: 0.8,
+  leashDistance: 3200,
+  homeArrivalDistance: 12,
 };
+
+function killerClownTargetIsValid(target) {
+  if (!target) return false;
+  if (target.isDestroyed) return false;
+  if (target._livingOnScene === false) return false;
+  return true;
+}
 
 function updateKillerClowns(runtimeScene, dt) {
   if (!runtimeScene.__havocKillerClownSystem) {
@@ -153,6 +174,14 @@ function updateKillerClowns(runtimeScene, dt) {
     mob.setAnimationSpeedScale(1);
   };
 
+  const beginReturnHome = (mob, ai) => {
+    ai.state = 'return';
+    ai.attackTimer = 0;
+    mob.setAngle(Math.atan2(ai.homeY - mob.getY(), ai.homeX - mob.getX()) * 180 / Math.PI);
+    mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.run);
+    mob.setAnimationSpeedScale(1);
+  };
+
   const initializeMob = (mob, stateOverride, forcedPosition) => {
     const allMobs = runtimeScene.getObjects(KILLER_CLOWN_CONFIG.objectName);
     const position = forcedPosition || randomFloorPosition(allMobs, mob);
@@ -168,9 +197,13 @@ function updateKillerClowns(runtimeScene, dt) {
       targetX: position.x,
       targetY: position.y,
       aggressive: false,
+      targetPlayer: null,
       dead: false,
+      homeX: position.x,
+      homeY: position.y,
       idleHoldX: position.x,
       idleHoldY: position.y,
+      attackTimer: 0,
     };
 
     if (state === 'idle') {
@@ -189,6 +222,107 @@ function updateKillerClowns(runtimeScene, dt) {
     applySpawnHeight(mob);
     initializeMob(mob, undefined, forcedPosition);
     return mob;
+  };
+
+  const finishReturnHome = (mob, ai) => {
+    mob.setPosition(ai.homeX, ai.homeY);
+    applySpawnHeight(mob);
+    ai.targetPlayer = null;
+    ai.aggressive = false;
+    ai.state = 'idle';
+    ai.timer = randomBetween(KILLER_CLOWN_CONFIG.idleMinSeconds, KILLER_CLOWN_CONFIG.idleMaxSeconds);
+    ai.idleHoldX = ai.homeX;
+    ai.idleHoldY = ai.homeY;
+    ai.attackTimer = 0;
+    holdIdlePosition(mob, ai);
+  };
+
+  const updateAggressiveMob = (mob, ai, dt) => {
+    const player = ai.targetPlayer;
+
+    if (!killerClownTargetIsValid(player)) {
+      beginReturnHome(mob, ai);
+      return;
+    }
+
+    const homeDistance = Math.sqrt(distanceSquared(
+      mob.getX(), mob.getY(),
+      ai.homeX, ai.homeY,
+    ));
+
+    if (homeDistance >= KILLER_CLOWN_CONFIG.leashDistance) {
+      beginReturnHome(mob, ai);
+      return;
+    }
+
+    if (ai.state === 'return') {
+      const homeDx = ai.homeX - mob.getX();
+      const homeDy = ai.homeY - mob.getY();
+      const homeDistanceNow = Math.sqrt(homeDx * homeDx + homeDy * homeDy);
+
+      if (homeDistanceNow <= KILLER_CLOWN_CONFIG.homeArrivalDistance) {
+        finishReturnHome(mob, ai);
+        return;
+      }
+
+      if (homeDistanceNow > 0.001) {
+        const nx = homeDx / homeDistanceNow;
+        const ny = homeDy / homeDistanceNow;
+        const step = Math.min(KILLER_CLOWN_CONFIG.returnSpeed * dt, homeDistanceNow);
+        mob.setPosition(
+          clamp(mob.getX() + nx * step, floorMinX, floorMaxX),
+          clamp(mob.getY() + ny * step, floorMinY, floorMaxY),
+        );
+        applySpawnHeight(mob);
+        mob.setAngle(Math.atan2(ny, nx) * 180 / Math.PI);
+        mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.run);
+        mob.setAnimationSpeedScale(1);
+      }
+      return;
+    }
+
+    const dx = player.getX() - mob.getX();
+    const dy = player.getY() - mob.getY();
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > KILLER_CLOWN_CONFIG.leashDistance) {
+      beginReturnHome(mob, ai);
+      return;
+    }
+
+    if (distance > KILLER_CLOWN_CONFIG.attackRange) {
+      if (distance > 0.001) {
+        const nx = dx / distance;
+        const ny = dy / distance;
+        const step = Math.min(KILLER_CLOWN_CONFIG.chaseSpeed * dt, distance - KILLER_CLOWN_CONFIG.attackRange);
+        mob.setPosition(mob.getX() + nx * step, mob.getY() + ny * step);
+        applySpawnHeight(mob);
+        mob.setAngle(Math.atan2(ny, nx) * 180 / Math.PI);
+        mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.run);
+        mob.setAnimationSpeedScale(1);
+      }
+      return;
+    }
+
+    mob.setAngle(Math.atan2(dy, dx) * 180 / Math.PI);
+    ai.attackTimer = Math.max(0, ai.attackTimer - dt);
+
+    if (mob.getAnimationName() === KILLER_CLOWN_CONFIG.animations.attack) {
+      if (!mob.hasAnimationEnded()) return;
+      mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.idle);
+      mob.setAnimationSpeedScale(1);
+      ai.attackTimer = KILLER_CLOWN_CONFIG.attackCooldownSeconds;
+      return;
+    }
+
+    if (ai.attackTimer <= 0) {
+      mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.attack);
+      mob.setAnimationSpeedScale(1);
+      mob.setAnimationElapsedTime(0);
+    } else {
+      mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.idle);
+      mob.setAnimationSpeedScale(1);
+    }
   };
 
   if (!system.initialized) {
@@ -229,7 +363,12 @@ function updateKillerClowns(runtimeScene, dt) {
     if (!mob.__killerClownAI) initializeMob(mob, 'idle');
 
     const ai = mob.__killerClownAI;
-    if (ai.dead || ai.aggressive) continue;
+    if (ai.dead) continue;
+
+    if (ai.aggressive || ai.state === 'return') {
+      updateAggressiveMob(mob, ai, dt);
+      continue;
+    }
 
     ai.timer -= dt;
 
@@ -275,11 +414,28 @@ function updateKillerClowns(runtimeScene, dt) {
   }
 }
 
-function aggroKillerClown(mob) {
-  if (!mob || !mob.__killerClownAI || (mob.getName && mob.getName() !== KILLER_CLOWN_CONFIG.objectName)) return;
-  mob.__killerClownAI.aggressive = true;
-  mob.__killerClownAI.state = 'aggro';
+function aggroKillerClown(mob, player) {
+  if (!mob || !mob.__killerClownAI) return;
+  if (typeof mob.getName === 'function' && mob.getName() !== KILLER_CLOWN_CONFIG.objectName) return;
+  if (!killerClownTargetIsValid(player)) return;
+
+  const ai = mob.__killerClownAI;
+
+  if (ai.dead) return;
+
+  ai.targetPlayer = player;
+  ai.aggressive = true;
+  ai.state = 'aggro';
+  ai.attackTimer = 0;
+
+  const dx = player.getX() - mob.getX();
+  const dy = player.getY() - mob.getY();
+  if (Math.abs(dx) + Math.abs(dy) > 0.001) {
+    mob.setAngle(Math.atan2(dy, dx) * 180 / Math.PI);
+  }
+
   mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.run);
+  mob.setAnimationSpeedScale(1);
 }
 
 if (typeof module !== 'undefined') {
