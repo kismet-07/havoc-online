@@ -17,7 +17,7 @@ const MOB_COMBAT_CONFIG = Object.freeze({
     objectName: 'Killer_clown',
     targetObjectName: 'Character',
     attackAnimation: 'Sword_Attack',
-    attackRange: 450,
+    attackRange: 600,
     hitDelaySeconds: 0.25,
     damage: 50,
   },
@@ -65,7 +65,10 @@ function updateKillerClownCombatDamage(runtimeScene, dt) {
       continue;
     }
 
-    const target = ai.targetPlayer;
+    // Killer Clown AI uses `target`; older combat code used `targetPlayer`.
+    // Accept either so damage delivery does not depend on an implementation
+    // detail of the AI bridge.
+    const target = ai.target || ai.targetPlayer;
     if (!target || target.isDestroyed || target._livingOnScene === false) continue;
 
     const isAttackAnimation = mob.getAnimationName() === MOB_COMBAT_CONFIG.killerClown.attackAnimation;
@@ -108,8 +111,8 @@ function updateKillerClownCombatDamage(runtimeScene, dt) {
       );
     }
 
-    // One damage event per attack animation. If the player moved out of range,
-    // this attack simply misses; the next attack gets a new hit window.
+    // No player-facing or mob-facing test is used here. If the target is in
+    // range when the hit window occurs, the attack lands from any angle.
     attackState.hitApplied = true;
   }
 }
