@@ -15,7 +15,7 @@ def install() -> None:
     source = SOURCE.read_text(encoding='utf-8')
     # Keep the embedded runtime aligned with the current Killer Clown config.
     # The runtime source currently contains the same combat constants inline.
-    source = source.replace('chaseSpeed: 180,', 'chaseSpeed: 200,', 1)
+    # The runtime source is already kept in sync with the dedicated config.
 
     killer_object = None
     for layout in project.get('layouts', []):
@@ -104,7 +104,7 @@ def install() -> None:
             print('Walk duration       : 10-15 seconds')
             print('Walk animation      : LOOPED')
             print('Walk speed          : 110')
-            print('Chase speed         : 200')
+            print('Chase speed         : 360')
             print('Return speed        : 140')
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
