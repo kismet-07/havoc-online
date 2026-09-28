@@ -1,9 +1,9 @@
-/** Killer Clown V1 configuration. */
+/** Killer Clown V2 combat/AI configuration. */
 
 const KillerClownConfig = Object.freeze({
   objectName: 'Killer_clown',
-  maxPopulation: 20,
-  respawnSeconds: 30,
+  maxPopulation: 15,
+  respawnSeconds: 15,
 
   animations: {
     idle: 'Idle_Sword',
@@ -14,10 +14,12 @@ const KillerClownConfig = Object.freeze({
 
   movement: {
     walkSpeed: 110,
+    chaseSpeed: 180,
+    returnSpeed: 140,
     idleMinSeconds: 2,
     idleMaxSeconds: 5,
-    walkMinSeconds: 2,
-    walkMaxSeconds: 6,
+    walkMinSeconds: 10,
+    walkMaxSeconds: 15,
     boundaryMargin: 300,
     spawnRadius: 1800,
   },
@@ -25,7 +27,10 @@ const KillerClownConfig = Object.freeze({
   combat: {
     aggressiveByDefault: false,
     aggroRange: 0,
-    attackRange: 0,
+    attackRange: 450,
+    attackCooldownSeconds: 0.8,
+    leashDistance: 3200,
+    homeArrivalDistance: 12,
   },
 });
 
