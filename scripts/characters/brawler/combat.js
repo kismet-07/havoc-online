@@ -2,6 +2,10 @@
  * Brawler combat orchestration for the first combat presentation test.
  *
  * No damage, hitbox, HP, stats, death or server state exists here.
+ *
+ * The selected mob is notified when an attack starts so its local prototype AI
+ * can enter combat and fight back. This is intentionally a presentation-layer
+ * hook; authoritative combat will move to the future FATE game server.
  */
 
 function initializeBrawlerCombat(runtimeScene) {
@@ -25,16 +29,27 @@ function brawlerTargetIsValid(target) {
   return true;
 }
 
+function notifyBrawlerAttackTarget(target, player) {
+  if (!brawlerTargetIsValid(target)) return;
+
+  if (typeof aggroKillerClown === 'function') {
+    aggroKillerClown(target, player);
+  }
+}
+
 function startBrawlerBasicAttack(player, combat) {
   const attackAnimation = BRAWLER_BASIC_ATTACKS.combo[
     combat.attackIndex % BRAWLER_BASIC_ATTACKS.combo.length
   ];
+
+  const activeTarget = combat.target;
 
   combat.attackIndex += 1;
   combat.attacking = true;
   combat.approaching = false;
   combat.attackQueued = false;
 
+  notifyBrawlerAttackTarget(activeTarget, player);
   setBrawlerCombatAnimation(player, attackAnimation);
 }
 
