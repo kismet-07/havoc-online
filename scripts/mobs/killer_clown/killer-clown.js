@@ -154,19 +154,14 @@ function updateKillerClown(mob, player, dt, system) {
     return;
   }
 
-  // Keep the attack animation active for the entire attack state.
-  // Do not use a hard-coded wall-clock duration: the actual GLB animation
-  // duration can differ from one mob asset to another. If Sword_Attack is
-  // configured as non-looping, restart it exactly when GDevelop reports that
-  // the animation has ended. If it is configured as looping, GDevelop keeps
-  // it playing continuously and hasAnimationEnded() remains false.
+  // Sword_Attack is configured as a LOOPED animation by the installer.
+  // Keeping the attack animation looped makes the mob attack continuously
+  // while the player remains inside attackRange. The AI only leaves this
+  // state when the target moves out of range or the leash is exceeded.
   ai.state = 'attack';
   ai.attackPlaying = true;
-
   if (mob.getAnimationName() !== KILLER_CLOWN_CONFIG.animations.attack) {
     mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.attack);
-    mob.setAnimationElapsedTime(0);
-  } else if (mob.hasAnimationEnded()) {
     mob.setAnimationElapsedTime(0);
   }
 }
