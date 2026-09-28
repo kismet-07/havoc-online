@@ -29,22 +29,20 @@ def action_fcurves(action):
         raise RuntimeError('Blender 5.2 action layer API is unavailable')
     for layer in action.layers:
         for strip in layer.strips:
-            if not hasattr(strip, 'channelbags'):
-                continue
             for bag in strip.channelbags:
                 curves.extend(list(bag.fcurves))
     return curves
 
 
-def action_bone_fcurves(action, bone_name):
-    prefix = f'pose.bones["{bone_name}"]'
-    return [fc for fc in action_fcurves(action) if fc.data_path.startswith(prefix)]
-
-
 def clear_range(curve, start, end):
-    for kp in list(curve.keyframe_points):
-        if start <= kp.co.x <= end:
-            curve.keyframe_points.remove(kp)
+    # Blender 5.2 can invalidate a Keyframe reference after removal. Remove
+    # by descending index so every removal targets the current collection.
+    indices = [i for i, kp in enumerate(curve.keyframe_points)
+               if start <= kp.co.x <= end]
+    for index in reversed(indices):
+        if index < len(curve.keyframe_points):
+            curve.keyframe_points.remove(curve.keyframe_points[index], fast=True)
+    curve.update()
 
 
 def insert_key(curve, frame, value, interpolation='BEZIER'):
@@ -54,8 +52,6 @@ def insert_key(curve, frame, value, interpolation='BEZIER'):
 
 
 def mirrored_quat_value(index, value):
-    # Reflect across the character sagittal plane:
-    # (w, x, y, z) -> (w, x, -y, -z)
     return value if index in (0, 1) else -value
 
 
@@ -63,79 +59,45 @@ def mirror_right_to_left(action, start, end):
     curves = action_fcurves(action)
 
     for right, left in ARM_PAIRS:
-        srcs = {
-            fc.array_index: fc
-            for fc in curves
-            if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'
-        }
-        dsts = {
-            fc.array_index: fc
-            for fc in curves
-            if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'
-        }
-
+        srcs = {fc.array_index: fc for fc in curves
+                if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'}
+        dsts = {fc.array_index: fc for fc in curves
+                if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
         if len(srcs) != 4 or len(dsts) != 4:
             continue
 
-        source_keys = {
-            idx: [
-                (kp.co.x, kp.co.y, kp.interpolation)
-                for kp in srcs[idx].keyframe_points
-                if start <= kp.co.x <= end
-            ]
-            for idx in range(4)
-        }
-
+        source_keys = {idx: [(kp.co.x, kp.co.y, kp.interpolation)
+                             for kp in srcs[idx].keyframe_points
+                             if start <= kp.co.x <= end] for idx in range(4)}
         for idx in range(4):
-            dst = dsts[idx]
-            clear_range(dst, start, end)
+            clear_range(dsts[idx], start, end)
             for frame, value, interpolation in source_keys[idx]:
-                insert_key(dst, frame, mirrored_quat_value(idx, value), interpolation)
+                insert_key(dsts[idx], frame, mirrored_quat_value(idx, value), interpolation)
 
     for right in HAND_RIGHT_BONES:
         left = right.replace('mixamorig:Right', 'mixamorig:Left', 1)
-        srcs = {
-            fc.array_index: fc
-            for fc in curves
-            if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'
-        }
-        dsts = {
-            fc.array_index: fc
-            for fc in curves
-            if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'
-        }
-
+        srcs = {fc.array_index: fc for fc in curves
+                if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'}
+        dsts = {fc.array_index: fc for fc in curves
+                if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
         if len(srcs) != 4 or len(dsts) != 4:
             continue
 
-        source_keys = {
-            idx: [
-                (kp.co.x, kp.co.y, kp.interpolation)
-                for kp in srcs[idx].keyframe_points
-                if start <= kp.co.x <= end
-            ]
-            for idx in range(4)
-        }
-
+        source_keys = {idx: [(kp.co.x, kp.co.y, kp.interpolation)
+                             for kp in srcs[idx].keyframe_points
+                             if start <= kp.co.x <= end] for idx in range(4)}
         for idx in range(4):
-            dst = dsts[idx]
-            clear_range(dst, start, end)
+            clear_range(dsts[idx], start, end)
             for frame, value, interpolation in source_keys[idx]:
-                insert_key(dst, frame, mirrored_quat_value(idx, value), interpolation)
+                insert_key(dsts[idx], frame, mirrored_quat_value(idx, value), interpolation)
 
 
 def neutralize_right_arm(action, start, end):
     curves = action_fcurves(action)
-    for bone in [
-        'mixamorig:RightShoulder',
-        'mixamorig:RightArm',
-        'mixamorig:RightForeArm',
-        'mixamorig:RightHand',
-    ]:
-        targets = [
-            fc for fc in curves
-            if fc.data_path == f'pose.bones["{bone}"].rotation_quaternion'
-        ]
+    for bone in ['mixamorig:RightShoulder','mixamorig:RightArm',
+                 'mixamorig:RightForeArm','mixamorig:RightHand']:
+        targets = [fc for fc in curves
+                   if fc.data_path == f'pose.bones["{bone}"].rotation_quaternion']
         for fc in targets:
             if not fc.keyframe_points:
                 continue
@@ -146,9 +108,8 @@ def neutralize_right_arm(action, start, end):
 
 
 def freeze_final_hold(action, freeze_frame):
-    # Convert all channels at/after freeze_frame to a constant final pose.
+    end = action.frame_range[1]
     for fc in action_fcurves(action):
-        end = action.frame_range[1]
         if not fc.keyframe_points:
             continue
         final_value = fc.evaluate(end)
@@ -171,24 +132,17 @@ def main():
     start, end = action.frame_range
     duration = end - start
     split = start + duration * 0.48
-
     mirror_right_to_left(action, start, split)
     neutralize_right_arm(action, start, split)
 
-    # Hold the final right-power-punch pose through the end of the animation.
     freeze_frame = start + duration * 0.78
     freeze_final_hold(action, freeze_frame)
     action.update_tag(refresh={'DATA'})
 
     bpy.ops.wm.save_as_mainfile(filepath=WORK_BLEND)
-    bpy.ops.export_scene.gltf(
-        filepath=OUTPUT,
-        export_format='GLB',
-        export_animations=True,
-        export_skins=True,
-        export_morph=False,
-        export_apply=False,
-    )
+    bpy.ops.export_scene.gltf(filepath=OUTPUT, export_format='GLB',
+                              export_animations=True, export_skins=True,
+                              export_morph=False, export_apply=False)
 
     print('\n' + '=' * 68)
     print('BRAWLER ATTACK2 MODIFICATION COMPLETE')
