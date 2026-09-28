@@ -5,7 +5,8 @@
  *
  * Attack input toggles automatic attack mode. Once enabled, the Brawler
  * repeats the configured combo continuously against the selected target until
- * the player toggles attack mode off or the target becomes invalid.
+ * the player toggles attack mode off, manually moves with the joystick, or the
+ * target becomes invalid.
  *
  * The selected mob receives an aggro request through runtimeScene state.
  * This avoids relying on JavaScript function visibility/order between separate
@@ -44,6 +45,20 @@ function notifyBrawlerAttackTarget(runtimeScene, target, player) {
   };
 }
 
+function cancelBrawlerAutoAttack(player, combat) {
+  combat.autoAttack = false;
+  combat.attackQueued = false;
+  combat.attacking = false;
+  combat.approaching = false;
+  combat.attackIndex = 0;
+
+  // Movement immediately takes over on the same frame. Resetting the attack
+  // animation here prevents combat from visually locking the player in place.
+  if (player && player.getAnimationName() !== BRAWLER_CONFIG.animations.idle) {
+    setBrawlerAnimation(player, BRAWLER_CONFIG.animations.idle);
+  }
+}
+
 function startBrawlerBasicAttack(runtimeScene, player, combat) {
   const attackAnimation = BRAWLER_BASIC_ATTACKS.combo[
     combat.attackIndex % BRAWLER_BASIC_ATTACKS.combo.length
@@ -68,6 +83,19 @@ function updateBrawlerCombat(runtimeScene, dt) {
   const mobileInput = initializeHavocMobileInput(runtimeScene);
 
   updateHavocTargetSelection(runtimeScene);
+
+  // Manual joystick movement has priority over automatic combat. A small
+  // dead-zone prevents an accidental touch from cancelling combat immediately.
+  const joystickMagnitude = Math.sqrt(
+    mobileInput.moveX * mobileInput.moveX +
+    mobileInput.moveY * mobileInput.moveY
+  );
+  const manualJoystickMovement =
+    mobileInput.joystickActive && joystickMagnitude >= 0.15;
+
+  if (manualJoystickMovement && (combat.autoAttack || combat.attacking || combat.approaching)) {
+    cancelBrawlerAutoAttack(player, combat);
+  }
 
   // One attack-button press starts automatic combat; another press stops it.
   // The current attack is allowed to finish before stopping.
