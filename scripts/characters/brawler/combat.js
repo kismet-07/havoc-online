@@ -35,8 +35,7 @@ function startBrawlerBasicAttack(player, combat) {
   combat.approaching = false;
   combat.attackQueued = false;
 
-  setBrawlerAnimation(player, attackAnimation);
-  player.setAnimationElapsedTime(0);
+  setBrawlerCombatAnimation(player, attackAnimation);
 }
 
 function updateBrawlerCombat(runtimeScene, dt) {
