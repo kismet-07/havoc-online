@@ -383,3 +383,4 @@ function aggroKillerClown(mob, player) {
 if (typeof module !== 'undefined') {
   module.exports = { KILLER_CLOWN_CONFIG, updateKillerClowns, aggroKillerClown };
 }
+

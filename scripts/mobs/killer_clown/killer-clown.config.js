@@ -37,3 +37,4 @@ const KillerClownConfig = Object.freeze({
 if (typeof module !== 'undefined') {
   module.exports = { KillerClownConfig };
 }
+
