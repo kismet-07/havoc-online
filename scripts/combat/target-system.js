@@ -11,6 +11,9 @@
 const HAVOC_TARGET_CONFIG = {
   mobObjectName: 'Killer_clown',
   indicatorObjectName: 'TargetSelectionIcon',
+  // World-space height above the mob's base. Do not derive this from
+  // getUnrotatedAABBMaxZ(): the Killer_clown is a rotated glTF Model3DObject,
+  // so that value is not a reliable world-vertical top coordinate.
   arrowZOffset: 300,
   indicatorScale: 0.4,
   hiddenX: -100000,
@@ -72,29 +75,9 @@ function initializeHavocTargetSelection(runtimeScene) {
       state.indicator.setScale(HAVOC_TARGET_CONFIG.indicatorScale);
     }
 
-    // target_icon.glb is a closed crystal, but its GLB material does not mark
-    // itself double-sided. During the embedded spin, back-face culling can make
-    // the entire icon disappear from this camera. Force the rendered material
-    // to render both sides while preserving the GLB's spin animation.
-    if (typeof state.indicator.get3DRendererObject === 'function' && typeof THREE !== 'undefined') {
-      const rendererObject = state.indicator.get3DRendererObject();
-      if (rendererObject && typeof rendererObject.traverse === 'function') {
-        rendererObject.traverse((child) => {
-          if (!child || !child.material) return;
-
-          const materials = Array.isArray(child.material)
-            ? child.material
-            : [child.material];
-
-          for (const material of materials) {
-            if (!material) continue;
-            material.side = THREE.DoubleSide;
-            material.needsUpdate = true;
-          }
-        });
-      }
-    }
-
+    // Do not modify the GLB materials here. The asset already renders with its
+    // authored material, and forcing a Three.js material recompilation is not
+    // required for target selection and can break custom GLB materials.
     state.indicatorConfigured = true;
   }
 
@@ -180,10 +163,10 @@ function updateHavocTargetIndicator(runtimeScene, target) {
 
   const x = target.getX();
   const y = target.getY();
-  const targetTopZ = typeof target.getUnrotatedAABBMaxZ === 'function'
-    ? target.getUnrotatedAABBMaxZ()
-    : target.getZ();
-  const indicatorZ = targetTopZ + HAVOC_TARGET_CONFIG.arrowZOffset;
+  // Use the mob's actual world Z plus a fixed offset. The previous
+  // getUnrotatedAABBMaxZ() calculation is not safe for this rotated glTF model.
+  const targetBaseZ = typeof target.getZ === 'function' ? target.getZ() : 0;
+  const indicatorZ = targetBaseZ + HAVOC_TARGET_CONFIG.arrowZOffset;
 
   const shown = setHavocIndicatorPosition(indicator, x, y, indicatorZ);
 
@@ -192,7 +175,7 @@ function updateHavocTargetIndicator(runtimeScene, target) {
     havocTargetLogState(runtimeScene, 'INDICATOR_POSITION_FAILED', {
       targetX: x,
       targetY: y,
-      targetTopZ,
+      targetBaseZ,
       indicatorZ,
     });
     return;
@@ -212,7 +195,7 @@ function updateHavocTargetIndicator(runtimeScene, target) {
       visibilityChanged,
       targetX: x,
       targetY: y,
-      targetTopZ,
+      targetBaseZ,
       indicatorZ,
       indicatorVisible: visible,
       indicatorLayer: indicator.layer,
@@ -228,7 +211,7 @@ function updateHavocTargetIndicator(runtimeScene, target) {
     console.log('[Havoc Target] TargetSelectionIcon positioned.', {
       targetX: x,
       targetY: y,
-      targetTopZ,
+      targetBaseZ,
       indicatorX: typeof indicator.getCenterXInScene === 'function' ? indicator.getCenterXInScene() : indicator.getX(),
       indicatorY: typeof indicator.getCenterYInScene === 'function' ? indicator.getCenterYInScene() : indicator.getY(),
       indicatorZ: typeof indicator.getCenterZInScene === 'function' ? indicator.getCenterZInScene() : indicator.getZ(),
