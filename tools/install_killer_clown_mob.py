@@ -25,9 +25,6 @@ def install() -> None:
     source = SOURCE.read_text(encoding='utf-8')
     chase_speed = get_chase_speed()
 
-    # The runtime source is what gets embedded into GDevelop. Keep its
-    # movement value synchronized with the maintainable config file so the
-    # installer cannot silently deploy an older chase speed.
     source, replacements = re.subn(
         r'(\bchaseSpeed:\s*)\d+',
         rf'\g<1>{chase_speed}',
@@ -89,6 +86,32 @@ def install() -> None:
         '  }',
         '}',
         '',
+        '// Runtime chase diagnostic. Logs once per second while a Killer Clown',
+        '// is actively chasing so configured speed can be compared with actual',
+        '// world-space displacement and player movement.',
+        'const killerClownDiagnostics = runtimeScene.__havocKillerClownDiagnostics || { timer: 0, lastMobX: null, lastMobY: null, lastPlayerX: null, lastPlayerY: null };',
+        'killerClownDiagnostics.timer += gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
+        'if (killerClownDiagnostics.timer >= 1) {',
+        '  killerClownDiagnostics.timer = 0;',
+        '  const diagnosticMob = runtimeScene.getObjects(KILLER_CLOWN_CONFIG.objectName).find(m => m.__killerClownAI && m.__killerClownAI.aggressive && m.__killerClownAI.state !== \'return\');',
+        '  const diagnosticPlayer = runtimeScene.getObjects(KILLER_CLOWN_CONFIG.targetObjectName)[0];',
+        '  if (diagnosticMob && diagnosticPlayer) {',
+        '    const mx = diagnosticMob.getX();',
+        '    const my = diagnosticMob.getY();',
+        '    const px = diagnosticPlayer.getX();',
+        '    const py = diagnosticPlayer.getY();',
+        '    const distance = Math.hypot(px - mx, py - my);',
+        '    const mobObserved = killerClownDiagnostics.lastMobX === null ? 0 : Math.hypot(mx - killerClownDiagnostics.lastMobX, my - killerClownDiagnostics.lastMobY);',
+        '    const playerObserved = killerClownDiagnostics.lastPlayerX === null ? 0 : Math.hypot(px - killerClownDiagnostics.lastPlayerX, py - killerClownDiagnostics.lastPlayerY);',
+        '    console.log(`[KILLER-CLOWN-DIAG] configured=${KILLER_CLOWN_CONFIG.chaseSpeed} distance=${distance.toFixed(2)} mob_delta=${mobObserved.toFixed(2)} player_delta=${playerObserved.toFixed(2)} attackRange=${KILLER_CLOWN_CONFIG.attackRange}`);',
+        '    killerClownDiagnostics.lastMobX = mx;',
+        '    killerClownDiagnostics.lastMobY = my;',
+        '    killerClownDiagnostics.lastPlayerX = px;',
+        '    killerClownDiagnostics.lastPlayerY = py;',
+        '  }',
+        '}',
+        'runtimeScene.__havocKillerClownDiagnostics = killerClownDiagnostics;',
+        '',
         '// Pass elapsed time directly. GDevelop can place multiple inline-code',
         '// blocks in a shared generated scope, so avoid a block-scoped dt name here.',
         'updateKillerClowns(runtimeScene, gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene));',
@@ -119,7 +142,7 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.11.')
+            print('Refreshed Killer Clown mob V1.12.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
@@ -131,6 +154,7 @@ def install() -> None:
             print('Clone Z height      : inherited from placed Killer_clown')
             print('Minimum separation  : 1000')
             print('Aggro bridge        : consumed BEFORE AI update')
+            print('Runtime chase diagnostic : ENABLED')
             print('Default camera       : maximum zoom out (2200)')
             return
 
@@ -146,7 +170,7 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.11.')
+        print('Installed Killer Clown mob V1.12.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
@@ -158,6 +182,7 @@ def install() -> None:
         print('Clone Z height      : inherited from placed Killer_clown')
         print('Minimum separation  : 1000')
         print('Aggro bridge        : consumed BEFORE AI update')
+        print('Runtime chase diagnostic : ENABLED')
         print('Default camera       : maximum zoom out (2200)')
         return
 
