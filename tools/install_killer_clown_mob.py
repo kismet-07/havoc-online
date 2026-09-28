@@ -52,9 +52,6 @@ def install() -> None:
         'Idle_Sword': True,
         'Walk_Large': True,
         'Run_Stealth': True,
-        # The mob must keep attacking while the player remains in melee range.
-        # Do not make Sword_Attack non-looping: that causes the mob to finish
-        # one swing and remain frozen until another animation transition.
         'Sword_Attack': True,
     }
 
@@ -77,8 +74,7 @@ def install() -> None:
     replacement.extend(source.splitlines())
     replacement.extend([
         '',
-        '// Consume Brawler aggro requests BEFORE the AI update so the mob',
-        '// enters aggressive state in the same runtime tick.',
+        '// Consume Brawler aggro requests BEFORE the AI update.',
         'const killerClownAggroRequest = runtimeScene.__havocKillerClownAggroRequest;',
         'if (killerClownAggroRequest) {',
         '  const requestedMob = killerClownAggroRequest.mob;',
@@ -127,18 +123,15 @@ def install() -> None:
         '    const my = diagnosticMob.getY();',
         '    const px = diagnosticPlayer.getX();',
         '    const py = diagnosticPlayer.getY();',
-        '    const elapsed = 0.5;',
         '    const distance = Math.hypot(px - mx, py - my);',
         '    const mobDelta = killerClownDiagnostics.lastMobX === null ? 0 : Math.hypot(mx - killerClownDiagnostics.lastMobX, my - killerClownDiagnostics.lastMobY);',
         '    const playerDelta = killerClownDiagnostics.lastPlayerX === null ? 0 : Math.hypot(px - killerClownDiagnostics.lastPlayerX, py - killerClownDiagnostics.lastPlayerY);',
-        '    const mobObservedSpeed = mobDelta / elapsed;',
-        '    const playerObservedSpeed = playerDelta / elapsed;',
         '    const text = [',
         '      \'KILLER CLOWN DIAGNOSTIC\',',
         '      \'------------------------\',',
         '      `Configured chase: ${KILLER_CLOWN_CONFIG.chaseSpeed.toFixed(0)}`,',
-        '      `Mob observed:    ${mobObservedSpeed.toFixed(1)} units/s`,',
-        '      `Player observed: ${playerObservedSpeed.toFixed(1)} units/s`,',
+        '      `Mob observed:    ${(mobDelta / 0.5).toFixed(1)} units/s`,',
+        '      `Player observed: ${(playerDelta / 0.5).toFixed(1)} units/s`,',
         '      `Distance:        ${distance.toFixed(1)}`,',
         '      `Attack range:    ${KILLER_CLOWN_CONFIG.attackRange.toFixed(0)}`,',
         '      `Mob delta/0.5s:  ${mobDelta.toFixed(1)}`,',
@@ -159,8 +152,6 @@ def install() -> None:
         '}',
         'runtimeScene.__havocKillerClownDiagnostics = killerClownDiagnostics;',
         '',
-        '// Pass elapsed time directly. GDevelop can place multiple inline-code',
-        '// blocks in a shared generated scope, so avoid a block-scoped dt name here.',
         'updateKillerClowns(runtimeScene, gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene));',
     ])
 
@@ -184,12 +175,8 @@ def install() -> None:
                 ]
 
         if found:
-            PROJECT.write_text(
-                json.dumps(project, indent=2, ensure_ascii=False),
-                encoding='utf-8',
-                newline='\n',
-            )
-            print('Refreshed Killer Clown mob V1.14.')
+            PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
+            print('Refreshed Killer Clown mob V1.15.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
@@ -197,7 +184,7 @@ def install() -> None:
             print('Walk speed          : 110')
             print(f'Chase speed         : {chase_speed}')
             print('Return speed        : 140')
-            print('Attack animation    : LOOPED')
+            print('Attack animation    : CYCLE-RESTARTED')
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
             print('Minimum separation  : 1000')
@@ -209,16 +196,9 @@ def install() -> None:
         if layout.get('name') != 'Untitled scene':
             continue
 
-        events.append({
-            'type': 'BuiltinCommonInstructions::JsCode',
-            'inlineCode': replacement,
-        })
-        PROJECT.write_text(
-            json.dumps(project, indent=2, ensure_ascii=False),
-            encoding='utf-8',
-            newline='\n',
-        )
-        print('Installed Killer Clown mob V1.14.')
+        events.append({'type': 'BuiltinCommonInstructions::JsCode', 'inlineCode': replacement})
+        PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
+        print('Installed Killer Clown mob V1.15.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
@@ -226,7 +206,7 @@ def install() -> None:
         print('Walk speed          : 110')
         print(f'Chase speed         : {chase_speed}')
         print('Return speed        : 140')
-        print('Attack animation    : LOOPED')
+        print('Attack animation    : CYCLE-RESTARTED')
         print('Animation names     : GLB names preserved')
         print('Clone Z height      : inherited from placed Killer_clown')
         print('Minimum separation  : 1000')
