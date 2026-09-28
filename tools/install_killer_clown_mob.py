@@ -53,8 +53,6 @@ def install() -> None:
             animation['name'] = animation_name
             animation['source'] = animation_name
 
-    camera_updated = False
-
     for layout in project.get('layouts', []):
         events = layout.get('events', [])
         replacement = [MARKER]
@@ -63,6 +61,19 @@ def install() -> None:
             '',
             'const killerClownDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
             'updateKillerClowns(runtimeScene, killerClownDt);',
+            '',
+            '// Consume Brawler aggro requests after the mob AI update. This bridge',
+            '// deliberately uses runtimeScene state instead of cross-event function',
+            '// visibility, which is not guaranteed between separate JsCode events.',
+            'const killerClownAggroRequest = runtimeScene.__havocKillerClownAggroRequest;',
+            'if (killerClownAggroRequest) {',
+            '  const requestedMob = killerClownAggroRequest.mob;',
+            '  const requestedPlayer = killerClownAggroRequest.player;',
+            '  runtimeScene.__havocKillerClownAggroRequest = null;',
+            '  if (requestedMob && requestedPlayer && typeof aggroKillerClown === \'function\') {',
+            '    aggroKillerClown(requestedMob, requestedPlayer);',
+            '  }',
+            '}',
         ])
 
         found = False
@@ -81,7 +92,6 @@ def install() -> None:
                     line.replace('distance: 900', f'distance: {DEFAULT_CAMERA_DISTANCE}')
                     for line in event.get('inlineCode', [])
                 ]
-                camera_updated = True
 
         if found:
             PROJECT.write_text(
@@ -89,7 +99,7 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.6.')
+            print('Refreshed Killer Clown mob V1.7.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
@@ -97,8 +107,7 @@ def install() -> None:
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
             print('Minimum separation  : 1000')
-            print('Idle                : position locked')
-            print('Rotation            : set once per wander target')
+            print('Aggro bridge        : Brawler -> runtimeScene -> Killer Clown')
             print('Default camera      : maximum zoom out (2200)')
             return
 
@@ -114,7 +123,7 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.6.')
+        print('Installed Killer Clown mob V1.7.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
@@ -122,8 +131,7 @@ def install() -> None:
         print('Animation names     : GLB names preserved')
         print('Clone Z height      : inherited from placed Killer_clown')
         print('Minimum separation  : 1000')
-        print('Idle                : position locked')
-        print('Rotation            : set once per wander target')
+        print('Aggro bridge        : Brawler -> runtimeScene -> Killer Clown')
         print('Default camera      : maximum zoom out (2200)')
         return
 
