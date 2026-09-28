@@ -13,9 +13,6 @@ DEFAULT_CAMERA_DISTANCE = 2200
 def install() -> None:
     project = json.loads(PROJECT.read_text(encoding='utf-8'))
     source = SOURCE.read_text(encoding='utf-8')
-    # Keep the embedded runtime aligned with the current Killer Clown config.
-    # The runtime source currently contains the same combat constants inline.
-    # The runtime source is already kept in sync with the dedicated config.
 
     killer_object = None
     for layout in project.get('layouts', []):
@@ -69,8 +66,9 @@ def install() -> None:
         '  }',
         '}',
         '',
-        'const killerClownDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
-        'updateKillerClowns(runtimeScene, killerClownDt);',
+        '// Pass elapsed time directly. GDevelop can place multiple inline-code',
+        '// blocks in a shared generated scope, so avoid a block-scoped dt name here.',
+        'updateKillerClowns(runtimeScene, gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene));',
     ])
 
     for layout in project.get('layouts', []):
