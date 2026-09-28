@@ -98,9 +98,10 @@ function updateBrawlerCombat(runtimeScene, dt) {
   }
 
   // One attack-button press starts automatic combat; another press stops it.
-  // The current attack is allowed to finish before stopping.
-  if (mobileInput.attackRequested ||
-      gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space')) {
+  // Manual joystick movement wins if both inputs occur in the same frame.
+  if (!manualJoystickMovement &&
+      (mobileInput.attackRequested ||
+       gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space'))) {
     combat.autoAttack = !combat.autoAttack;
     combat.attackQueued = combat.autoAttack;
   }
