@@ -22,17 +22,13 @@ HAND_RIGHT_BONES = [
     'mixamorig:RightHandThumb1','mixamorig:RightHandThumb2','mixamorig:RightHandThumb3','mixamorig:RightHandThumb4',
 ]
 
-
 def action_fcurves(action):
     curves = []
-    if not hasattr(action, 'layers'):
-        raise RuntimeError('Blender 5.2 action layer API is unavailable')
     for layer in action.layers:
         for strip in layer.strips:
             for bag in strip.channelbags:
                 curves.extend(list(bag.fcurves))
     return curves
-
 
 def clear_range(curve, start, end):
     indices = [i for i, kp in enumerate(curve.keyframe_points)
@@ -42,19 +38,20 @@ def clear_range(curve, start, end):
             curve.keyframe_points.remove(curve.keyframe_points[index], fast=True)
     curve.update()
 
-
 def insert_key(curve, frame, value, interpolation='BEZIER'):
     kp = curve.keyframe_points.insert(frame, value, options={'FAST'})
     kp.interpolation = interpolation
     return kp
 
-
 def mirrored_quat_value(index, value):
     return value if index in (0, 1) else -value
 
+def copy_keys(curve):
+    return [(kp.co.x, kp.co.y, kp.interpolation) for kp in curve.keyframe_points]
 
 def mirror_right_to_left(action, start, end):
     curves = action_fcurves(action)
+
     for right, left in ARM_PAIRS:
         srcs = {fc.array_index: fc for fc in curves
                 if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'}
@@ -62,9 +59,14 @@ def mirror_right_to_left(action, start, end):
                 if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
         if len(srcs) != 4 or len(dsts) != 4:
             continue
-        source_keys = {idx: [(kp.co.x, kp.co.y, kp.interpolation)
-                             for kp in srcs[idx].keyframe_points
-                             if start <= kp.co.x <= end] for idx in range(4)}
+
+        source_keys = {
+            idx: [(frame, value, interpolation)
+                  for frame, value, interpolation in copy_keys(srcs[idx])
+                  if start <= frame < end]
+            for idx in range(4)
+        }
+
         for idx in range(4):
             clear_range(dsts[idx], start, end)
             for frame, value, interpolation in source_keys[idx]:
@@ -78,19 +80,27 @@ def mirror_right_to_left(action, start, end):
                 if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
         if len(srcs) != 4 or len(dsts) != 4:
             continue
-        source_keys = {idx: [(kp.co.x, kp.co.y, kp.interpolation)
-                             for kp in srcs[idx].keyframe_points
-                             if start <= kp.co.x <= end] for idx in range(4)}
+
+        source_keys = {
+            idx: [(frame, value, interpolation)
+                  for frame, value, interpolation in copy_keys(srcs[idx])
+                  if start <= frame < end]
+            for idx in range(4)
+        }
+
         for idx in range(4):
             clear_range(dsts[idx], start, end)
             for frame, value, interpolation in source_keys[idx]:
                 insert_key(dsts[idx], frame, mirrored_quat_value(idx, value), interpolation)
 
-
 def neutralize_right_arm(action, start, end):
     curves = action_fcurves(action)
-    for bone in ['mixamorig:RightShoulder','mixamorig:RightArm',
-                 'mixamorig:RightForeArm','mixamorig:RightHand']:
+    for bone in [
+        'mixamorig:RightShoulder',
+        'mixamorig:RightArm',
+        'mixamorig:RightForeArm',
+        'mixamorig:RightHand',
+    ]:
         targets = [fc for fc in curves
                    if fc.data_path == f'pose.bones["{bone}"].rotation_quaternion']
         for fc in targets:
@@ -101,17 +111,17 @@ def neutralize_right_arm(action, start, end):
             insert_key(fc, start, value)
             insert_key(fc, end, value)
 
-
-def freeze_final_hold(action, freeze_frame):
-    end = action.frame_range[1]
+def freeze_final_hold_from_pose(action, hold_start, end):
+    # Capture the pose at hold_start before changing keys. Then explicitly
+    # write that pose at both ends of the hold range. This avoids relying on
+    # evaluate(end), which can return a value affected by the original action.
     for fc in action_fcurves(action):
         if not fc.keyframe_points:
             continue
-        final_value = fc.evaluate(end)
-        clear_range(fc, freeze_frame, end)
-        insert_key(fc, freeze_frame, final_value, 'CONSTANT')
-        insert_key(fc, end, final_value, 'CONSTANT')
-
+        hold_value = fc.evaluate(hold_start)
+        clear_range(fc, hold_start, end)
+        insert_key(fc, hold_start, hold_value, 'CONSTANT')
+        insert_key(fc, end, hold_value, 'CONSTANT')
 
 def main():
     if not os.path.exists(INPUT):
@@ -127,20 +137,23 @@ def main():
     start, end = action.frame_range
     duration = end - start
     split = start + duration * 0.48
+    hold_start = start + duration * 0.78
+
     mirror_right_to_left(action, start, split)
     neutralize_right_arm(action, start, split)
+    freeze_final_hold_from_pose(action, hold_start, end)
 
-    freeze_frame = start + duration * 0.78
-    freeze_final_hold(action, freeze_frame)
-
-    # Blender 5.2 updates the action data through the keyframe edits above;
-    # the legacy Action.update_tag(refresh={'DATA'}) call is not supported.
     bpy.context.view_layer.update()
 
     bpy.ops.wm.save_as_mainfile(filepath=WORK_BLEND)
-    bpy.ops.export_scene.gltf(filepath=OUTPUT, export_format='GLB',
-                              export_animations=True, export_skins=True,
-                              export_morph=False, export_apply=False)
+    bpy.ops.export_scene.gltf(
+        filepath=OUTPUT,
+        export_format='GLB',
+        export_animations=True,
+        export_skins=True,
+        export_morph=False,
+        export_apply=False,
+    )
 
     print('\n' + '=' * 68)
     print('BRAWLER ATTACK2 MODIFICATION COMPLETE')
@@ -148,10 +161,9 @@ def main():
     print(f'Action      : {ACTION_NAME}')
     print(f'Range       : {start:.2f} -> {end:.2f}')
     print(f'Hook split  : {split:.2f}')
-    print(f'Final hold  : {freeze_frame:.2f} -> {end:.2f}')
+    print(f'Final hold  : {hold_start:.2f} -> {end:.2f}')
     print('Sequence    : LEFT HOOK -> RIGHT POWER PUNCH -> HOLD')
     print(f'Output      : {OUTPUT}')
-
 
 if __name__ == '__main__':
     main()
