@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,199 +39,29 @@ def build_source() -> list[str]:
     return lines
 
 
-def text_object(name: str, string: str, character_size: int) -> dict:
-    return {
-        'assetStoreId': '',
-        'bold': True,
-        'italic': False,
-        'name': name,
-        'smoothed': True,
-        'tags': 'HavocMobileUI',
-        'type': 'TextObject::Text',
-        'underlined': False,
-        'variables': [],
-        'effects': [],
-        'behaviors': [],
-        'string': string,
-        'font': '',
-        'characterSize': character_size,
-        'color': {'b': 255, 'g': 255, 'r': 255},
-    }
-
-
-def target_indicator_object(name: str, width: int, height: int, depth: int) -> dict:
-    return {
-        'name': name,
-        'tags': 'HavocCombatUI',
-        'type': 'Primitive3D::Box',
-        'variables': [],
-        'effects': [],
-        'behaviors': [],
-        'content': {
-            'width': width,
-            'height': height,
-            'depth': depth,
-            'materialType': 'Basic',
-            'tint': '#ff2020',
-            'frontFaceResourceName': '',
-            'backFaceResourceName': '',
-            'topFaceResourceName': '',
-            'bottomFaceResourceName': '',
-            'leftFaceResourceName': '',
-            'rightFaceResourceName': '',
-            'frontFaceVisible': True,
-            'backFaceVisible': True,
-            'topFaceVisible': True,
-            'bottomFaceVisible': True,
-            'leftFaceVisible': True,
-            'rightFaceVisible': True,
-            'frontFaceResourceRepeat': False,
-            'backFaceResourceRepeat': False,
-            'topFaceResourceRepeat': False,
-            'bottomFaceResourceRepeat': False,
-            'leftFaceResourceRepeat': False,
-            'rightFaceResourceRepeat': False,
-            'enableTextureTransparency': False,
-            'isCastingShadow': False,
-            'isReceivingShadow': False,
-        },
-    }
-
-
-def instance(name: str, x: float, y: float, z_order: int) -> dict:
-    return {
-        'angle': 0,
-        'customSize': False,
-        'height': 0,
-        'layer': 'UI',
-        'name': name,
-        'persistentUuid': str(uuid.uuid4()),
-        'width': 0,
-        'x': x,
-        'y': y,
-        'zOrder': z_order,
-        'numberProperties': [],
-        'stringProperties': [],
-        'initialVariables': [],
-    }
-
-
-def ensure_mobile_ui(layout: dict) -> None:
-    objects = layout.setdefault('objects', [])
-    object_names = {obj.get('name') for obj in objects}
-
-    definitions = [
-        text_object('MobileJoystickBase', 'O', 72),
-        text_object('MobileJoystickKnob', '+', 36),
-        text_object('MobileAttackButton', '[ ATTACK ]', 28),
-    ]
-
-    for definition in definitions:
-        if definition['name'] not in object_names:
-            objects.append(definition)
-
-    folder = layout.setdefault('objectsFolderStructure', {'folderName': '__ROOT'})
-    children = folder.setdefault('children', [])
-    child_names = {child.get('objectName') for child in children}
-    for definition in definitions:
-        if definition['name'] not in child_names:
-            children.append({'objectName': definition['name']})
-
-    layers = layout.setdefault('layers', [])
-    ui_layer = next((layer for layer in layers if layer.get('name') == 'UI'), None)
-
-    if ui_layer is None:
-        ui_layer = {
-            'ambientLightColorB': 0,
-            'ambientLightColorG': 0,
-            'ambientLightColorR': 0,
-            'followBaseLayerCamera': False,
-            'isLightingLayer': False,
-            'name': 'UI',
-            'visibility': True,
-            'cameras': [{
-                'defaultSize': True,
-                'defaultViewport': True,
-                'height': 0,
-                'viewportBottom': 1,
-                'viewportLeft': 0,
-                'viewportRight': 1,
-                'viewportTop': 0,
-                'width': 0,
-            }],
-            'effects': [],
-            'instances': [],
-        }
-        layers.append(ui_layer)
-    else:
-        ui_layer['followBaseLayerCamera'] = False
-        ui_layer.setdefault('instances', [])
-
-    instances = ui_layer['instances']
-    instance_names = {item.get('name') for item in instances}
-
-    for item in [
-        instance('MobileJoystickBase', 80, 500, 100),
-        instance('MobileJoystickKnob', 105, 525, 101),
-        instance('MobileAttackButton', 1020, 590, 100),
-    ]:
-        if item['name'] not in instance_names:
-            instances.append(item)
-
-
-def ensure_target_indicator_objects(layout: dict) -> None:
-    objects = layout.setdefault('objects', [])
-
-    radius = 260
-    thickness = 20
-    height = 6
-    diameter = radius * 2
-
-    definitions = [
-        target_indicator_object('TargetSelectionRingTop', diameter, height, thickness),
-        target_indicator_object('TargetSelectionRingBottom', diameter, height, thickness),
-        target_indicator_object('TargetSelectionRingLeft', thickness, height, diameter),
-        target_indicator_object('TargetSelectionRingRight', thickness, height, diameter),
-    ]
-
-    object_names = {obj.get('name') for obj in objects}
-    for definition in definitions:
-        if definition['name'] not in object_names:
-            objects.append(definition)
-
-    folder = layout.setdefault('objectsFolderStructure', {'folderName': '__ROOT'})
-    children = folder.setdefault('children', [])
-    child_names = {child.get('objectName') for child in children}
-    for definition in definitions:
-        if definition['name'] not in child_names:
-            children.append({'objectName': definition['name']})
-
-
 def install() -> None:
+    if not PROJECT.exists():
+        raise RuntimeError(f'Missing project file: {PROJECT}')
+
     project = json.loads(PROJECT.read_text(encoding='utf-8'))
     replacement = build_source()
-    found = False
+    matches = []
 
-    for layout in project.get('layouts', []):
-        for event in layout.get('events', []):
+    for layout_index, layout in enumerate(project.get('layouts', [])):
+        for event_index, event in enumerate(layout.get('events', [])):
             if event.get('type') != 'BuiltinCommonInstructions::JsCode':
                 continue
-
             inline = event.get('inlineCode', [])
-            joined = '\n'.join(inline)
+            if MARKER in '\n'.join(inline):
+                matches.append((layout_index, event_index, event))
 
-            if MARKER in joined or "runtimeScene.getObjects('Character')[0]" in joined:
-                event['inlineCode'] = replacement
-                ensure_mobile_ui(layout)
-                ensure_target_indicator_objects(layout)
-                found = True
-                break
+    if len(matches) != 1:
+        raise RuntimeError(
+            f'Safety check failed: expected exactly one {MARKER} event, found {len(matches)}.'
+        )
 
-        if found:
-            break
-
-    if not found:
-        raise RuntimeError('Brawler JavaScript event was not found.')
+    layout_index, event_index, event = matches[0]
+    event['inlineCode'] = replacement
 
     PROJECT.write_text(
         json.dumps(project, indent=2, ensure_ascii=False),
@@ -240,13 +69,12 @@ def install() -> None:
         newline='\n',
     )
 
-    print('Installed Brawler combat/input test source.')
-    print('Added UI layer and temporary mobile controls.')
-    print('Added target selection and target approach.')
-    print('Added red target selection indicator.')
-    print('Added Attack1/Attack2 presentation sequence.')
-    print('No HP, damage, hitbox, death or database logic added.')
-    print('Killer Clown event was not modified.')
+    print('Brawler inline-code synchronization complete.')
+    print(f'Replaced Brawler event: layouts[{layout_index}].events[{event_index}]')
+    print('Source files embedded:')
+    for _, display_path in SOURCE_FILES:
+        print(f'  - {display_path}')
+    print('No layout objects, instances, layers, target indicator, Killer Clown event, HP, damage, or database data were modified.')
 
 
 if __name__ == '__main__':
