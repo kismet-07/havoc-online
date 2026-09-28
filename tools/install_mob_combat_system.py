@@ -24,9 +24,6 @@ def remove_existing_block(lines: list[str]) -> list[str]:
             inside = True
             continue
         if inside:
-            # The installer owns the block through the end of the embedded
-            # mob-combat source/call section. We only ever place it immediately
-            # before the runtime entry point, so stop when the entry marker is hit.
             if line.strip() in {
                 "const brawlerDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);",
                 "const killerClownDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);",
@@ -88,7 +85,7 @@ def install() -> None:
     brawler_event['inlineCode'] = insert_before_entry(
         brawler_lines,
         "const brawlerDt =",
-        'consumeMobDamageQueue(runtimeScene, player);',
+        "consumeMobDamageQueue(runtimeScene, runtimeScene.getObjects('Character')[0]);",
     )
     killer_event['inlineCode'] = insert_before_entry(
         killer_lines,
