@@ -27,7 +27,7 @@ const KillerClownConfig = Object.freeze({
   combat: {
     aggressiveByDefault: false,
     aggroRange: 0,
-    attackRange: 450,
+    attackRange: 160,
     attackCooldownSeconds: 0.8,
     leashDistance: 3200,
     homeArrivalDistance: 12,
