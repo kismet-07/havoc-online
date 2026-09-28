@@ -25,7 +25,7 @@ const KILLER_CLOWN_CONFIG = {
     attack: 'Sword_Attack',
   },
   walkSpeed: 110,
-  chaseSpeed: 180,
+  chaseSpeed: 360,
   returnSpeed: 140,
   idleMinSeconds: 2,
   idleMaxSeconds: 5,
@@ -228,25 +228,19 @@ function updateKillerClowns(runtimeScene, dt) {
 
   const updateAggressiveMob = (mob, ai, dt) => {
     const player = ai.targetPlayer;
-
     if (ai.state === 'return') {
       const homeDx = ai.homeX - mob.getX();
       const homeDy = ai.homeY - mob.getY();
       const homeDistance = Math.sqrt(homeDx * homeDx + homeDy * homeDy);
-
       if (homeDistance <= KILLER_CLOWN_CONFIG.homeArrivalDistance) {
         finishReturnHome(mob, ai);
         return;
       }
-
       if (homeDistance > 0.001) {
         const nx = homeDx / homeDistance;
         const ny = homeDy / homeDistance;
         const step = Math.min(KILLER_CLOWN_CONFIG.returnSpeed * dt, homeDistance);
-        mob.setPosition(
-          clamp(mob.getX() + nx * step, floorMinX, floorMaxX),
-          clamp(mob.getY() + ny * step, floorMinY, floorMaxY),
-        );
+        mob.setPosition(clamp(mob.getX() + nx * step, floorMinX, floorMaxX), clamp(mob.getY() + ny * step, floorMinY, floorMaxY));
         applySpawnHeight(mob);
         mob.setAngle(Math.atan2(ny, nx) * 180 / Math.PI);
         mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.run);
@@ -254,27 +248,22 @@ function updateKillerClowns(runtimeScene, dt) {
       }
       return;
     }
-
     if (!killerClownTargetIsValid(player)) {
       beginReturnHome(mob, ai);
       return;
     }
-
     const homeDistance = Math.sqrt(distanceSquared(mob.getX(), mob.getY(), ai.homeX, ai.homeY));
     if (homeDistance >= KILLER_CLOWN_CONFIG.leashDistance) {
       beginReturnHome(mob, ai);
       return;
     }
-
     const dx = player.getX() - mob.getX();
     const dy = player.getY() - mob.getY();
     const distance = Math.sqrt(dx * dx + dy * dy);
-
     if (distance > KILLER_CLOWN_CONFIG.leashDistance) {
       beginReturnHome(mob, ai);
       return;
     }
-
     if (distance > KILLER_CLOWN_CONFIG.attackRange) {
       if (distance > 0.001) {
         const nx = dx / distance;
@@ -288,10 +277,8 @@ function updateKillerClowns(runtimeScene, dt) {
       }
       return;
     }
-
     mob.setAngle(Math.atan2(dy, dx) * 180 / Math.PI);
     ai.attackTimer = Math.max(0, ai.attackTimer - dt);
-
     if (mob.getAnimationName() === KILLER_CLOWN_CONFIG.animations.attack) {
       if (!mob.hasAnimationEnded()) return;
       mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.idle);
@@ -299,7 +286,6 @@ function updateKillerClowns(runtimeScene, dt) {
       ai.attackTimer = KILLER_CLOWN_CONFIG.attackCooldownSeconds;
       return;
     }
-
     if (ai.attackTimer <= 0) {
       mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.attack);
       mob.setAnimationSpeedScale(1);
@@ -314,12 +300,8 @@ function updateKillerClowns(runtimeScene, dt) {
     system.initialized = true;
     const existing = runtimeScene.getObjects(KILLER_CLOWN_CONFIG.objectName);
     if (existing.length > 0 && typeof existing[0].getZ === 'function') system.spawnZ = existing[0].getZ();
-
     const spawnPositions = buildInitialSpawnPositions();
-    for (let i = 0; i < existing.length && i < spawnPositions.length; i += 1) {
-      initializeMob(existing[i], undefined, spawnPositions[i]);
-    }
-
+    for (let i = 0; i < existing.length && i < spawnPositions.length; i += 1) initializeMob(existing[i], undefined, spawnPositions[i]);
     let spawnIndex = existing.length;
     while (runtimeScene.getObjects(KILLER_CLOWN_CONFIG.objectName).length < KILLER_CLOWN_CONFIG.maxPopulation) {
       const forcedPosition = spawnPositions[spawnIndex] || randomFloorPosition(runtimeScene.getObjects(KILLER_CLOWN_CONFIG.objectName), null);
@@ -339,28 +321,22 @@ function updateKillerClowns(runtimeScene, dt) {
   const allMobs = runtimeScene.getObjects(KILLER_CLOWN_CONFIG.objectName);
   for (const mob of allMobs) {
     if (!mob.__killerClownAI) initializeMob(mob, 'idle');
-
     const ai = mob.__killerClownAI;
     if (ai.dead) continue;
-
     if (ai.aggressive || ai.state === 'return') {
       updateAggressiveMob(mob, ai, dt);
       continue;
     }
-
     ai.timer -= dt;
-
     if (ai.state === 'idle') {
       holdIdlePosition(mob, ai);
       if (ai.timer <= 0) beginWander(mob, ai, allMobs);
       continue;
     }
-
     if (ai.state === 'wander') {
       const dx = ai.targetX - mob.getX();
       const dy = ai.targetY - mob.getY();
       const distance = Math.sqrt(dx * dx + dy * dy);
-
       if (distance < 8 || ai.timer <= 0) {
         ai.state = 'idle';
         ai.timer = randomBetween(KILLER_CLOWN_CONFIG.idleMinSeconds, KILLER_CLOWN_CONFIG.idleMaxSeconds);
@@ -369,18 +345,15 @@ function updateKillerClowns(runtimeScene, dt) {
         holdIdlePosition(mob, ai);
         continue;
       }
-
       const nx = dx / distance;
       const ny = dy / distance;
       const step = Math.min(KILLER_CLOWN_CONFIG.walkSpeed * dt, distance);
       const nextX = clamp(mob.getX() + nx * step, floorMinX, floorMaxX);
       const nextY = clamp(mob.getY() + ny * step, floorMinY, floorMaxY);
-
       if (!isFarEnough(nextX, nextY, allMobs, KILLER_CLOWN_CONFIG.minimumSeparation, mob)) {
         beginWander(mob, ai, allMobs);
         continue;
       }
-
       mob.setPosition(nextX, nextY);
       applySpawnHeight(mob);
       mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.walk);
@@ -393,20 +366,16 @@ function aggroKillerClown(mob, player) {
   if (!mob || !mob.__killerClownAI) return;
   if (typeof mob.getName === 'function' && mob.getName() !== KILLER_CLOWN_CONFIG.objectName) return;
   if (!killerClownTargetIsValid(player)) return;
-
   const ai = mob.__killerClownAI;
   if (ai.dead) return;
-
   ai.targetPlayer = player;
   ai.aggressive = true;
   ai.state = 'aggro';
   ai.returningHome = false;
   ai.attackTimer = 0;
-
   const dx = player.getX() - mob.getX();
   const dy = player.getY() - mob.getY();
   if (Math.abs(dx) + Math.abs(dy) > 0.001) mob.setAngle(Math.atan2(dy, dx) * 180 / Math.PI);
-
   mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.run);
   mob.setAnimationSpeedScale(1);
 }
