@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760">
+<defs>
+  <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#080b14"/><stop offset="1" stop-color="#171322"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="1400" height="760" fill="url(#bg)"/>
+<text x="700" y="48" fill="#fff" font-family="Arial,sans-serif" font-size="30" font-weight="700" text-anchor="middle">HAVOC ONLINE — WEAPON UPGRADE GLOW PROGRESSION</text>
+<text x="700" y="76" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="15" text-anchor="middle">Visual target for enhancement effects • +0 through +50</text>
+<rect x="12" y="105" width="250" height="285" rx="12" fill="#0c1020" stroke="#d8d8d8" stroke-opacity=".65" stroke-width="2"/>
+<text x="137" y="150" fill="#d8d8d8" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+0</text>
+<circle cx="137" cy="230" r="52" fill="#d8d8d8" fill-opacity=".08" stroke="#d8d8d8" stroke-opacity=".35"/>
+<path d="M105 250 L115 195 L140 180 L166 202 L173 254 L147 273 Z" fill="#202535" stroke="#d8d8d8" stroke-width="4" filter="url(#glow)"/>
+<text x="137" y="312" fill="#fff" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle">Normal</text>
+<text x="137" y="339" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">No glow</text>
+<text x="137" y="365" fill="#d8d8d8" font-family="Arial,sans-serif" font-size="11" text-anchor="middle">BASE</text>
+<rect x="270" y="105" width="250" height="285" rx="12" fill="#0c1020" stroke="#ff8a30" stroke-opacity=".65" stroke-width="2"/>
+<text x="395" y="150" fill="#ff8a30" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+7</text>
+<circle cx="395" cy="230" r="52" fill="#ff8a30" fill-opacity=".08" stroke="#ff8a30" stroke-opacity=".35"/>
+<path d="M363 250 L373 195 L398 180 L424 202 L431 254 L405 273 Z" fill="#202535" stroke="#ff8a30" stroke-width="4" filter="url(#glow)"/>
+<path d="M337 258 Q320 225 351 194 M447 263 Q470 226 438 193" fill="none" stroke="#ff8a30" stroke-width="4"/>
+<text x="395" y="312" fill="#fff" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle">Faint Orange</text>
+<text x="395" y="339" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Faint orange</text>
+<text x="395" y="365" fill="#ff8a30" font-family="Arial,sans-serif" font-size="11" text-anchor="middle">COLOR TIER</text>
+<rect x="528" y="105" width="250" height="285" rx="12" fill="#0c1020" stroke="#ffd34d" stroke-opacity=".65" stroke-width="2"/>
+<text x="653" y="150" fill="#ffd34d" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+9</text>
+<circle cx="653" cy="230" r="52" fill="#ffd34d" fill-opacity=".08" stroke="#ffd34d" stroke-opacity=".35"/>
+<path d="M621 250 L631 195 L656 180 L682 202 L689 254 L663 273 Z" fill="#202535" stroke="#ffd34d" stroke-width="4" filter="url(#glow)"/>
+<path d="M595 258 Q578 225 609 194 M705 263 Q728 226 696 193" fill="none" stroke="#ffd34d" stroke-width="5"/>
+<text x="653" y="312" fill="#fff" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle">Gold</text>
+<text x="653" y="339" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Gold</text>
+<text x="653" y="365" fill="#ffd34d" font-family="Arial,sans-serif" font-size="11" text-anchor="middle">COLOR TIER</text>
+<rect x="786" y="105" width="250" height="285" rx="12" fill="#0c1020" stroke="#3c8cff" stroke-opacity=".65" stroke-width="2"/>
+<text x="911" y="150" fill="#3c8cff" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+10</text>
+<circle cx="911" cy="230" r="52" fill="#3c8cff" fill-opacity=".08" stroke="#3c8cff" stroke-opacity=".35"/>
+<path d="M879 250 L889 195 L914 180 L940 202 L947 254 L921 273 Z" fill="#202535" stroke="#3c8cff" stroke-width="4" filter="url(#glow)"/>
+<path d="M853 258 Q836 225 867 194 M963 263 Q986 226 954 193" fill="none" stroke="#3c8cff" stroke-width="5"/>
+<text x="911" y="312" fill="#fff" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle">Blue</text>
+<text x="911" y="339" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Ran Online-style blue</text>
+<text x="911" y="365" fill="#3c8cff" font-family="Arial,sans-serif" font-size="11" text-anchor="middle">COLOR TIER</text>
+<rect x="1044" y="105" width="250" height="285" rx="12" fill="#0c1020" stroke="#8fd8ff" stroke-opacity=".65" stroke-width="2"/>
+<text x="1169" y="150" fill="#8fd8ff" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+15</text>
+<circle cx="1169" cy="230" r="52" fill="#8fd8ff" fill-opacity=".08" stroke="#8fd8ff" stroke-opacity=".35"/>
+<path d="M1137 250 L1147 195 L1172 180 L1198 202 L1205 254 L1179 273 Z" fill="#202535" stroke="#8fd8ff" stroke-width="5" filter="url(#glow)"/>
+<path d="M1111 258 Q1094 225 1125 194 M1221 263 Q1244 226 1212 193" fill="none" stroke="#8fd8ff" stroke-width="6"/>
+<text x="1169" y="312" fill="#fff" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle">Blue / White</text>
+<text x="1169" y="339" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Brighter energy</text>
+<text x="1169" y="365" fill="#8fd8ff" font-family="Arial,sans-serif" font-size="11" text-anchor="middle">ENERGY TIER</text>
+<rect x="12" y="415" width="223" height="285" rx="12" fill="#0c1020" stroke="#20eaff" stroke-opacity=".65" stroke-width="2"/>
+<text x="123" y="460" fill="#20eaff" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+20</text>
+<path d="M91 560 L101 505 L126 490 L152 512 L159 564 L133 583 Z" fill="#202535" stroke="#20eaff" stroke-width="5" filter="url(#glow)"/>
+<circle cx="123" cy="540" r="70" fill="none" stroke="#20eaff" stroke-width="2" stroke-dasharray="5 12"/>
+<text x="123" y="622" fill="#fff" font-family="Arial,sans-serif" font-size="16" font-weight="700" text-anchor="middle">Blue + Cyan</text>
+<text x="123" y="648" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Cyan particles</text>
+<rect x="243" y="415" width="223" height="285" rx="12" fill="#0c1020" stroke="#19cfff" stroke-opacity=".65" stroke-width="2"/>
+<text x="354" y="460" fill="#19cfff" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+25</text>
+<path d="M322 560 L332 505 L357 490 L383 512 L390 564 L364 583 Z" fill="#202535" stroke="#19cfff" stroke-width="6" filter="url(#glow)"/>
+<circle cx="354" cy="540" r="70" fill="none" stroke="#19cfff" stroke-width="3" stroke-dasharray="9 14"/>
+<text x="354" y="622" fill="#fff" font-family="Arial,sans-serif" font-size="16" font-weight="700" text-anchor="middle">Blue / Cyan</text>
+<text x="354" y="648" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Orbiting particles + bloom</text>
+<rect x="474" y="415" width="223" height="285" rx="12" fill="#0c1020" stroke="#8d62ff" stroke-opacity=".65" stroke-width="2"/>
+<text x="585" y="460" fill="#8d62ff" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+30</text>
+<path d="M553 560 L563 505 L588 490 L614 512 L621 564 L595 583 Z" fill="#202535" stroke="#8d62ff" stroke-width="6" filter="url(#glow)"/>
+<circle cx="585" cy="540" r="70" fill="none" stroke="#8d62ff" stroke-width="3" stroke-dasharray="7 16"/>
+<text x="585" y="622" fill="#fff" font-family="Arial,sans-serif" font-size="16" font-weight="700" text-anchor="middle">Purple Transition</text>
+<text x="585" y="648" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Blue moving toward purple</text>
+<rect x="705" y="415" width="223" height="285" rx="12" fill="#0c1020" stroke="#ef45ff" stroke-opacity=".65" stroke-width="2"/>
+<text x="816" y="460" fill="#ef45ff" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+35</text>
+<path d="M784 560 L794 505 L819 490 L845 512 L852 564 L826 583 Z" fill="#202535" stroke="#ef45ff" stroke-width="6" filter="url(#glow)"/>
+<circle cx="816" cy="540" r="70" fill="none" stroke="#ef45ff" stroke-width="4" stroke-dasharray="6 13"/>
+<text x="816" y="622" fill="#fff" font-family="Arial,sans-serif" font-size="16" font-weight="700" text-anchor="middle">Purple / Magenta</text>
+<text x="816" y="648" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Strong energy field</text>
+<rect x="936" y="415" width="223" height="285" rx="12" fill="#0c1020" stroke="#ff3b62" stroke-opacity=".65" stroke-width="2"/>
+<text x="1047" y="460" fill="#ff3b62" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+40</text>
+<path d="M1015 560 L1025 505 L1050 490 L1076 512 L1083 564 L1057 583 Z" fill="#202535" stroke="#ff3b62" stroke-width="7" filter="url(#glow)"/>
+<circle cx="1047" cy="540" r="70" fill="none" stroke="#ff3b62" stroke-width="5" stroke-dasharray="5 10"/>
+<circle cx="1047" cy="540" r="18" fill="#fff" filter="url(#glow)"/>
+<text x="1047" y="622" fill="#fff" font-family="Arial,sans-serif" font-size="16" font-weight="700" text-anchor="middle">Crimson / Magenta</text>
+<text x="1047" y="648" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">White-hot core</text>
+<rect x="1170" y="415" width="223" height="285" rx="12" fill="#0c1020" stroke="#fff" stroke-opacity=".65" stroke-width="2"/>
+<text x="1281" y="460" fill="#fff" font-family="Arial,sans-serif" font-size="34" font-weight="700" text-anchor="middle">+50</text>
+<path d="M1249 560 L1259 505 L1284 490 L1310 512 L1317 564 L1291 583 Z" fill="#202535" stroke="#fff" stroke-width="7" filter="url(#glow)"/>
+<path d="M1218 520 Q1281 460 1344 520 M1218 565 Q1281 625 1344 565" fill="none" stroke="#ff3b62" stroke-width="4"/>
+<path d="M1225 550 Q1281 475 1337 550" fill="none" stroke="#20eaff" stroke-width="4"/>
+<path d="M1230 580 Q1281 500 1332 580" fill="none" stroke="#ffd34d" stroke-width="4"/>
+<text x="1281" y="622" fill="#fff" font-family="Arial,sans-serif" font-size="16" font-weight="700" text-anchor="middle">Rainbow</text>
+<text x="1281" y="648" fill="#aeb7c8" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Maximum enhancement</text>
+<text x="700" y="742" fill="#7f8ba3" font-family="Arial,sans-serif" font-size="12" text-anchor="middle">Design direction: enhancement level controls emissive intensity, particle density, bloom, orbiting effects, and color transition.</text>
+</svg>
