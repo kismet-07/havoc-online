@@ -1,5 +1,6 @@
 import bpy
 import os
+import math
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 INPUT = os.path.join(ROOT, 'brawler_inplace_attack2_modified.glb')
@@ -26,10 +27,7 @@ def action_fcurves(action):
 
 def curves_for_bones(all_curves, bones):
     wanted = tuple(f'pose.bones["{bone}"]' for bone in bones)
-    return [
-        fc for fc in all_curves
-        if any(fc.data_path.startswith(prefix) for prefix in wanted)
-    ]
+    return [fc for fc in all_curves if any(fc.data_path.startswith(prefix) for prefix in wanted)]
 
 def max_step_motion(curves, start, end, samples=SAMPLE_COUNT):
     maximum = 0.0
@@ -43,16 +41,6 @@ def max_step_motion(curves, start, end, samples=SAMPLE_COUNT):
         previous = current
     return maximum
 
-def max_hold_delta(curves, start, end, samples=SAMPLE_COUNT):
-    maximum = 0.0
-    if end <= start:
-        return maximum
-    for i in range(samples + 1):
-        frame = start + (end - start) * (i / samples)
-        for fc in curves:
-            maximum = max(maximum, abs(fc.evaluate(frame) - fc.evaluate(start)))
-    return maximum
-
 def main():
     if not os.path.exists(INPUT):
         raise FileNotFoundError(INPUT)
@@ -62,40 +50,38 @@ def main():
 
     action = bpy.data.actions.get(ACTION_NAME)
     if action is None:
-        raise RuntimeError(f"Missing action: {ACTION_NAME}")
+        raise RuntimeError(f'Missing action: {ACTION_NAME}')
 
     first, last = action.frame_range
     duration = last - first
     hook_end = first + duration * 0.48
-    hold_start = first + duration * 0.78
+    hold_start = math.ceil(first + duration * 0.78)
 
     all_curves = action_fcurves(action)
     arm_curves = curves_for_bones(all_curves, ARM_BONES)
 
-    # Do not assume that frame 62 represents the pose the exporter should hold.
-    # Measure the actual motion across the hold interval instead.
     hook_motion = max_step_motion(arm_curves, first, hook_end)
     punch_motion = max_step_motion(arm_curves, hook_end, hold_start)
     hold_motion = max_step_motion(arm_curves, hold_start, last)
 
-    print("\n" + "=" * 70)
-    print("BRAWLER ATTACK2 EXPORTED GLB VALIDATION")
-    print("=" * 70)
-    print(f"Action           : {ACTION_NAME}")
-    print(f"Frame range      : {first:.2f} -> {last:.2f}")
-    print(f"Hook section     : {first:.2f} -> {hook_end:.2f}")
-    print(f"Power punch      : {hook_end:.2f} -> {hold_start:.2f}")
-    print(f"Final hold       : {hold_start:.2f} -> {last:.2f}")
-    print(f"Hook arm motion  : {hook_motion:.8f}")
-    print(f"Punch arm motion : {punch_motion:.8f}")
-    print(f"Hold arm motion  : {hold_motion:.8f}")
-    print(f"Hold stable      : {hold_motion <= HOLD_EPS}")
+    print('\n' + '=' * 70)
+    print('BRAWLER ATTACK2 EXPORTED GLB VALIDATION')
+    print('=' * 70)
+    print(f'Action           : {ACTION_NAME}')
+    print(f'Frame range      : {first:.2f} -> {last:.2f}')
+    print(f'Hook section     : {first:.2f} -> {hook_end:.2f}')
+    print(f'Power punch      : {hook_end:.2f} -> {hold_start:.2f}')
+    print(f'Final hold       : {hold_start:.2f} -> {last:.2f}')
+    print(f'Hook arm motion  : {hook_motion:.8f}')
+    print(f'Punch arm motion : {punch_motion:.8f}')
+    print(f'Hold arm motion  : {hold_motion:.8f}')
+    print(f'Hold stable      : {hold_motion <= HOLD_EPS}')
     passed = hook_motion > MOTION_EPS and punch_motion > MOTION_EPS and hold_motion <= HOLD_EPS
-    print(f"PASS             : {passed}")
-    print("=" * 70)
+    print(f'PASS             : {passed}')
+    print('=' * 70)
 
     if not passed:
         raise SystemExit(1)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
