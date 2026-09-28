@@ -6,7 +6,7 @@
  *                                      \-> leash exceeded -> return home
  *
  * The scene contains one Killer_clown template instance. Missing population
- * members are created at runtime around that template's spawn point.
+ * members are created around that template's spawn point.
  *
  * No HP, damage, death, stats, networking or database state is implemented.
  */
@@ -35,8 +35,8 @@ const KILLER_CLOWN_CONFIG = {
   spawnColumns: 5,
   spawnRows: 3,
   spawnSpacing: 1100,
-  spawnAttempts: 80,
-  attackRange: 160,
+  spawnAttempts: 120,
+  attackRange: 450,
   attackCooldownSeconds: 0.8,
   leashDistance: 3200,
   homeArrivalDistance: 12,
@@ -109,22 +109,28 @@ function killerClownBuildClusterPositions(anchorX, anchorY, floor) {
   const positions = [];
   const columns = KILLER_CLOWN_CONFIG.spawnColumns;
   const rows = KILLER_CLOWN_CONFIG.spawnRows;
-  const centerColumn = (columns - 1) / 2;
-  const centerRow = (rows - 1) / 2;
+  const halfWidth = ((columns - 1) * KILLER_CLOWN_CONFIG.spawnSpacing) / 2;
+  const halfHeight = ((rows - 1) * KILLER_CLOWN_CONFIG.spawnSpacing) / 2;
+
+  // Clamp the cluster CENTER, not each point. Clamping each point separately
+  // can compress the outer row/column and break minimum separation near edges.
+  const centerX = killerClownClamp(
+    anchorX,
+    bounds.minX + halfWidth,
+    bounds.maxX - halfWidth,
+  );
+  const centerY = killerClownClamp(
+    anchorY,
+    bounds.minY + halfHeight,
+    bounds.maxY - halfHeight,
+  );
 
   for (let row = 0; row < rows; row += 1) {
     for (let column = 0; column < columns; column += 1) {
-      const x = killerClownClamp(
-        anchorX + (column - centerColumn) * KILLER_CLOWN_CONFIG.spawnSpacing,
-        bounds.minX,
-        bounds.maxX,
-      );
-      const y = killerClownClamp(
-        anchorY + (row - centerRow) * KILLER_CLOWN_CONFIG.spawnSpacing,
-        bounds.minY,
-        bounds.maxY,
-      );
-      positions.push({ x, y });
+      positions.push({
+        x: centerX + (column - (columns - 1) / 2) * KILLER_CLOWN_CONFIG.spawnSpacing,
+        y: centerY + (row - (rows - 1) / 2) * KILLER_CLOWN_CONFIG.spawnSpacing,
+      });
     }
   }
 
@@ -139,45 +145,66 @@ function killerClownFindSpawnPosition(anchor, floor, existing, preferredPosition
   }
 
   const bounds = killerClownGetFloorBounds(floor);
+
+  // Fallback remains around the original template instead of scattering new
+  // mobs across the entire floor.
   for (let attempt = 0; attempt < KILLER_CLOWN_CONFIG.spawnAttempts; attempt += 1) {
     const angle = Math.random() * Math.PI * 2;
-    const radius = killerClownRandomBetween(1100, 2200);
+    const radius = killerClownRandomBetween(1200, 3000);
     const x = killerClownClamp(anchor.x + Math.cos(angle) * radius, bounds.minX, bounds.maxX);
     const y = killerClownClamp(anchor.y + Math.sin(angle) * radius, bounds.minY, bounds.maxY);
     if (killerClownIsFarEnough(x, y, existing, null)) return { x, y };
   }
 
-  return {
-    x: killerClownClamp(anchor.x, bounds.minX, bounds.maxX),
-    y: killerClownClamp(anchor.y, bounds.minY, bounds.maxY),
-  };
+  // Never intentionally stack a clone on another mob.
+  return null;
+}
+
+function killerClownChooseWanderDirection(mob, allMobs, floor) {
+  const bounds = killerClownGetFloorBounds(floor);
+  const preferredAngle = Math.random() * Math.PI * 2;
+
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    const angle = attempt === 0
+      ? preferredAngle
+      : Math.random() * Math.PI * 2;
+    const distance = killerClownRandomBetween(700, 1400);
+    const targetX = killerClownClamp(
+      mob.getX() + Math.cos(angle) * distance,
+      bounds.minX,
+      bounds.maxX,
+    );
+    const targetY = killerClownClamp(
+      mob.getY() + Math.sin(angle) * distance,
+      bounds.minY,
+      bounds.maxY,
+    );
+
+    if (killerClownIsFarEnough(targetX, targetY, allMobs, mob)) {
+      return { x: Math.cos(angle), y: Math.sin(angle) };
+    }
+  }
+
+  return null;
 }
 
 function killerClownBeginWander(mob, ai, allMobs, floor) {
-  const bounds = killerClownGetFloorBounds(floor);
-  const angle = Math.random() * Math.PI * 2;
-  const distance = killerClownRandomBetween(700, 1400);
-  let targetX = killerClownClamp(mob.getX() + Math.cos(angle) * distance, bounds.minX, bounds.maxX);
-  let targetY = killerClownClamp(mob.getY() + Math.sin(angle) * distance, bounds.minY, bounds.maxY);
-
-  if (!killerClownIsFarEnough(targetX, targetY, allMobs, mob)) {
-    targetX = mob.getX();
-    targetY = mob.getY();
+  const direction = killerClownChooseWanderDirection(mob, allMobs, floor);
+  if (!direction) {
+    ai.walkDirection = null;
+    ai.state = 'idle';
+    ai.idleTimer = 0.5;
+    killerClownSetAnimation(mob, KILLER_CLOWN_CONFIG.animations.idle, false);
+    return;
   }
 
-  ai.walkDirection = {
-    x: targetX - mob.getX(),
-    y: targetY - mob.getY(),
-  };
-  const length = Math.hypot(ai.walkDirection.x, ai.walkDirection.y) || 1;
-  ai.walkDirection.x /= length;
-  ai.walkDirection.y /= length;
+  ai.walkDirection = direction;
   ai.walkTimer = killerClownRandomBetween(
     KILLER_CLOWN_CONFIG.walkMinSeconds,
     KILLER_CLOWN_CONFIG.walkMaxSeconds,
   );
   ai.state = 'wander';
-  mob.setAngle(Math.atan2(ai.walkDirection.y, ai.walkDirection.x) * 180 / Math.PI);
+  mob.setAngle(Math.atan2(direction.y, direction.x) * 180 / Math.PI);
   killerClownSetAnimation(mob, KILLER_CLOWN_CONFIG.animations.walk, false);
 }
 
@@ -215,6 +242,7 @@ function killerClownInitializeMob(mob, spawnZ, stateOverride, forcedPosition, fl
 function killerClownCreateMob(runtimeScene, spawnZ, forcedPosition, floor) {
   const current = runtimeScene.getObjects(KILLER_CLOWN_CONFIG.objectName);
   if (current.length >= KILLER_CLOWN_CONFIG.maxPopulation) return null;
+  if (!forcedPosition) return null;
 
   const mob = runtimeScene.createObject(KILLER_CLOWN_CONFIG.objectName);
   if (!mob) return null;
@@ -235,6 +263,7 @@ function killerClownBeginReturnHome(mob, ai) {
   ai.target = null;
   ai.aggressive = false;
   ai.attackTimer = 0;
+  ai.walkDirection = null;
   killerClownSetAnimation(mob, KILLER_CLOWN_CONFIG.animations.run, false);
 }
 
@@ -243,7 +272,7 @@ function killerClownUpdateReturnHome(mob, dt, ai) {
   const dy = ai.homeY - mob.getY();
   const distance = Math.hypot(dx, dy);
 
-  if (distance <= KILLER_CLOWN_CONFIG.homeArrivalDistance) {
+  if (distance <= KILLER_CLOWN_CONFIG.homeArrivalDistance || distance <= 0.001) {
     mob.setPosition(ai.homeX, ai.homeY);
     killerClownApplySpawnHeight(mob, ai.homeZ);
     ai.state = 'idle';
@@ -276,22 +305,49 @@ function killerClownUpdateIdleWander(mob, dt, ai, allMobs, floor) {
 
   if (!ai.walkDirection || ai.walkTimer <= 0) {
     killerClownBeginWander(mob, ai, allMobs, floor);
+    if (ai.state !== 'wander') return;
   }
 
   ai.walkTimer -= dt;
   const step = KILLER_CLOWN_CONFIG.walkSpeed * dt;
-  mob.setPosition(
+  const bounds = killerClownGetFloorBounds(floor);
+  const nextX = killerClownClamp(
     mob.getX() + ai.walkDirection.x * step,
-    mob.getY() + ai.walkDirection.y * step,
+    bounds.minX,
+    bounds.maxX,
   );
+  const nextY = killerClownClamp(
+    mob.getY() + ai.walkDirection.y * step,
+    bounds.minY,
+    bounds.maxY,
+  );
+
+  if (!killerClownIsFarEnough(nextX, nextY, allMobs, mob)) {
+    // Never walk through another mob. Pick a new direction on the next tick.
+    ai.walkDirection = null;
+    ai.walkTimer = 0;
+    ai.state = 'idle';
+    ai.idleTimer = 0;
+    killerClownSetAnimation(mob, KILLER_CLOWN_CONFIG.animations.idle, false);
+    return;
+  }
+
+  mob.setPosition(nextX, nextY);
   killerClownApplySpawnHeight(mob, ai.homeZ);
   mob.setAngle(Math.atan2(ai.walkDirection.y, ai.walkDirection.x) * 180 / Math.PI);
   killerClownSetAnimation(mob, KILLER_CLOWN_CONFIG.animations.walk, false);
 
   const distanceFromHome = Math.hypot(mob.getX() - ai.homeX, mob.getY() - ai.homeY);
   if (distanceFromHome >= KILLER_CLOWN_CONFIG.boundaryMargin) {
-    ai.walkDirection.x *= -1;
-    ai.walkDirection.y *= -1;
+    ai.walkDirection = null;
+    ai.walkTimer = 0;
+    ai.state = 'idle';
+    ai.idleTimer = killerClownRandomBetween(
+      KILLER_CLOWN_CONFIG.idleMinSeconds,
+      KILLER_CLOWN_CONFIG.idleMaxSeconds,
+    );
+    killerClownSetAnimation(mob, KILLER_CLOWN_CONFIG.animations.idle, false);
+    return;
   }
 
   if (ai.walkTimer <= 0) {
@@ -342,8 +398,6 @@ function killerClownUpdateAggressive(mob, dt, ai) {
     return;
   }
 
-  // Sword_Attack is installed as LOOPED. Do not restart its timeline on a
-  // timer; doing so cuts the GLB action short and makes the attack look stuck.
   mob.setAngle(Math.atan2(dy, dx) * 180 / Math.PI);
   ai.state = 'attack';
   killerClownSetAnimation(mob, KILLER_CLOWN_CONFIG.animations.attack, false);
@@ -383,9 +437,7 @@ function updateKillerClowns(runtimeScene, dt) {
           y: killerClownClamp((bounds.minY + bounds.maxY) * 0.5, bounds.minY, bounds.maxY),
         };
 
-    // IMPORTANT: preserve the positions of already placed instances. The
-    // previous implementation moved every existing mob to a floor-wide grid,
-    // which made most of the population disappear outside the camera view.
+    // Preserve already placed instances exactly where they are.
     for (const mob of existing) {
       killerClownInitializeMob(mob, system.spawnZ, undefined, null, floor, existing);
     }
@@ -404,6 +456,7 @@ function updateKillerClowns(runtimeScene, dt) {
         current,
         system.spawnPositions,
       );
+      if (!forcedPosition) break;
       if (!killerClownCreateMob(runtimeScene, system.spawnZ, forcedPosition, floor)) break;
     }
   }
@@ -419,6 +472,7 @@ function updateKillerClowns(runtimeScene, dt) {
         current,
         system.spawnPositions,
       );
+      if (!forcedPosition) break;
       if (!killerClownCreateMob(runtimeScene, system.spawnZ, forcedPosition, floor)) break;
     }
   }
@@ -430,7 +484,12 @@ function updateKillerClowns(runtimeScene, dt) {
     }
 
     const ai = mob.__killerClownAI;
-    if (ai.aggressive || ai.state === 'return') {
+
+    // RETURN is a real state. Do not send it through aggressive update:
+    // target is intentionally null while the mob travels back home.
+    if (ai.state === 'return') {
+      killerClownUpdateReturnHome(mob, dt, ai);
+    } else if (ai.aggressive) {
       killerClownUpdateAggressive(mob, dt, ai);
     } else {
       killerClownUpdateIdleWander(mob, dt, ai, allMobs, floor);
@@ -447,6 +506,7 @@ function aggroKillerClown(mob, player) {
   ai.target = player;
   ai.state = 'chase';
   ai.attackTimer = 0;
+  ai.walkDirection = null;
   return true;
 }
 
