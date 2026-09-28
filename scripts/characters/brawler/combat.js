@@ -3,9 +3,10 @@
  *
  * No damage, hitbox, HP, stats, death or server state exists here.
  *
- * The selected mob is notified when an attack starts so its local prototype AI
- * can enter combat and fight back. This is intentionally a presentation-layer
- * hook; authoritative combat will move to the future FATE game server.
+ * The selected mob receives an aggro request through runtimeScene state.
+ * This avoids relying on JavaScript function visibility/order between separate
+ * GDevelop JsCode events. The Killer Clown event consumes that request.
+ * Authoritative combat will move to the future FATE game server.
  */
 
 function initializeBrawlerCombat(runtimeScene) {
@@ -29,15 +30,16 @@ function brawlerTargetIsValid(target) {
   return true;
 }
 
-function notifyBrawlerAttackTarget(target, player) {
+function notifyBrawlerAttackTarget(runtimeScene, target, player) {
   if (!brawlerTargetIsValid(target)) return;
 
-  if (typeof aggroKillerClown === 'function') {
-    aggroKillerClown(target, player);
-  }
+  runtimeScene.__havocKillerClownAggroRequest = {
+    mob: target,
+    player,
+  };
 }
 
-function startBrawlerBasicAttack(player, combat) {
+function startBrawlerBasicAttack(runtimeScene, player, combat) {
   const attackAnimation = BRAWLER_BASIC_ATTACKS.combo[
     combat.attackIndex % BRAWLER_BASIC_ATTACKS.combo.length
   ];
@@ -49,7 +51,7 @@ function startBrawlerBasicAttack(player, combat) {
   combat.approaching = false;
   combat.attackQueued = false;
 
-  notifyBrawlerAttackTarget(activeTarget, player);
+  notifyBrawlerAttackTarget(runtimeScene, activeTarget, player);
   setBrawlerCombatAnimation(player, attackAnimation);
 }
 
@@ -118,5 +120,5 @@ function updateBrawlerCombat(runtimeScene, dt) {
 
   combat.approaching = false;
   player.setAngle(player.getAngleToObject(activeTarget));
-  startBrawlerBasicAttack(player, combat);
+  startBrawlerBasicAttack(runtimeScene, player, combat);
 }
