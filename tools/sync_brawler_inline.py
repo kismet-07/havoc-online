@@ -85,9 +85,16 @@ def main() -> None:
         )
 
     combat_source = (ROOT / 'scripts' / 'characters' / 'brawler' / 'combat.js').read_text(encoding='utf-8')
-    if 'return !!target && !target.isDestroyed;' not in combat_source:
+    required_target_validity = (
+        'function brawlerTargetIsValid(target) {' in combat_source
+        and 'if (!target) return false;' in combat_source
+        and 'if (target.isDestroyed) return false;' in combat_source
+        and 'if (target._livingOnScene === false) return false;' in combat_source
+        and 'return true;' in combat_source
+    )
+    if not required_target_validity:
         raise SystemExit(
-            'Safety check failed: combat target validity is not using the current destroyed-only rule.'
+            'Safety check failed: Brawler target validity guard is missing the current null, destroyed, and living-state checks.'
         )
 
     backup = PROJECT.with_name(PROJECT.name + '.before-brawler-inline-sync.bak')
@@ -101,7 +108,7 @@ def main() -> None:
     print('Brawler inline-code synchronization complete.')
     print('Replaced exactly one inline brawler JS event from the external source files.')
     print('Preserved TargetSelectionIcon and refused obsolete target-arrow objects.')
-    print('Current combat target validity: destroyed-only.')
+    print('Current combat target validity: null + destroyed + living-state checks.')
     print('Desktop target selection: mouse press transition.')
     print('Mouse release: no target-selection request.')
     print(f'Backup: {backup.name}')
