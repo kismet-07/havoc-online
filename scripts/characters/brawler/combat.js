@@ -3,6 +3,10 @@
  *
  * No damage, hitbox, HP, stats, death or server state exists here.
  *
+ * Attack input toggles automatic attack mode. Once enabled, the Brawler
+ * repeats the configured combo continuously against the selected target until
+ * the player toggles attack mode off or the target becomes invalid.
+ *
  * The selected mob receives an aggro request through runtimeScene state.
  * This avoids relying on JavaScript function visibility/order between separate
  * GDevelop JsCode events. The Killer Clown event consumes that request.
@@ -17,6 +21,7 @@ function initializeBrawlerCombat(runtimeScene) {
       attacking: false,
       approaching: false,
       attackQueued: false,
+      autoAttack: false,
     };
   }
 
@@ -64,10 +69,20 @@ function updateBrawlerCombat(runtimeScene, dt) {
 
   updateHavocTargetSelection(runtimeScene);
 
+  // One attack-button press starts automatic combat; another press stops it.
+  // The current attack is allowed to finish before stopping.
+  if (mobileInput.attackRequested ||
+      gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space')) {
+    combat.autoAttack = !combat.autoAttack;
+    combat.attackQueued = combat.autoAttack;
+  }
+
   if (!brawlerTargetIsValid(combat.target)) {
     combat.target = null;
     combat.approaching = false;
     combat.attackQueued = false;
+    combat.attacking = false;
+    combat.autoAttack = false;
     return;
   }
 
@@ -76,19 +91,21 @@ function updateBrawlerCombat(runtimeScene, dt) {
       combat.attacking = false;
       combat.approaching = false;
       setBrawlerAnimation(player, BRAWLER_CONFIG.animations.idle);
+
+      // Continue automatically without requiring another attack-button press.
+      combat.attackQueued = combat.autoAttack;
     }
     return;
   }
 
-  const activeTarget = combat.target;
-
-  if (mobileInput.attackRequested ||
-      gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space')) {
-    combat.attackQueued = true;
+  if (!combat.autoAttack) {
+    combat.attackQueued = false;
+    return;
   }
 
-  if (!combat.attackQueued) return;
+  combat.attackQueued = true;
 
+  const activeTarget = combat.target;
   const distance = player.getDistanceToObject(activeTarget);
   const attackRange = BRAWLER_CONFIG.combat.attackRange;
 
