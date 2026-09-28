@@ -13,6 +13,9 @@ DEFAULT_CAMERA_DISTANCE = 2200
 def install() -> None:
     project = json.loads(PROJECT.read_text(encoding='utf-8'))
     source = SOURCE.read_text(encoding='utf-8')
+    # Keep the embedded runtime aligned with the current Killer Clown config.
+    # The runtime source currently contains the same combat constants inline.
+    source = source.replace('chaseSpeed: 180,', 'chaseSpeed: 200,', 1)
 
     killer_object = None
     for layout in project.get('layouts', []):
@@ -95,11 +98,14 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.8.')
+            print('Refreshed Killer Clown mob V1.9.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
             print('Walk animation      : LOOPED')
+            print('Walk speed          : 110')
+            print('Chase speed         : 200')
+            print('Return speed        : 140')
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
             print('Minimum separation  : 1000')
@@ -119,11 +125,14 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.8.')
+        print('Installed Killer Clown mob V1.9.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
         print('Walk animation      : LOOPED')
+        print('Walk speed          : 110')
+        print('Chase speed         : 200')
+        print('Return speed        : 140')
         print('Animation names     : GLB names preserved')
         print('Clone Z height      : inherited from placed Killer_clown')
         print('Minimum separation  : 1000')
