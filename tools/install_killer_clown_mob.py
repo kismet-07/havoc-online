@@ -1,18 +1,41 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / 'Havoc Online.json'
 SOURCE = ROOT / 'scripts' / 'mobs' / 'killer_clown' / 'killer-clown.js'
+CONFIG = ROOT / 'scripts' / 'mobs' / 'killer_clown' / 'killer-clown.config.js'
 MARKER = '// HAVOC_KILLER_CLOWN_MOB_V1'
 DEFAULT_CAMERA_DISTANCE = 2200
+
+
+def get_chase_speed() -> int:
+    config = CONFIG.read_text(encoding='utf-8')
+    match = re.search(r'\bchaseSpeed:\s*(\d+)', config)
+    if not match:
+        raise RuntimeError("chaseSpeed was not found in killer-clown.config.js")
+    return int(match.group(1))
 
 
 def install() -> None:
     project = json.loads(PROJECT.read_text(encoding='utf-8'))
     source = SOURCE.read_text(encoding='utf-8')
+    chase_speed = get_chase_speed()
+
+    # The runtime source is what gets embedded into GDevelop. Keep its
+    # movement value synchronized with the maintainable config file so the
+    # installer cannot silently deploy an older chase speed.
+    source, replacements = re.subn(
+        r'(\bchaseSpeed:\s*)\d+',
+        rf'\g<1>{chase_speed}',
+        source,
+        count=1,
+    )
+    if replacements != 1:
+        raise RuntimeError("chaseSpeed was not found in killer-clown.js")
 
     killer_object = None
     for layout in project.get('layouts', []):
@@ -96,13 +119,13 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.10.')
+            print('Refreshed Killer Clown mob V1.11.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
             print('Walk animation      : LOOPED')
             print('Walk speed          : 110')
-            print('Chase speed         : 550')
+            print(f'Chase speed         : {chase_speed}')
             print('Return speed        : 140')
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
@@ -123,13 +146,13 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.10.')
+        print('Installed Killer Clown mob V1.11.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
         print('Walk animation      : LOOPED')
         print('Walk speed          : 110')
-        print('Chase speed         : 550')
+        print(f'Chase speed         : {chase_speed}')
         print('Return speed        : 140')
         print('Animation names     : GLB names preserved')
         print('Clone Z height      : inherited from placed Killer_clown')
