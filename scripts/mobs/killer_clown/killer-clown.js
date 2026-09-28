@@ -25,7 +25,7 @@ const KILLER_CLOWN_CONFIG = {
     attack: 'Sword_Attack',
   },
   walkSpeed: 110,
-  chaseSpeed: 360,
+  chaseSpeed: 550,
   returnSpeed: 140,
   idleMinSeconds: 2,
   idleMaxSeconds: 5,
@@ -337,7 +337,7 @@ function updateKillerClowns(runtimeScene, dt) {
       const dx = ai.targetX - mob.getX();
       const dy = ai.targetY - mob.getY();
       const distance = Math.sqrt(dx * dx + dy * dy);
-      if (distance < 8 || ai.timer <= 0) {
+      if (distance <= 20 || ai.timer <= 0) {
         ai.state = 'idle';
         ai.timer = randomBetween(KILLER_CLOWN_CONFIG.idleMinSeconds, KILLER_CLOWN_CONFIG.idleMaxSeconds);
         ai.idleHoldX = mob.getX();
@@ -348,14 +348,9 @@ function updateKillerClowns(runtimeScene, dt) {
       const nx = dx / distance;
       const ny = dy / distance;
       const step = Math.min(KILLER_CLOWN_CONFIG.walkSpeed * dt, distance);
-      const nextX = clamp(mob.getX() + nx * step, floorMinX, floorMaxX);
-      const nextY = clamp(mob.getY() + ny * step, floorMinY, floorMaxY);
-      if (!isFarEnough(nextX, nextY, allMobs, KILLER_CLOWN_CONFIG.minimumSeparation, mob)) {
-        beginWander(mob, ai, allMobs);
-        continue;
-      }
-      mob.setPosition(nextX, nextY);
+      mob.setPosition(mob.getX() + nx * step, mob.getY() + ny * step);
       applySpawnHeight(mob);
+      mob.setAngle(Math.atan2(ny, nx) * 180 / Math.PI);
       mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.walk);
       mob.setAnimationSpeedScale(1);
     }
@@ -363,24 +358,17 @@ function updateKillerClowns(runtimeScene, dt) {
 }
 
 function aggroKillerClown(mob, player) {
-  if (!mob || !mob.__killerClownAI) return;
-  if (typeof mob.getName === 'function' && mob.getName() !== KILLER_CLOWN_CONFIG.objectName) return;
-  if (!killerClownTargetIsValid(player)) return;
-  const ai = mob.__killerClownAI;
-  if (ai.dead) return;
-  ai.targetPlayer = player;
-  ai.aggressive = true;
-  ai.state = 'aggro';
-  ai.returningHome = false;
-  ai.attackTimer = 0;
-  const dx = player.getX() - mob.getX();
-  const dy = player.getY() - mob.getY();
-  if (Math.abs(dx) + Math.abs(dy) > 0.001) mob.setAngle(Math.atan2(dy, dx) * 180 / Math.PI);
-  mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.run);
-  mob.setAnimationSpeedScale(1);
+  if (!mob || !player) return false;
+  if (!mob.__killerClownAI) return false;
+  if (mob.__killerClownAI.dead) return false;
+  mob.__killerClownAI.aggressive = true;
+  mob.__killerClownAI.targetPlayer = player;
+  mob.__killerClownAI.returningHome = false;
+  mob.__killerClownAI.state = 'chase';
+  mob.__killerClownAI.attackTimer = 0;
+  return true;
 }
 
 if (typeof module !== 'undefined') {
   module.exports = { KILLER_CLOWN_CONFIG, updateKillerClowns, aggroKillerClown };
 }
-
