@@ -86,12 +86,36 @@ def install() -> None:
         '  }',
         '}',
         '',
-        '// Runtime chase diagnostic. Logs once per second while a Killer Clown',
-        '// is actively chasing so configured speed can be compared with actual',
-        '// world-space displacement and player movement.',
-        'const killerClownDiagnostics = runtimeScene.__havocKillerClownDiagnostics || { timer: 0, lastMobX: null, lastMobY: null, lastPlayerX: null, lastPlayerY: null };',
+        '// Temporary in-game chase diagnostic. This deliberately avoids the',
+        '// GDevelop debugger so it also works with the free version.',
+        'const killerClownDiagnostics = runtimeScene.__havocKillerClownDiagnostics || {',
+        '  timer: 0,',
+        '  lastMobX: null,',
+        '  lastMobY: null,',
+        '  lastPlayerX: null,',
+        '  lastPlayerY: null,',
+        '  overlay: null,',
+        '};',
+        'const diagnosticDocument = typeof document !== \'undefined\' ? document : null;',
+        'if (diagnosticDocument && !killerClownDiagnostics.overlay) {',
+        '  const overlay = diagnosticDocument.createElement(\'div\');',
+        '  overlay.id = \'havoc-killer-clown-diagnostic\';',
+        '  overlay.style.position = \'fixed\';',
+        '  overlay.style.left = \'12px\';',
+        '  overlay.style.top = \'12px\';',
+        '  overlay.style.zIndex = \'999999\';',
+        '  overlay.style.padding = \'10px 12px\';',
+        '  overlay.style.background = \'rgba(0,0,0,0.82)\';',
+        '  overlay.style.color = \'#ffffff\';',
+        '  overlay.style.font = \'12px/1.45 monospace\';',
+        '  overlay.style.whiteSpace = \'pre\';',
+        '  overlay.style.pointerEvents = \'none\';',
+        '  overlay.textContent = \'KILLER CLOWN DIAGNOSTIC\\nWaiting for aggro...\';',
+        '  diagnosticDocument.body.appendChild(overlay);',
+        '  killerClownDiagnostics.overlay = overlay;',
+        '}',
         'killerClownDiagnostics.timer += gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
-        'if (killerClownDiagnostics.timer >= 1) {',
+        'if (killerClownDiagnostics.timer >= 0.5) {',
         '  killerClownDiagnostics.timer = 0;',
         '  const diagnosticMob = runtimeScene.getObjects(KILLER_CLOWN_CONFIG.objectName).find(m => m.__killerClownAI && m.__killerClownAI.aggressive && m.__killerClownAI.state !== \'return\');',
         '  const diagnosticPlayer = runtimeScene.getObjects(KILLER_CLOWN_CONFIG.targetObjectName)[0];',
@@ -100,14 +124,34 @@ def install() -> None:
         '    const my = diagnosticMob.getY();',
         '    const px = diagnosticPlayer.getX();',
         '    const py = diagnosticPlayer.getY();',
+        '    const elapsed = 0.5;',
         '    const distance = Math.hypot(px - mx, py - my);',
-        '    const mobObserved = killerClownDiagnostics.lastMobX === null ? 0 : Math.hypot(mx - killerClownDiagnostics.lastMobX, my - killerClownDiagnostics.lastMobY);',
-        '    const playerObserved = killerClownDiagnostics.lastPlayerX === null ? 0 : Math.hypot(px - killerClownDiagnostics.lastPlayerX, py - killerClownDiagnostics.lastPlayerY);',
-        '    console.log(`[KILLER-CLOWN-DIAG] configured=${KILLER_CLOWN_CONFIG.chaseSpeed} distance=${distance.toFixed(2)} mob_delta=${mobObserved.toFixed(2)} player_delta=${playerObserved.toFixed(2)} attackRange=${KILLER_CLOWN_CONFIG.attackRange}`);',
+        '    const mobDelta = killerClownDiagnostics.lastMobX === null ? 0 : Math.hypot(mx - killerClownDiagnostics.lastMobX, my - killerClownDiagnostics.lastMobY);',
+        '    const playerDelta = killerClownDiagnostics.lastPlayerX === null ? 0 : Math.hypot(px - killerClownDiagnostics.lastPlayerX, py - killerClownDiagnostics.lastPlayerY);',
+        '    const mobObservedSpeed = mobDelta / elapsed;',
+        '    const playerObservedSpeed = playerDelta / elapsed;',
+        '    const text = [',
+        '      \'KILLER CLOWN DIAGNOSTIC\',',
+        '      \'------------------------\',',
+        '      `Configured chase: ${KILLER_CLOWN_CONFIG.chaseSpeed.toFixed(0)}`,',
+        '      `Mob observed:    ${mobObservedSpeed.toFixed(1)} units/s`,',
+        '      `Player observed: ${playerObservedSpeed.toFixed(1)} units/s`,',
+        '      `Distance:        ${distance.toFixed(1)}`,',
+        '      `Attack range:    ${KILLER_CLOWN_CONFIG.attackRange.toFixed(0)}`,',
+        '      `Mob delta/0.5s:  ${mobDelta.toFixed(1)}`,',
+        '      `Player delta/0.5s:${playerDelta.toFixed(1)}`,',
+        '    ].join(\'\\n\');',
+        '    if (killerClownDiagnostics.overlay) killerClownDiagnostics.overlay.textContent = text;',
         '    killerClownDiagnostics.lastMobX = mx;',
         '    killerClownDiagnostics.lastMobY = my;',
         '    killerClownDiagnostics.lastPlayerX = px;',
         '    killerClownDiagnostics.lastPlayerY = py;',
+        '  } else if (killerClownDiagnostics.overlay) {',
+        '    killerClownDiagnostics.overlay.textContent = \'KILLER CLOWN DIAGNOSTIC\\nWaiting for aggressive mob...\';',
+        '    killerClownDiagnostics.lastMobX = null;',
+        '    killerClownDiagnostics.lastMobY = null;',
+        '    killerClownDiagnostics.lastPlayerX = null;',
+        '    killerClownDiagnostics.lastPlayerY = null;',
         '  }',
         '}',
         'runtimeScene.__havocKillerClownDiagnostics = killerClownDiagnostics;',
@@ -142,7 +186,7 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.12.')
+            print('Refreshed Killer Clown mob V1.13.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
@@ -154,7 +198,7 @@ def install() -> None:
             print('Clone Z height      : inherited from placed Killer_clown')
             print('Minimum separation  : 1000')
             print('Aggro bridge        : consumed BEFORE AI update')
-            print('Runtime chase diagnostic : ENABLED')
+            print('Runtime chase diagnostic : IN-GAME OVERLAY')
             print('Default camera       : maximum zoom out (2200)')
             return
 
@@ -170,7 +214,7 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.12.')
+        print('Installed Killer Clown mob V1.13.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
@@ -182,7 +226,7 @@ def install() -> None:
         print('Clone Z height      : inherited from placed Killer_clown')
         print('Minimum separation  : 1000')
         print('Aggro bridge        : consumed BEFORE AI update')
-        print('Runtime chase diagnostic : ENABLED')
+        print('Runtime chase diagnostic : IN-GAME OVERLAY')
         print('Default camera       : maximum zoom out (2200)')
         return
 
