@@ -98,13 +98,13 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.9.')
+            print('Refreshed Killer Clown mob V1.10.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
             print('Walk animation      : LOOPED')
             print('Walk speed          : 110')
-            print('Chase speed         : 360')
+            print('Chase speed         : 550')
             print('Return speed        : 140')
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
@@ -125,13 +125,13 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.9.')
+        print('Installed Killer Clown mob V1.10.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
         print('Walk animation      : LOOPED')
         print('Walk speed          : 110')
-        print('Chase speed         : 200')
+        print('Chase speed         : 550')
         print('Return speed        : 140')
         print('Animation names     : GLB names preserved')
         print('Clone Z height      : inherited from placed Killer_clown')
