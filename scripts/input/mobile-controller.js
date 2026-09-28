@@ -25,6 +25,7 @@ function initializeHavocMobileInput(runtimeScene) {
     runtimeScene.__havocMobileInput = {
       joystickTouchId: null,
       joystickActive: false,
+      joystickMouseActive: false,
       moveX: 0,
       moveY: 0,
       run: false,
@@ -60,37 +61,79 @@ function updateHavocMobileInput(runtimeScene) {
   const attackTop = height - HAVOC_MOBILE_INPUT_CONFIG.attackButtonBottomMargin - HAVOC_MOBILE_INPUT_CONFIG.attackButtonHeight;
 
   if (uiLayer) {
-    if (joystickBase) joystickBase.setPosition(joystickCenterX - joystickBase.getWidth() / 2, joystickCenterY - joystickBase.getHeight() / 2);
-    if (joystickKnob) joystickKnob.setPosition(joystickCenterX - joystickKnob.getWidth() / 2, joystickCenterY - joystickKnob.getHeight() / 2);
-    if (attackButton) attackButton.setPosition(attackLeft, attackTop);
+    if (joystickBase) {
+      joystickBase.setPosition(
+        joystickCenterX - (joystickBase.getWidth() || 72) / 2,
+        joystickCenterY - (joystickBase.getHeight() || 72) / 2
+      );
+    }
+    if (attackButton) {
+      attackButton.setPosition(attackLeft, attackTop);
+    }
   }
 
-  // Use the configured button rectangle instead of cursorOnObject().
-  // MobileAttackButton is a text object whose runtime dimensions may be 0x0.
+  // Hit testing uses canvas pixel coordinates (0 to viewportWidth, 0 to viewportHeight).
   const isInsideAttackButton = (x, y) =>
     x >= attackLeft &&
     x <= attackLeft + HAVOC_MOBILE_INPUT_CONFIG.attackButtonWidth &&
     y >= attackTop &&
     y <= attackTop + HAVOC_MOBILE_INPUT_CONFIG.attackButtonHeight;
 
-  // Desktop target selection must use the mouse press transition, not the
-  // release transition. A release was being interpreted as a second target
-  // selection and could raycast-miss, clearing the target immediately after
-  // the initial selection. Track the previous pressed state explicitly so the
-  // request is emitted exactly once on the press frame.
+  const isInJoystickRegion = (x, y) =>
+    x <= width * 0.42 && y >= height * 0.55;
+
+  // Desktop mouse handling
   const mouseLeftPressed = inputManager.isMouseButtonPressed(gdjs.InputManager.MOUSE_LEFT_BUTTON);
   const mouseLeftStarted = mouseLeftPressed && !state.mouseLeftWasPressed;
   state.mouseLeftWasPressed = mouseLeftPressed;
 
-  const mouseCursorX = gdjs.evtTools.input.getCursorX(runtimeScene);
-  const mouseCursorY = gdjs.evtTools.input.getCursorY(runtimeScene);
-  const mouseOnAttackButton =
-    mouseLeftStarted && isInsideAttackButton(mouseCursorX, mouseCursorY);
+  const mouseX = inputManager.getCursorX();
+  const mouseY = inputManager.getCursorY();
 
-  if (mouseOnAttackButton) {
-    state.attackRequested = true;
+  if (mouseLeftStarted) {
+    if (isInsideAttackButton(mouseX, mouseY)) {
+      state.attackRequested = true;
+    } else if (isInJoystickRegion(mouseX, mouseY)) {
+      state.joystickMouseActive = true;
+    } else {
+      state.targetTapX = mouseX;
+      state.targetTapY = mouseY;
+      state.targetTapRequested = true;
+    }
   }
 
+  if (state.joystickMouseActive) {
+    if (!mouseLeftPressed) {
+      state.joystickMouseActive = false;
+      if (state.joystickTouchId === null) {
+        state.joystickActive = false;
+        state.moveX = 0;
+        state.moveY = 0;
+        state.run = false;
+      }
+    } else {
+      const dx = mouseX - joystickCenterX;
+      const dy = mouseY - joystickCenterY;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const clampedLength = Math.min(length, HAVOC_MOBILE_INPUT_CONFIG.joystickRadius);
+      const nx = length > 0 ? dx / length : 0;
+      const ny = length > 0 ? dy / length : 0;
+
+      state.moveX = nx * (clampedLength / HAVOC_MOBILE_INPUT_CONFIG.joystickRadius);
+      state.moveY = -ny * (clampedLength / HAVOC_MOBILE_INPUT_CONFIG.joystickRadius);
+      state.run = clampedLength >= HAVOC_MOBILE_INPUT_CONFIG.joystickRadius * 0.78;
+      state.joystickActive = true;
+
+      if (joystickKnob) {
+        joystickKnob.setPosition(
+          joystickCenterX + nx * clampedLength - (joystickKnob.getWidth() || 36) / 2,
+          joystickCenterY + ny * clampedLength - (joystickKnob.getHeight() || 36) / 2
+        );
+      }
+    }
+  }
+
+  // Mobile touch handling
   const touchIds = inputManager.getAllTouchIdentifiers();
   const startedIds = inputManager.getStartedTouchIdentifiers();
 
@@ -107,7 +150,7 @@ function updateHavocMobileInput(runtimeScene) {
       continue;
     }
 
-    if (x <= width * 0.42 && y >= height * 0.55 && state.joystickTouchId === null) {
+    if (isInJoystickRegion(x, y) && state.joystickTouchId === null) {
       state.joystickTouchId = id;
       state.joystickActive = true;
       continue;
@@ -118,28 +161,16 @@ function updateHavocMobileInput(runtimeScene) {
     state.targetTapRequested = true;
   }
 
-  // Desktop preview: convert a fresh left mouse press into the same target
-  // request used by mobile. The target system performs the 3D hit test.
-  if (mouseLeftStarted && !mouseOnAttackButton) {
-    const cursorX = mouseCursorX;
-    const cursorY = mouseCursorY;
-    const inJoystickRegion = cursorX <= width * 0.42 && cursorY >= height * 0.55;
-
-    if (!inJoystickRegion) {
-      state.targetTapX = cursorX;
-      state.targetTapY = cursorY;
-      state.targetTapRequested = true;
-    }
-  }
-
   if (state.joystickTouchId !== null) {
     const id = state.joystickTouchId;
     if (touchIds.indexOf(id) === -1) {
       state.joystickTouchId = null;
-      state.joystickActive = false;
-      state.moveX = 0;
-      state.moveY = 0;
-      state.run = false;
+      if (!state.joystickMouseActive) {
+        state.joystickActive = false;
+        state.moveX = 0;
+        state.moveY = 0;
+        state.run = false;
+      }
     } else {
       const x = inputManager.getTouchX(id);
       const y = inputManager.getTouchY(id);
@@ -153,14 +184,22 @@ function updateHavocMobileInput(runtimeScene) {
       state.moveX = nx * (clampedLength / HAVOC_MOBILE_INPUT_CONFIG.joystickRadius);
       state.moveY = -ny * (clampedLength / HAVOC_MOBILE_INPUT_CONFIG.joystickRadius);
       state.run = clampedLength >= HAVOC_MOBILE_INPUT_CONFIG.joystickRadius * 0.78;
+      state.joystickActive = true;
 
       if (joystickKnob) {
         joystickKnob.setPosition(
-          joystickCenterX + nx * clampedLength - joystickKnob.getWidth() / 2,
-          joystickCenterY + ny * clampedLength - joystickKnob.getHeight() / 2,
+          joystickCenterX + nx * clampedLength - (joystickKnob.getWidth() || 36) / 2,
+          joystickCenterY + ny * clampedLength - (joystickKnob.getHeight() || 36) / 2
         );
       }
     }
+  }
+
+  if (!state.joystickActive && joystickKnob) {
+    joystickKnob.setPosition(
+      joystickCenterX - (joystickKnob.getWidth() || 36) / 2,
+      joystickCenterY - (joystickKnob.getHeight() || 36) / 2
+    );
   }
 
   if (gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space')) {

@@ -19,7 +19,10 @@ function initializeBrawlerCombat(runtimeScene) {
 }
 
 function brawlerTargetIsValid(target) {
-  return !!target && !target.isDestroyed;
+  if (!target) return false;
+  if (target.isDestroyed) return false;
+  if (target._livingOnScene === false) return false;
+  return true;
 }
 
 function startBrawlerBasicAttack(player, combat) {
@@ -83,6 +86,9 @@ function updateBrawlerCombat(runtimeScene, dt) {
     if (length > 0.001) {
       const moveX = dx / length;
       const moveY = dy / length;
+      if (!runtimeScene.__fatePlayerMovement) {
+        runtimeScene.__fatePlayerMovement = { x: player.getX(), y: player.getY() };
+      }
       const movement = runtimeScene.__fatePlayerMovement;
       const speed = BRAWLER_CONFIG.movement.walkSpeed;
 

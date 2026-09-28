@@ -5,17 +5,19 @@
  * desktop/mobile pointer position. This avoids RuntimeObject3D.cursorOnObject,
  * which is not reliable for our moving third-person 3D camera.
  *
- * The indicator is one pre-created TargetSelectionIcon 3D model instance.
- * The model's first embedded GLB animation plays automatically.
+ * The visual target indicator is a flat circular ground ring centered around
+ * the selected mob's feet/base on the ground plane (XY), tracking the mob
+ * dynamically while it moves.
  */
 const HAVOC_TARGET_CONFIG = {
   mobObjectName: 'Killer_clown',
   indicatorObjectName: 'TargetSelectionIcon',
-  // World-space height above the mob's base. Do not derive this from
-  // getUnrotatedAABBMaxZ(): the Killer_clown is a rotated glTF Model3DObject,
-  // so that value is not a reliable world-vertical top coordinate.
-  arrowZOffset: 300,
-  indicatorScale: 0.4,
+  // Ground ring radius and positioning:
+  // Circles around the mob's feet flat on the floor (XY plane).
+  ringInnerRadius: 200,
+  ringOuterRadius: 240,
+  ringGroundZOffset: 4,
+  ringColor: 0xff2020,
   hiddenX: -100000,
   hiddenY: -100000,
 };
@@ -36,7 +38,7 @@ function havocTargetLogState(runtimeScene, event, data) {
 
   const target = state.indicatorTarget;
   const combat = runtimeScene.__havocBrawlerCombat;
-  const indicator = state.indicator;
+  const ring = state.groundRingMesh;
 
   console.log('[Havoc Target][DIAG]', event, {
     ...data,
@@ -44,11 +46,8 @@ function havocTargetLogState(runtimeScene, event, data) {
     combatTargetDestroyed: !!(combat && combat.target && combat.target.isDestroyed),
     indicatorTarget: target ? havocTargetDiagnosticObjectName(target) : null,
     indicatorTargetDestroyed: !!(target && target.isDestroyed),
-    indicatorExists: !!indicator,
-    indicatorDestroyed: !!(indicator && indicator.isDestroyed),
-    indicatorVisible: indicator && typeof indicator.isVisible === 'function'
-      ? indicator.isVisible()
-      : 'unknown',
+    ringExists: !!ring,
+    ringVisible: ring ? ring.visible : false,
   });
 }
 
@@ -56,6 +55,7 @@ function initializeHavocTargetSelection(runtimeScene) {
   if (!runtimeScene.__havocTargetSelection) {
     runtimeScene.__havocTargetSelection = {
       indicator: null,
+      groundRingMesh: null,
       indicatorTarget: null,
       raycastLogged: false,
       indicatorLogged: false,
@@ -67,79 +67,131 @@ function initializeHavocTargetSelection(runtimeScene) {
   }
 
   const state = runtimeScene.__havocTargetSelection;
-  const objects = runtimeScene.getObjects(HAVOC_TARGET_CONFIG.indicatorObjectName);
-  state.indicator = objects.length > 0 ? objects[0] : null;
 
-  if (state.indicator && !state.indicatorConfigured) {
-    if (typeof state.indicator.setScale === 'function') {
-      state.indicator.setScale(HAVOC_TARGET_CONFIG.indicatorScale);
+  // Keep legacy TargetSelectionIcon permanently parked and hidden offscreen.
+  if (!state.indicator) {
+    const objects = runtimeScene.getObjects(HAVOC_TARGET_CONFIG.indicatorObjectName);
+    state.indicator = objects.length > 0 ? objects[0] : null;
+  }
+
+  if (state.indicator && !state.indicator.isDestroyed) {
+    if (typeof state.indicator.hide === 'function') {
+      state.indicator.hide(true);
     }
-
-    // Do not modify the GLB materials here. The asset already renders with its
-    // authored material, and forcing a Three.js material recompilation is not
-    // required for target selection and can break custom GLB materials.
-    state.indicatorConfigured = true;
+    if (typeof state.indicator.setPosition === 'function') {
+      state.indicator.setPosition(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY);
+    }
   }
 
   return state;
 }
 
-function setHavocIndicatorPosition(indicator, x, y, z) {
-  if (!indicator || indicator.isDestroyed) return false;
+function getHavocGroundRing(runtimeScene) {
+  const state = initializeHavocTargetSelection(runtimeScene);
+  const worldLayer = runtimeScene.getLayer('');
+  if (!worldLayer || !worldLayer.getRenderer) return null;
+  const layerRenderer = worldLayer.getRenderer();
 
-  // The target icon starts hidden far outside the scene. Explicitly unhide it
-  // before positioning because Model3DObject inherits RuntimeObject3D.hide().
-  if (typeof indicator.hide === 'function') {
-    indicator.hide(false);
+  if (typeof THREE === 'undefined' || typeof THREE.RingGeometry !== 'function') {
+    return null;
   }
 
-  // Keep the icon on the base 3D layer. The world camera is attached to this
-  // layer; putting the model on UI would make it invisible to the world camera.
-  if (typeof indicator.setLayer === 'function' && indicator.layer !== '') {
-    indicator.setLayer('');
+  if (state.groundRingMesh) {
+    if (state.groundRingMesh.parent) {
+      return state.groundRingMesh;
+    }
+    if (typeof layerRenderer.add3DRendererObject === 'function') {
+      layerRenderer.add3DRendererObject(state.groundRingMesh);
+      return state.groundRingMesh;
+    }
   }
 
-  if (typeof indicator.setCenterPositionInScene === 'function') {
-    indicator.setCenterPositionInScene(x, y);
-  } else if (typeof indicator.setPosition === 'function') {
-    indicator.setPosition(x, y);
-  } else {
-    return false;
+  const innerRadius = HAVOC_TARGET_CONFIG.ringInnerRadius;
+  const outerRadius = HAVOC_TARGET_CONFIG.ringOuterRadius;
+  const group = new THREE.Group();
+
+  // Primary outer circular ring (oriented in XY ground plane with Z=0)
+  const ringGeo = new THREE.RingGeometry(innerRadius, outerRadius, 64);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: HAVOC_TARGET_CONFIG.ringColor,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -1.0,
+    polygonOffsetUnits: -1.0,
+  });
+  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+  group.add(ringMesh);
+
+  // Subtle translucent inner circle fill
+  if (typeof THREE.CircleGeometry === 'function') {
+    const innerGeo = new THREE.CircleGeometry(innerRadius, 64);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: HAVOC_TARGET_CONFIG.ringColor,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.15,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1.0,
+      polygonOffsetUnits: -1.0,
+    });
+    const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+    group.add(innerMesh);
   }
 
-  if (typeof indicator.setCenterZInScene === 'function') {
-    indicator.setCenterZInScene(z);
-  } else if (typeof indicator.setZ === 'function') {
-    indicator.setZ(z);
-  } else {
-    return false;
+  group.visible = false;
+  group.position.set(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY, 0);
+
+  if (typeof layerRenderer.add3DRendererObject === 'function') {
+    layerRenderer.add3DRendererObject(group);
   }
 
-  return true;
+  state.groundRingMesh = group;
+  return group;
 }
 
 function clearHavocTargetIndicator(runtimeScene, reason = 'unspecified') {
   const state = initializeHavocTargetSelection(runtimeScene);
-  const indicator = state.indicator;
+  const ring = state.groundRingMesh;
 
   havocTargetLogState(runtimeScene, 'CLEAR_INDICATOR', { reason });
 
+  if (ring) {
+    ring.visible = false;
+    ring.position.set(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY, 0);
+  }
+
+  const indicator = state.indicator;
   if (indicator && !indicator.isDestroyed) {
     if (typeof indicator.setPosition === 'function') {
       indicator.setPosition(HAVOC_TARGET_CONFIG.hiddenX, HAVOC_TARGET_CONFIG.hiddenY);
     }
-    if (typeof indicator.setCenterZInScene === 'function') {
-      indicator.setCenterZInScene(0);
-    } else if (typeof indicator.setZ === 'function') {
-      indicator.setZ(0);
-    }
-
     if (typeof indicator.hide === 'function') {
       indicator.hide(true);
     }
   }
 
   state.indicatorTarget = null;
+}
+
+function getHavocTargetAnchorPosition(target) {
+  // Use the mob's GDevelop 3D object coordinates directly.
+  // In GDevelop 5's 3D runtime:
+  // 1. Killer Clown's GDevelop coordinates are target.getX(), target.getY(), target.getZ().
+  // 2. layerRenderer.add3DRendererObject() adds Three.js objects directly into layer._threeGroup.
+  // 3. Inside _threeGroup, the local coordinate space IS the GDevelop coordinate system:
+  //    threeGroup.position is (0,0,0) with scale (1,1,1).
+  // 4. Do NOT use Three.js Box3 / setFromObject(): Box3 traverses into root scene world space,
+  //    where GDevelop has _threeScene.scale.y = -1. That inverts world Y and corrupts Z,
+  //    throwing the indicator thousands of units off the map!
+  const x = target.getX();
+  const y = target.getY();
+  const groundZ = typeof target.getZ === 'function' ? target.getZ() : 0;
+
+  return { x, y, groundZ };
 }
 
 function updateHavocTargetIndicator(runtimeScene, target) {
@@ -154,73 +206,49 @@ function updateHavocTargetIndicator(runtimeScene, target) {
     return;
   }
 
-  const indicator = state.indicator;
-  if (!indicator || indicator.isDestroyed) {
-    console.warn('[Havoc Target] TargetSelectionIcon instance is missing from the scene.');
-    havocTargetLogState(runtimeScene, 'INDICATOR_INSTANCE_MISSING', {});
+  const ring = getHavocGroundRing(runtimeScene);
+  if (!ring) {
+    console.warn('[Havoc Target] Unable to initialize ground selection ring.');
     return;
   }
 
-  const x = target.getX();
-  const y = target.getY();
-  // Use the mob's actual world Z plus a fixed offset. The previous
-  // getUnrotatedAABBMaxZ() calculation is not safe for this rotated glTF model.
-  const targetBaseZ = typeof target.getZ === 'function' ? target.getZ() : 0;
-  const indicatorZ = targetBaseZ + HAVOC_TARGET_CONFIG.arrowZOffset;
+  const anchor = getHavocTargetAnchorPosition(target);
+  const ringZ = anchor.groundZ + HAVOC_TARGET_CONFIG.ringGroundZOffset;
 
-  const shown = setHavocIndicatorPosition(indicator, x, y, indicatorZ);
-
-  if (!shown) {
-    console.warn('[Havoc Target] TargetSelectionIcon does not expose the required 3D positioning API.');
-    havocTargetLogState(runtimeScene, 'INDICATOR_POSITION_FAILED', {
-      targetX: x,
-      targetY: y,
-      targetBaseZ,
-      indicatorZ,
-    });
-    return;
-  }
+  ring.position.set(anchor.x, anchor.y, ringZ);
+  ring.visible = true;
 
   state.indicatorTarget = target;
 
-  const visible = typeof indicator.isVisible === 'function' ? indicator.isVisible() : 'unknown';
   const targetChanged = state.diagnosticLastTarget !== target;
   const indicatorTargetChanged = state.diagnosticLastIndicatorTarget !== target;
-  const visibilityChanged = state.diagnosticLastIndicatorVisible !== visible;
+  const visibilityChanged = state.diagnosticLastIndicatorVisible !== ring.visible;
 
   if (targetChanged || indicatorTargetChanged || visibilityChanged) {
     havocTargetLogState(runtimeScene, 'INDICATOR_UPDATED', {
       targetChanged,
       indicatorTargetChanged,
       visibilityChanged,
-      targetX: x,
-      targetY: y,
-      targetBaseZ,
-      indicatorZ,
-      indicatorVisible: visible,
-      indicatorLayer: indicator.layer,
+      targetX: anchor.x,
+      targetY: anchor.y,
+      ringZ,
+      ringVisible: ring.visible,
     });
 
     state.diagnosticLastTarget = target;
     state.diagnosticLastIndicatorTarget = target;
-    state.diagnosticLastIndicatorVisible = visible;
+    state.diagnosticLastIndicatorVisible = ring.visible;
   }
 
   if (!state.indicatorLogged) {
     state.indicatorLogged = true;
-    console.log('[Havoc Target] TargetSelectionIcon positioned.', {
-      targetX: x,
-      targetY: y,
-      targetBaseZ,
-      indicatorX: typeof indicator.getCenterXInScene === 'function' ? indicator.getCenterXInScene() : indicator.getX(),
-      indicatorY: typeof indicator.getCenterYInScene === 'function' ? indicator.getCenterYInScene() : indicator.getY(),
-      indicatorZ: typeof indicator.getCenterZInScene === 'function' ? indicator.getCenterZInScene() : indicator.getZ(),
-      indicatorVisible: typeof indicator.isVisible === 'function' ? indicator.isVisible() : 'unknown',
-      indicatorLayer: indicator.layer,
-      indicatorScale: typeof indicator.getScale === 'function' ? indicator.getScale() : 'unknown',
-      indicatorWidth: typeof indicator.getWidth === 'function' ? indicator.getWidth() : 'unknown',
-      indicatorHeight: typeof indicator.getHeight === 'function' ? indicator.getHeight() : 'unknown',
-      indicatorDepth: typeof indicator.getDepth === 'function' ? indicator.getDepth() : 'unknown',
+    console.log('[Havoc Target] Ground target ring positioned.', {
+      targetX: anchor.x,
+      targetY: anchor.y,
+      ringZ,
+      ringVisible: ring.visible,
+      ringInnerRadius: HAVOC_TARGET_CONFIG.ringInnerRadius,
+      ringOuterRadius: HAVOC_TARGET_CONFIG.ringOuterRadius,
     });
   }
 }
@@ -230,9 +258,10 @@ function getHavocPointerCoordinates(runtimeScene, input) {
     return { x: input.targetTapX, y: input.targetTapY };
   }
 
+  const inputManager = runtimeScene.getGame().getInputManager();
   return {
-    x: gdjs.evtTools.input.getCursorX(runtimeScene),
-    y: gdjs.evtTools.input.getCursorY(runtimeScene),
+    x: inputManager.getCursorX(),
+    y: inputManager.getCursorY(),
   };
 }
 
@@ -340,10 +369,17 @@ function updateHavocTargetSelection(runtimeScene) {
       });
       updateHavocTargetIndicator(runtimeScene, selectedTarget);
     } else {
-      combat.target = null;
-      havocTargetLogState(runtimeScene, 'COMBAT_TARGET_CLEARED_BY_MISS', {});
-      clearHavocTargetIndicator(runtimeScene, 'target-selection-miss');
+      havocTargetLogState(runtimeScene, 'TARGET_SELECTION_MISS_IGNORED', {
+        retainedTarget: combat.target ? havocTargetDiagnosticObjectName(combat.target) : null,
+      });
     }
+  }
+
+  if (!combat.target) {
+    if (selection.indicatorTarget) {
+      clearHavocTargetIndicator(runtimeScene, 'no-combat-target');
+    }
+    return;
   }
 
   if (!brawlerTargetIsValid(combat.target)) {
