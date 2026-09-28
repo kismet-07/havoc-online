@@ -12,18 +12,19 @@ MARKER = '// HAVOC_KILLER_CLOWN_MOB_V1'
 DEFAULT_CAMERA_DISTANCE = 2200
 
 
-def get_chase_speed() -> int:
+def get_config_number(name: str) -> int:
     config = CONFIG.read_text(encoding='utf-8')
-    match = re.search(r'\bchaseSpeed:\s*(\d+)', config)
+    match = re.search(rf'\b{name}:\s*(\d+)', config)
     if not match:
-        raise RuntimeError("chaseSpeed was not found in killer-clown.config.js")
+        raise RuntimeError(f"{name} was not found in killer-clown.config.js")
     return int(match.group(1))
 
 
 def install() -> None:
     project = json.loads(PROJECT.read_text(encoding='utf-8'))
     source = SOURCE.read_text(encoding='utf-8')
-    chase_speed = get_chase_speed()
+    chase_speed = get_config_number('chaseSpeed')
+    attack_range = get_config_number('attackRange')
 
     source, replacements = re.subn(
         r'(\bchaseSpeed:\s*)\d+',
@@ -33,6 +34,15 @@ def install() -> None:
     )
     if replacements != 1:
         raise RuntimeError("chaseSpeed was not found in killer-clown.js")
+
+    source, replacements = re.subn(
+        r'(\battackRange:\s*)\d+',
+        rf'\g<1>{attack_range}',
+        source,
+        count=1,
+    )
+    if replacements != 1:
+        raise RuntimeError("attackRange was not found in killer-clown.js")
 
     killer_object = None
     for layout in project.get('layouts', []):
@@ -176,7 +186,7 @@ def install() -> None:
 
         if found:
             PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
-            print('Refreshed Killer Clown mob V1.16.')
+            print('Refreshed Killer Clown mob V1.17.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
@@ -184,11 +194,14 @@ def install() -> None:
             print('Walk speed          : 110')
             print(f'Chase speed         : {chase_speed}')
             print('Return speed        : 140')
+            print(f'Attack range        : {attack_range}')
             print('Attack animation    : LOOPED')
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
             print('Minimum separation  : 1000')
-            print('Spawn layout        : 5 x 3 clustered around template')
+            print('Spawn layout        : 5 x 3 around template; edge-safe spacing')
+            print('Wander separation   : ENFORCED')
+            print('Return state        : FIXED')
             print('Aggro bridge        : consumed BEFORE AI update')
             print('Runtime chase diagnostic : IN-GAME OVERLAY')
             print('Default camera       : maximum zoom out (2200)')
@@ -199,7 +212,7 @@ def install() -> None:
 
         events.append({'type': 'BuiltinCommonInstructions::JsCode', 'inlineCode': replacement})
         PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
-        print('Installed Killer Clown mob V1.16.')
+        print('Installed Killer Clown mob V1.17.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
@@ -207,11 +220,14 @@ def install() -> None:
         print('Walk speed          : 110')
         print(f'Chase speed         : {chase_speed}')
         print('Return speed        : 140')
+        print(f'Attack range        : {attack_range}')
         print('Attack animation    : LOOPED')
         print('Animation names     : GLB names preserved')
         print('Clone Z height      : inherited from placed Killer_clown')
         print('Minimum separation  : 1000')
-        print('Spawn layout        : 5 x 3 clustered around template')
+        print('Spawn layout        : 5 x 3 around template; edge-safe spacing')
+        print('Wander separation   : ENFORCED')
+        print('Return state        : FIXED')
         print('Aggro bridge        : consumed BEFORE AI update')
         print('Runtime chase diagnostic : IN-GAME OVERLAY')
         print('Default camera       : maximum zoom out (2200)')
