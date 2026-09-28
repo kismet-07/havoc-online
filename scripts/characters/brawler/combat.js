@@ -22,10 +22,6 @@ function initializeBrawlerCombat(runtimeScene) {
 }
 
 function brawlerTargetIsValid(target) {
-  // A selected 3D mob can report itself as hidden through the generic
-  // RuntimeObject visibility state while its Model3D renderer is still active.
-  // Target validity therefore follows object lifetime here. The target system
-  // already performs the actual 3D raycast and only selects visible mobs.
   return !!target && !target.isDestroyed;
 }
 
@@ -54,7 +50,9 @@ function havocCombatLog(runtimeScene, event, data) {
 }
 
 function startBrawlerBasicAttack(player, combat) {
-  const attackAnimation = BRAWLER_BASIC_ATTACKS.combo[combat.attackIndex % BRAWLER_BASIC_ATTACKS.combo.length];
+  const attackAnimation = BRAWLER_BASIC_ATTACKS.combo[
+    combat.attackIndex % BRAWLER_BASIC_ATTACKS.combo.length
+  ];
   combat.attackIndex += 1;
   combat.attacking = true;
   combat.approaching = false;
@@ -91,6 +89,7 @@ function updateBrawlerCombat(runtimeScene, dt) {
     combat.target = null;
     combat.approaching = false;
     combat.attackQueued = false;
+    return;
   }
 
   if (combat.attacking) {
@@ -104,9 +103,8 @@ function updateBrawlerCombat(runtimeScene, dt) {
   }
 
   const activeTarget = combat.target;
-  if (!activeTarget) return;
-
-  const attackRequested = mobileInput.attackRequested ||
+  const attackRequested =
+    mobileInput.attackRequested ||
     gdjs.evtTools.input.wasKeyJustPressed(runtimeScene, 'space');
 
   if (attackRequested) {
