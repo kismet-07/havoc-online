@@ -154,21 +154,20 @@ function updateKillerClown(mob, player, dt, system) {
     return;
   }
 
+  // Keep the attack animation active for the entire attack state.
+  // Do not use a hard-coded wall-clock duration: the actual GLB animation
+  // duration can differ from one mob asset to another. If Sword_Attack is
+  // configured as non-looping, restart it exactly when GDevelop reports that
+  // the animation has ended. If it is configured as looping, GDevelop keeps
+  // it playing continuously and hasAnimationEnded() remains false.
   ai.state = 'attack';
-  ai.attackCooldown = Math.max(0, ai.attackCooldown - dt);
-  if (!ai.attackPlaying && ai.attackCooldown <= 0) {
-    ai.attackPlaying = true;
-    ai.attackCooldown = KILLER_CLOWN_CONFIG.attackCooldownSeconds;
-    ai.lastAttackAt = Date.now();
-    mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.attack);
-  }
+  ai.attackPlaying = true;
 
-  if (ai.attackPlaying) {
-    const elapsed = (Date.now() - ai.lastAttackAt) / 1000;
-    if (elapsed >= 0.8) {
-      ai.attackPlaying = false;
-      mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.idle);
-    }
+  if (mob.getAnimationName() !== KILLER_CLOWN_CONFIG.animations.attack) {
+    mob.setAnimationName(KILLER_CLOWN_CONFIG.animations.attack);
+    mob.setAnimationElapsedTime(0);
+  } else if (mob.hasAnimationEnded()) {
+    mob.setAnimationElapsedTime(0);
   }
 }
 
