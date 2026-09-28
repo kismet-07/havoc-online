@@ -52,7 +52,10 @@ def install() -> None:
         'Idle_Sword': True,
         'Walk_Large': True,
         'Run_Stealth': True,
-        'Sword_Attack': False,
+        # The mob must keep attacking while the player remains in melee range.
+        # Do not make Sword_Attack non-looping: that causes the mob to finish
+        # one swing and remain frozen until another animation transition.
+        'Sword_Attack': True,
     }
 
     existing_by_source = {a.get('source'): a for a in animations}
@@ -186,7 +189,7 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.13.')
+            print('Refreshed Killer Clown mob V1.14.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
@@ -194,6 +197,7 @@ def install() -> None:
             print('Walk speed          : 110')
             print(f'Chase speed         : {chase_speed}')
             print('Return speed        : 140')
+            print('Attack animation    : LOOPED')
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
             print('Minimum separation  : 1000')
@@ -214,7 +218,7 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.13.')
+        print('Installed Killer Clown mob V1.14.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
@@ -222,6 +226,7 @@ def install() -> None:
         print('Walk speed          : 110')
         print(f'Chase speed         : {chase_speed}')
         print('Return speed        : 140')
+        print('Attack animation    : LOOPED')
         print('Animation names     : GLB names preserved')
         print('Clone Z height      : inherited from placed Killer_clown')
         print('Minimum separation  : 1000')
