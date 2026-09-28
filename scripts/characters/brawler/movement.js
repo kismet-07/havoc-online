@@ -24,6 +24,29 @@ function updateBrawlerMovement(runtimeScene, dt) {
   const inputManager = runtimeScene.getGame().getInputManager();
   const mobileInput = initializeHavocMobileInput(runtimeScene);
   const combatState = initializeBrawlerCombat(runtimeScene);
+
+  // Manual movement cancels automatic combat before movement is evaluated.
+  // This makes WASD behave the same way as the mobile joystick: the player
+  // immediately regains control and can run away from the target.
+  const manualKeyboardMovement =
+    input.isKeyPressed(runtimeScene, 'a') ||
+    input.isKeyPressed(runtimeScene, 'd') ||
+    input.isKeyPressed(runtimeScene, 'w') ||
+    input.isKeyPressed(runtimeScene, 's');
+
+  const joystickMagnitude = Math.sqrt(
+    mobileInput.moveX * mobileInput.moveX +
+    mobileInput.moveY * mobileInput.moveY
+  );
+  const manualJoystickMovement =
+    mobileInput.joystickActive && joystickMagnitude >= 0.15;
+
+  if (manualKeyboardMovement || manualJoystickMovement) {
+    if (combatState.autoAttack || combatState.attacking || combatState.approaching) {
+      cancelBrawlerAutoAttack(player, combatState);
+    }
+  }
+
   const combatLocked = combatState.attacking || combatState.approaching;
 
   const left = !combatLocked && input.isKeyPressed(runtimeScene, 'a');
