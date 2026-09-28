@@ -65,6 +65,14 @@ function updateHavocMobileInput(runtimeScene) {
     if (attackButton) attackButton.setPosition(attackLeft, attackTop);
   }
 
+  // Use the configured button rectangle instead of cursorOnObject().
+  // MobileAttackButton is a text object whose runtime dimensions may be 0x0.
+  const isInsideAttackButton = (x, y) =>
+    x >= attackLeft &&
+    x <= attackLeft + HAVOC_MOBILE_INPUT_CONFIG.attackButtonWidth &&
+    y >= attackTop &&
+    y <= attackTop + HAVOC_MOBILE_INPUT_CONFIG.attackButtonHeight;
+
   // Desktop target selection must use the mouse press transition, not the
   // release transition. A release was being interpreted as a second target
   // selection and could raycast-miss, clearing the target immediately after
@@ -74,10 +82,12 @@ function updateHavocMobileInput(runtimeScene) {
   const mouseLeftStarted = mouseLeftPressed && !state.mouseLeftWasPressed;
   state.mouseLeftWasPressed = mouseLeftPressed;
 
-  const touchStarted = inputManager.getStartedTouchIdentifiers().length > 0;
-  const pointerStarted = mouseLeftStarted || touchStarted;
+  const mouseCursorX = gdjs.evtTools.input.getCursorX(runtimeScene);
+  const mouseCursorY = gdjs.evtTools.input.getCursorY(runtimeScene);
+  const mouseOnAttackButton =
+    mouseLeftStarted && isInsideAttackButton(mouseCursorX, mouseCursorY);
 
-  if (attackButton && pointerStarted && attackButton.cursorOnObject()) {
+  if (mouseOnAttackButton) {
     state.attackRequested = true;
   }
 
@@ -85,10 +95,17 @@ function updateHavocMobileInput(runtimeScene) {
   const startedIds = inputManager.getStartedTouchIdentifiers();
 
   for (const id of startedIds) {
+    if (typeof gdjs.InputManager.MOUSE_TOUCH_ID !== 'undefined' && id === gdjs.InputManager.MOUSE_TOUCH_ID) {
+      continue;
+    }
+
     const x = inputManager.getTouchX(id);
     const y = inputManager.getTouchY(id);
 
-    if (attackButton && attackButton.cursorOnObject()) continue;
+    if (isInsideAttackButton(x, y)) {
+      state.attackRequested = true;
+      continue;
+    }
 
     if (x <= width * 0.42 && y >= height * 0.55 && state.joystickTouchId === null) {
       state.joystickTouchId = id;
@@ -103,9 +120,9 @@ function updateHavocMobileInput(runtimeScene) {
 
   // Desktop preview: convert a fresh left mouse press into the same target
   // request used by mobile. The target system performs the 3D hit test.
-  if (mouseLeftStarted && (!attackButton || !attackButton.cursorOnObject())) {
-    const cursorX = gdjs.evtTools.input.getCursorX(runtimeScene);
-    const cursorY = gdjs.evtTools.input.getCursorY(runtimeScene);
+  if (mouseLeftStarted && !mouseOnAttackButton) {
+    const cursorX = mouseCursorX;
+    const cursorY = mouseCursorY;
     const inJoystickRegion = cursorX <= width * 0.42 && cursorY >= height * 0.55;
 
     if (!inJoystickRegion) {
