@@ -14,7 +14,7 @@ const KillerClownConfig = Object.freeze({
 
   movement: {
     walkSpeed: 110,
-    chaseSpeed: 550,
+    chaseSpeed: 700,
     returnSpeed: 140,
     idleMinSeconds: 2,
     idleMaxSeconds: 5,
