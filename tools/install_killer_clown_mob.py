@@ -35,9 +35,6 @@ def install() -> None:
         'Sword_Attack': False,
     }
 
-    # Keep the GDevelop animation name identical to the GLB source name.
-    # The runtime script calls setAnimationName() with these exact names.
-    # Do not rename them to display aliases such as "Walk" or "Run".
     existing_by_source = {a.get('source'): a for a in animations}
     for animation_name, should_loop in required.items():
         animation = existing_by_source.get(animation_name)
@@ -53,29 +50,28 @@ def install() -> None:
             animation['name'] = animation_name
             animation['source'] = animation_name
 
+    replacement = [MARKER]
+    replacement.extend(source.splitlines())
+    replacement.extend([
+        '',
+        '// Consume Brawler aggro requests BEFORE the AI update so the mob',
+        '// enters aggressive state in the same runtime tick.',
+        'const killerClownAggroRequest = runtimeScene.__havocKillerClownAggroRequest;',
+        'if (killerClownAggroRequest) {',
+        '  const requestedMob = killerClownAggroRequest.mob;',
+        '  const requestedPlayer = killerClownAggroRequest.player;',
+        '  runtimeScene.__havocKillerClownAggroRequest = null;',
+        '  if (requestedMob && requestedPlayer && typeof aggroKillerClown === \'function\') {',
+        '    aggroKillerClown(requestedMob, requestedPlayer);',
+        '  }',
+        '}',
+        '',
+        'const killerClownDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
+        'updateKillerClowns(runtimeScene, killerClownDt);',
+    ])
+
     for layout in project.get('layouts', []):
         events = layout.get('events', [])
-        replacement = [MARKER]
-        replacement.extend(source.splitlines())
-        replacement.extend([
-            '',
-            'const killerClownDt = gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
-            'updateKillerClowns(runtimeScene, killerClownDt);',
-            '',
-            '// Consume Brawler aggro requests after the mob AI update. This bridge',
-            '// deliberately uses runtimeScene state instead of cross-event function',
-            '// visibility, which is not guaranteed between separate JsCode events.',
-            'const killerClownAggroRequest = runtimeScene.__havocKillerClownAggroRequest;',
-            'if (killerClownAggroRequest) {',
-            '  const requestedMob = killerClownAggroRequest.mob;',
-            '  const requestedPlayer = killerClownAggroRequest.player;',
-            '  runtimeScene.__havocKillerClownAggroRequest = null;',
-            '  if (requestedMob && requestedPlayer && typeof aggroKillerClown === \'function\') {',
-            '    aggroKillerClown(requestedMob, requestedPlayer);',
-            '  }',
-            '}',
-        ])
-
         found = False
         for event in events:
             if event.get('type') != 'BuiltinCommonInstructions::JsCode':
@@ -99,7 +95,7 @@ def install() -> None:
                 encoding='utf-8',
                 newline='\n',
             )
-            print('Refreshed Killer Clown mob V1.7.')
+            print('Refreshed Killer Clown mob V1.8.')
             print('Population          : 15')
             print('Respawn             : 15 seconds')
             print('Walk duration       : 10-15 seconds')
@@ -107,8 +103,8 @@ def install() -> None:
             print('Animation names     : GLB names preserved')
             print('Clone Z height      : inherited from placed Killer_clown')
             print('Minimum separation  : 1000')
-            print('Aggro bridge        : Brawler -> runtimeScene -> Killer Clown')
-            print('Default camera      : maximum zoom out (2200)')
+            print('Aggro bridge        : consumed BEFORE AI update')
+            print('Default camera       : maximum zoom out (2200)')
             return
 
         if layout.get('name') != 'Untitled scene':
@@ -123,7 +119,7 @@ def install() -> None:
             encoding='utf-8',
             newline='\n',
         )
-        print('Installed Killer Clown mob V1.7.')
+        print('Installed Killer Clown mob V1.8.')
         print('Population          : 15')
         print('Respawn             : 15 seconds')
         print('Walk duration       : 10-15 seconds')
@@ -131,8 +127,8 @@ def install() -> None:
         print('Animation names     : GLB names preserved')
         print('Clone Z height      : inherited from placed Killer_clown')
         print('Minimum separation  : 1000')
-        print('Aggro bridge        : Brawler -> runtimeScene -> Killer Clown')
-        print('Default camera      : maximum zoom out (2200)')
+        print('Aggro bridge        : consumed BEFORE AI update')
+        print('Default camera       : maximum zoom out (2200)')
         return
 
     raise RuntimeError("Untitled scene layout was not found")
