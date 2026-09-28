@@ -35,8 +35,6 @@ def action_fcurves(action):
 
 
 def clear_range(curve, start, end):
-    # Blender 5.2 can invalidate a Keyframe reference after removal. Remove
-    # by descending index so every removal targets the current collection.
     indices = [i for i, kp in enumerate(curve.keyframe_points)
                if start <= kp.co.x <= end]
     for index in reversed(indices):
@@ -57,7 +55,6 @@ def mirrored_quat_value(index, value):
 
 def mirror_right_to_left(action, start, end):
     curves = action_fcurves(action)
-
     for right, left in ARM_PAIRS:
         srcs = {fc.array_index: fc for fc in curves
                 if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'}
@@ -65,7 +62,6 @@ def mirror_right_to_left(action, start, end):
                 if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
         if len(srcs) != 4 or len(dsts) != 4:
             continue
-
         source_keys = {idx: [(kp.co.x, kp.co.y, kp.interpolation)
                              for kp in srcs[idx].keyframe_points
                              if start <= kp.co.x <= end] for idx in range(4)}
@@ -82,7 +78,6 @@ def mirror_right_to_left(action, start, end):
                 if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
         if len(srcs) != 4 or len(dsts) != 4:
             continue
-
         source_keys = {idx: [(kp.co.x, kp.co.y, kp.interpolation)
                              for kp in srcs[idx].keyframe_points
                              if start <= kp.co.x <= end] for idx in range(4)}
@@ -137,7 +132,10 @@ def main():
 
     freeze_frame = start + duration * 0.78
     freeze_final_hold(action, freeze_frame)
-    action.update_tag(refresh={'DATA'})
+
+    # Blender 5.2 updates the action data through the keyframe edits above;
+    # the legacy Action.update_tag(refresh={'DATA'}) call is not supported.
+    bpy.context.view_layer.update()
 
     bpy.ops.wm.save_as_mainfile(filepath=WORK_BLEND)
     bpy.ops.export_scene.gltf(filepath=OUTPUT, export_format='GLB',
