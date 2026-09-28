@@ -1,5 +1,6 @@
 import bpy
 import os
+import math
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 INPUT = os.path.join(ROOT, 'brawler_inplace.glb')
@@ -51,22 +52,12 @@ def copy_keys(curve):
 
 def mirror_right_to_left(action, start, end):
     curves = action_fcurves(action)
-
     for right, left in ARM_PAIRS:
-        srcs = {fc.array_index: fc for fc in curves
-                if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'}
-        dsts = {fc.array_index: fc for fc in curves
-                if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
+        srcs = {fc.array_index: fc for fc in curves if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'}
+        dsts = {fc.array_index: fc for fc in curves if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
         if len(srcs) != 4 or len(dsts) != 4:
             continue
-
-        source_keys = {
-            idx: [(frame, value, interpolation)
-                  for frame, value, interpolation in copy_keys(srcs[idx])
-                  if start <= frame < end]
-            for idx in range(4)
-        }
-
+        source_keys = {idx: [(frame, value, interpolation) for frame, value, interpolation in copy_keys(srcs[idx]) if start <= frame < end] for idx in range(4)}
         for idx in range(4):
             clear_range(dsts[idx], start, end)
             for frame, value, interpolation in source_keys[idx]:
@@ -74,20 +65,11 @@ def mirror_right_to_left(action, start, end):
 
     for right in HAND_RIGHT_BONES:
         left = right.replace('mixamorig:Right', 'mixamorig:Left', 1)
-        srcs = {fc.array_index: fc for fc in curves
-                if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'}
-        dsts = {fc.array_index: fc for fc in curves
-                if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
+        srcs = {fc.array_index: fc for fc in curves if fc.data_path == f'pose.bones["{right}"].rotation_quaternion'}
+        dsts = {fc.array_index: fc for fc in curves if fc.data_path == f'pose.bones["{left}"].rotation_quaternion'}
         if len(srcs) != 4 or len(dsts) != 4:
             continue
-
-        source_keys = {
-            idx: [(frame, value, interpolation)
-                  for frame, value, interpolation in copy_keys(srcs[idx])
-                  if start <= frame < end]
-            for idx in range(4)
-        }
-
+        source_keys = {idx: [(frame, value, interpolation) for frame, value, interpolation in copy_keys(srcs[idx]) if start <= frame < end] for idx in range(4)}
         for idx in range(4):
             clear_range(dsts[idx], start, end)
             for frame, value, interpolation in source_keys[idx]:
@@ -95,14 +77,8 @@ def mirror_right_to_left(action, start, end):
 
 def neutralize_right_arm(action, start, end):
     curves = action_fcurves(action)
-    for bone in [
-        'mixamorig:RightShoulder',
-        'mixamorig:RightArm',
-        'mixamorig:RightForeArm',
-        'mixamorig:RightHand',
-    ]:
-        targets = [fc for fc in curves
-                   if fc.data_path == f'pose.bones["{bone}"].rotation_quaternion']
+    for bone in ['mixamorig:RightShoulder','mixamorig:RightArm','mixamorig:RightForeArm','mixamorig:RightHand']:
+        targets = [fc for fc in curves if fc.data_path == f'pose.bones["{bone}"].rotation_quaternion']
         for fc in targets:
             if not fc.keyframe_points:
                 continue
@@ -112,9 +88,9 @@ def neutralize_right_arm(action, start, end):
             insert_key(fc, end, value)
 
 def freeze_final_hold_from_pose(action, hold_start, end):
-    # Capture the pose at hold_start before changing keys. Then explicitly
-    # write that pose at both ends of the hold range. This avoids relying on
-    # evaluate(end), which can return a value affected by the original action.
+    # GLTF animation export is normally sampled on whole frames. Begin the
+    # immutable recovery-free stance on an integer frame so the exported
+    # animation cannot interpolate through the old recovery pose.
     for fc in action_fcurves(action):
         if not fc.keyframe_points:
             continue
@@ -137,23 +113,16 @@ def main():
     start, end = action.frame_range
     duration = end - start
     split = start + duration * 0.48
-    hold_start = start + duration * 0.78
+    # Use the first whole frame after the power-punch section for the hold.
+    hold_start = math.ceil(start + duration * 0.78)
 
     mirror_right_to_left(action, start, split)
     neutralize_right_arm(action, start, split)
     freeze_final_hold_from_pose(action, hold_start, end)
 
     bpy.context.view_layer.update()
-
     bpy.ops.wm.save_as_mainfile(filepath=WORK_BLEND)
-    bpy.ops.export_scene.gltf(
-        filepath=OUTPUT,
-        export_format='GLB',
-        export_animations=True,
-        export_skins=True,
-        export_morph=False,
-        export_apply=False,
-    )
+    bpy.ops.export_scene.gltf(filepath=OUTPUT, export_format='GLB', export_animations=True, export_skins=True, export_morph=False, export_apply=False)
 
     print('\n' + '=' * 68)
     print('BRAWLER ATTACK2 MODIFICATION COMPLETE')
