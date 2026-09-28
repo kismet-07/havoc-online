@@ -22,6 +22,7 @@ const KillerClownConfig = Object.freeze({
     walkMaxSeconds: 15,
     boundaryMargin: 300,
     spawnRadius: 1800,
+    minimumSeparation: 1000,
   },
 
   combat: {
@@ -31,6 +32,8 @@ const KillerClownConfig = Object.freeze({
     attackCooldownSeconds: 0.8,
     leashDistance: 3200,
     homeArrivalDistance: 12,
+    combatSeparation: 300,
+    combatSeparationSpeed: 240,
   },
 });
 
