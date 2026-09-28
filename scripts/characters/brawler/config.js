@@ -17,7 +17,7 @@ const BRAWLER_CONFIG = {
     attackRange: 450,
     animationSpeed: {
       Attack1: 1.35,
-      Attack2: 1.15,
+      Attack2: 1.35,
     },
   },
   animations: {
