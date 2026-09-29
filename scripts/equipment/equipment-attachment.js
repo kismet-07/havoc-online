@@ -137,6 +137,8 @@ function havocQuaternionToEulerZYXDegrees(quaternion) {
 function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding) {
   if (!player || !equipmentObject || !binding) return false;
   if (typeof equipmentObject.get3DRendererObject !== 'function') return false;
+  if (typeof THREE === 'undefined') return false;
+  if (typeof THREE.Vector3 !== 'function' || typeof THREE.Quaternion !== 'function') return false;
 
   const boneName = HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.activeHand === 'left'
     ? binding.leftAnchor
@@ -158,17 +160,8 @@ function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding
     return false;
   }
 
-  const worldPosition = {
-    x: 0,
-    y: 0,
-    z: 0,
-  };
-  const worldQuaternion = {
-    x: 0,
-    y: 0,
-    z: 0,
-    w: 1,
-  };
+  const worldPosition = new THREE.Vector3();
+  const worldQuaternion = new THREE.Quaternion();
 
   bone.getWorldPosition(worldPosition);
   bone.getWorldQuaternion(worldQuaternion);
