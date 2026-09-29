@@ -43,7 +43,22 @@ def build_inline_source() -> list[str]:
     for path in SOURCE_FILES:
         rel = path.relative_to(ROOT).as_posix()
         lines.append(f'// --- {rel} ---')
-        lines.extend(path.read_text(encoding='utf-8').splitlines())
+        source_lines = path.read_text(encoding='utf-8').splitlines()
+        if path.name == 'equipment-attachment.js':
+            cleaned = []
+            skip = False
+            for line in source_lines:
+                if "console.groupCollapsed('[Havoc Equipment] Gauntlet diagnostic')" in line:
+                    skip = True
+                    continue
+                if skip and 'console.groupEnd();' in line:
+                    skip = False
+                    continue
+                if skip:
+                    continue
+                cleaned.append(line)
+            source_lines = cleaned
+        lines.extend(source_lines)
         lines.append('')
 
     lines.extend([
@@ -190,9 +205,10 @@ def main() -> None:
         and 'equipmentRendererObject.visible = true' in equipment_source
         and 'bone.add(equipmentRendererObject)' not in equipment_source
         and 'equipmentRendererObject.parent' not in equipment_source
+        and 'collectHavocEquipmentDiagnostic' not in equipment_source
     )
     if not required_equipment_runtime:
-        raise SystemExit('Safety check failed: Brawler equipment attachment runtime is incomplete or still uses skeleton parenting.')
+        raise SystemExit('Safety check failed: Brawler equipment attachment runtime is incomplete or still uses skeleton parenting/stale diagnostics.')
 
     enhancement_vfx_source = (ROOT / 'scripts' / 'enhancement' / 'vfx.js').read_text(encoding='utf-8')
     if 'function updateHavocEnhancement(runtimeScene, dt)' not in enhancement_vfx_source:
@@ -206,6 +222,7 @@ def main() -> None:
     print('Replaced exactly one brawler inline JS event from the external source files.')
     print('Registered IronGauntlet as a GDevelop Model3D object definition.')
     print('Registered GauntletDiagnostic as a desktop in-game Text object.')
+    print('Removed stale collectHavocEquipmentDiagnostic runtime call from generated inline code.')
     print('Included enhancement foundation and equipment attachment runtime.')
     print('Runtime entry point now applies the Brawler gauntlet world transform from the right-hand bone.')
     print('Desktop diagnostic panel is enabled.')
