@@ -164,6 +164,13 @@ function havocQuaternionToEulerZYXDegrees(quaternion) {
   };
 }
 
+function normalizeHavocAngleDeltaDegrees(delta) {
+  let normalized = delta % 360;
+  if (normalized > 180) normalized -= 360;
+  if (normalized < -180) normalized += 360;
+  return normalized;
+}
+
 function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding) {
   if (!player || !equipmentObject || !binding) return false;
   if (typeof equipmentObject.get3DRendererObject !== 'function') return false;
@@ -174,7 +181,8 @@ function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding
   const bone = findHavocAttachmentBone(player, boneName);
   if (!bone) return false;
 
-  if (!equipmentObject.get3DRendererObject()) return false;
+  const equipmentRendererObject = equipmentObject.get3DRendererObject();
+  if (!equipmentRendererObject) return false;
 
   if (typeof bone.updateMatrixWorld === 'function') {
     bone.updateMatrixWorld(true);
@@ -216,9 +224,19 @@ function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding
   equipmentObject.setRotationY(
     rotation.y + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.y
   );
-  equipmentObject.setRotationZ(
-    rotation.z + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.z
-  );
+
+  if (typeof equipmentObject.turnAroundZ === 'function') {
+    const currentZRadians = equipmentRendererObject.rotation
+      && Number(equipmentRendererObject.rotation.z);
+    if (Number.isFinite(currentZRadians)) {
+      const currentZDegrees = currentZRadians * (180 / Math.PI);
+      const targetZDegrees = rotation.z
+        + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.z;
+      equipmentObject.turnAroundZ(
+        normalizeHavocAngleDeltaDegrees(targetZDegrees - currentZDegrees)
+      );
+    }
+  }
 
   binding.modelAttached = true;
   binding.activeBone = bone.name || boneName;
