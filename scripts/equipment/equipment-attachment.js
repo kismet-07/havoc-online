@@ -12,7 +12,7 @@ const HAVOC_EQUIPMENT_ATTACHMENT_PROFILES = Object.freeze({
     leftAnchor: 'mixamorig:LeftHand',
     rightAnchor: 'mixamorig:RightHand',
     modelRequired: true,
-    modelObjectName: 'BrawlerGauntlet',
+    modelObjectName: 'IronGauntlet',
   }),
 });
 
@@ -249,7 +249,7 @@ function updateHavocEquipmentAttachments(runtimeScene) {
 
   const state = initializeHavocEquipmentAttachments(runtimeScene);
   const players = runtimeScene.getObjects(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.playerObjectName);
-  let equipmentObjects = runtimeScene.getObjects('BrawlerGauntlet');
+  let equipmentObjects = runtimeScene.getObjects('IronGauntlet');
 
   const player = players && players[0];
   let equipmentObject = equipmentObjects && equipmentObjects[0];
@@ -263,14 +263,14 @@ function updateHavocEquipmentAttachments(runtimeScene) {
   }
 
   if (!equipmentObject && typeof runtimeScene.createObject === 'function') {
-    equipmentObject = runtimeScene.createObject('BrawlerGauntlet');
+    equipmentObject = runtimeScene.createObject('IronGauntlet');
     equipmentObjects = equipmentObject ? [equipmentObject] : [];
   }
 
   if (!equipmentObject) {
     if (!state.warnedMissingModel) {
       state.warnedMissingModel = true;
-      console.warn('[Havoc Equipment] Unable to create BrawlerGauntlet runtime instance.');
+      console.warn('[Havoc Equipment] Unable to create IronGauntlet runtime instance.');
     }
     return;
   }
