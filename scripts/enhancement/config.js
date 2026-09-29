@@ -40,3 +40,4 @@ function getHavocEnhancementProfile(level) {
 }
 
 // Phase 2 prototype verified against Brawler_inplace.glb hand-bone names.
+// Runtime attachment uses the GLB's actual mixamorig hand bones.
