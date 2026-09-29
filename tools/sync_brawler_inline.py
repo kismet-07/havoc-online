@@ -25,6 +25,8 @@ SOURCE_FILES = [
 
 MARKER = '// HAVOC_BRAWLER_CHARACTER_V1'
 TARGET_ICON = 'TargetSelectionIcon'
+GAUNTLET_OBJECT = 'IronGauntlet'
+GAUNTLET_RESOURCE = 'basic_iron_gauntlet.glb'
 OBSOLETE = (
     'TargetSelectionArrowStem',
     'TargetSelectionArrowHead',
@@ -56,6 +58,55 @@ def build_inline_source() -> list[str]:
     return lines
 
 
+def ensure_gauntlet_object_definition(project: dict) -> None:
+    """Register IronGauntlet as a real GDevelop Model3D object type.
+
+    The GLB resource alone is not enough for runtimeScene.createObject().
+    The object definition must exist in the layout object registry first.
+    """
+    layouts = project.get('layouts', [])
+    if not layouts:
+        raise SystemExit('Safety check failed: project has no layouts.')
+
+    layout = layouts[0]
+    objects = layout.setdefault('objects', [])
+    existing = next((obj for obj in objects if obj.get('name') == GAUNTLET_OBJECT), None)
+    if existing:
+        return
+
+    resources = project.get('resources', {}).get('resources', [])
+    resource_names = {r.get('name') for r in resources}
+    if GAUNTLET_RESOURCE not in resource_names:
+        raise SystemExit(
+            f'Safety check failed: {GAUNTLET_RESOURCE} is not registered as a project resource.'
+        )
+
+    objects.append({
+        'assetStoreId': '',
+        'name': GAUNTLET_OBJECT,
+        'persistentUuid': '9d8f5f8e-6d0a-4c9a-8e42-1d6b7a3c5f20',
+        'type': 'Scene3D::Model3DObject',
+        'variables': [],
+        'effects': [],
+        'behaviors': [],
+        'content': {
+            'centerLocation': 'CenteredOnZ',
+            'depth': 100,
+            'height': 100,
+            'isCastingShadow': True,
+            'isReceivingShadow': True,
+            'keepAspectRatio': True,
+            'materialType': 'StandardWithoutMetalness',
+            'modelResourceName': GAUNTLET_RESOURCE,
+            'originLocation': 'ModelOrigin',
+            'rotationX': 90,
+            'rotationY': 0,
+            'rotationZ': 90,
+            'width': 100,
+        },
+    })
+
+
 def find_brawler_events(project: dict) -> list[dict]:
     found = []
     for layout in project.get('layouts', []):
@@ -77,6 +128,8 @@ def main() -> None:
         raise SystemExit(
             f'Safety check failed: expected exactly one brawler inline JS event, found {len(events)}.'
         )
+
+    ensure_gauntlet_object_definition(project)
 
     source = build_inline_source()
     events[0]['inlineCode'] = source
@@ -138,7 +191,8 @@ def main() -> None:
     )
 
     print('Brawler inline-code synchronization complete.')
-    print('Replaced exactly one inline brawler JS event from the external source files.')
+    print('Replaced exactly one brawler inline JS event from the external source files.')
+    print('Registered IronGauntlet as a GDevelop Model3D object definition.')
     print('Included enhancement foundation and equipment attachment runtime.')
     print('Runtime entry point now applies the Brawler gauntlet world transform from the right-hand bone.')
     print('Enhancement VFX remains behind its current disabled presentation boundary.')
