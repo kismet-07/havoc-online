@@ -52,10 +52,8 @@ def build_inline_source() -> list[str]:
         '  if (!runtimeScene) return;',
         '  const diagnosticState = runtimeScene.__havocGauntletDiagnostic || { overlay: null, timer: 0 };',
         '  runtimeScene.__havocGauntletDiagnostic = diagnosticState;',
-        '',
         '  const diagnosticDocument = typeof document !== "undefined" ? document : null;',
         '  if (!diagnosticDocument || !diagnosticDocument.body) return;',
-        '',
         '  if (!diagnosticState.overlay || !diagnosticDocument.body.contains(diagnosticState.overlay)) {',
         '    diagnosticState.overlay = diagnosticDocument.getElementById("havoc-gauntlet-diagnostic");',
         '    if (!diagnosticState.overlay) {',
@@ -76,11 +74,9 @@ def build_inline_source() -> list[str]:
         '      diagnosticState.overlay = overlay;',
         '    }',
         '  }',
-        '',
         '  diagnosticState.timer += gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(runtimeScene);',
         '  if (diagnosticState.timer < 0.25) return;',
         '  diagnosticState.timer = 0;',
-        '',
         '  const player = runtimeScene.getObjects("Character")[0] || null;',
         '  const gauntlet = runtimeScene.getObjects("IronGauntlet")[0] || null;',
         '  const state = runtimeScene.__havocEquipmentAttachments || null;',
@@ -88,22 +84,16 @@ def build_inline_source() -> list[str]:
         '  const playerRenderer = player && typeof player.get3DRendererObject === "function" ? player.get3DRendererObject() : null;',
         '  const gauntletRenderer = gauntlet && typeof gauntlet.get3DRendererObject === "function" ? gauntlet.get3DRendererObject() : null;',
         '  const bone = player && binding ? findHavocAttachmentBone(player, binding.rightAnchor) : null;',
+        '  const visualRoot = binding && binding.visualRoot ? binding.visualRoot : null;',
         '  let meshCount = 0;',
-        '  let culledMeshCount = 0;',
-        '  if (gauntletRenderer && typeof gauntletRenderer.traverse === "function") {',
-        '    gauntletRenderer.traverse((node) => {',
-        '      if (node && node.isMesh) {',
-        '        meshCount += 1;',
-        '        if (node.frustumCulled) culledMeshCount += 1;',
-        '      }',
-        '    });',
+        '  if (visualRoot && typeof visualRoot.traverse === "function") {',
+        '    visualRoot.traverse((node) => { if (node && node.isMesh) meshCount += 1; });',
         '  }',
-        '  const rendererPosition = gauntletRenderer && gauntletRenderer.position ? [gauntletRenderer.position.x, gauntletRenderer.position.y, gauntletRenderer.position.z].map(v => Number(v).toFixed(2)).join(", ") : "NONE";',
-        '  const rendererScale = gauntletRenderer && gauntletRenderer.scale ? [gauntletRenderer.scale.x, gauntletRenderer.scale.y, gauntletRenderer.scale.z].map(v => Number(v).toFixed(3)).join(", ") : "NONE";',
-        '  const bonePosition = bone && bone.matrixWorld && typeof THREE !== "undefined" && typeof THREE.Vector3 === "function" ? new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld) : null;',
-        '  const bonePositionText = bonePosition ? [bonePosition.x, bonePosition.y, bonePosition.z].map(v => Number(v).toFixed(2)).join(", ") : "NONE";',
-        '  const objectSize = gauntlet && typeof gauntlet.getWidth === "function" ? [gauntlet.getWidth(), gauntlet.getHeight(), gauntlet.getDepth()].map(v => Number(v).toFixed(2)).join(", ") : "NONE";',
-        '  const objectScale = gauntlet && typeof gauntlet.getScale === "function" ? Number(gauntlet.getScale()).toFixed(3) : "NONE";',
+        '  const parentName = visualRoot && visualRoot.parent ? (visualRoot.parent.name || visualRoot.parent.type || "<unnamed>") : "NONE";',
+        '  const baseScale = binding && binding.baseScale ? [binding.baseScale.x, binding.baseScale.y, binding.baseScale.z].map(v => Number(v).toFixed(3)).join(", ") : "NONE";',
+        '  const baseQuaternion = binding && binding.baseQuaternion ? [binding.baseQuaternion.x, binding.baseQuaternion.y, binding.baseQuaternion.z, binding.baseQuaternion.w].map(v => Number(v).toFixed(4)).join(", ") : "NONE";',
+        '  const rendererChildren = gauntletRenderer && gauntletRenderer.children ? gauntletRenderer.children.length : 0;',
+        '  const boneName = bone && bone.name ? bone.name : "NONE";',
         '  const lines = [',
         '    "GAUNTLET DIAGNOSTIC",',
         '    "------------------",',
@@ -111,19 +101,17 @@ def build_inline_source() -> list[str]:
         '    "Character renderer: " + (playerRenderer ? "FOUND" : "MISSING"),',
         '    "IronGauntlet:       " + (gauntlet ? "FOUND" : "MISSING"),',
         '    "Gauntlet renderer:  " + (gauntletRenderer ? "FOUND" : "MISSING"),',
-        '    "Mesh count:          " + meshCount,',
-        '    "Culled meshes:      " + culledMeshCount,',
-        '    "Object size:        " + objectSize,',
-        '    "Object scale:       " + objectScale,',
-        '    "Renderer visible:   " + (gauntletRenderer && gauntletRenderer.visible ? "YES" : "NO"),',
-        '    "Renderer position:  " + rendererPosition,',
-        '    "Renderer scale:     " + rendererScale,',
+        '    "Renderer children:   " + rendererChildren,',
+        '    "Visual root:         " + (visualRoot ? "FOUND" : "MISSING"),',
+        '    "Visual parent:       " + parentName,',
+        '    "Visual meshes:       " + meshCount,',
         '    "RightHand bone:     " + (bone ? "FOUND" : "MISSING"),',
-        '    "Actual bone:        " + (bone && bone.name ? bone.name : "NONE"),',
-        '    "Bone world pos:     " + bonePositionText,',
+        '    "Actual bone:        " + boneName,',
         '    "Binding:            " + (binding ? "FOUND" : "MISSING"),',
         '    "Attached:           " + (binding && binding.modelAttached ? "YES" : "NO"),',
         '    "Renderer parented:  " + (binding && binding.rendererParented ? "YES" : "NO"),',
+        '    "Base scale:         " + baseScale,',
+        '    "Base quaternion:    " + baseQuaternion,',
         '  ];',
         '  diagnosticState.overlay.textContent = lines.join("\\n");',
         '}',
@@ -152,6 +140,7 @@ def ensure_gauntlet_object_definition(project: dict) -> None:
     resource_names = {r.get('name') for r in resources}
     if GAUNTLET_RESOURCE not in resource_names:
         raise SystemExit(f'Safety check failed: {GAUNTLET_RESOURCE} is not registered as a project resource.')
+
     existing = next((obj for obj in objects if obj.get('name') == GAUNTLET_OBJECT), None)
     if not existing:
         objects.append({
@@ -174,18 +163,12 @@ def ensure_gauntlet_object_definition(project: dict) -> None:
         content = existing.get('content', {})
         if existing.get('type') != 'Scene3D::Model3DObject' or content.get('modelResourceName') != GAUNTLET_RESOURCE:
             raise SystemExit('Safety check failed: existing IronGauntlet object is not a Model3DObject using basic_iron_gauntlet.glb.')
+
     layout['objects'] = [obj for obj in objects if obj.get('name') != LEGACY_DIAGNOSTIC_OBJECT]
     layout['instances'] = [inst for inst in instances if inst.get('name') != LEGACY_DIAGNOSTIC_OBJECT]
     folder = layout.get('objectsFolderStructure')
     if isinstance(folder, dict) and isinstance(folder.get('children'), list):
         folder['children'] = [child for child in folder['children'] if child.get('objectName') != LEGACY_DIAGNOSTIC_OBJECT]
-    if any(obj.get('name') == LEGACY_DIAGNOSTIC_OBJECT for obj in layout['objects']):
-        raise SystemExit('Safety check failed: legacy GDevelop GauntletDiagnostic remains in project JSON.')
-    if any(inst.get('name') == LEGACY_DIAGNOSTIC_OBJECT for inst in layout['instances']):
-        raise SystemExit('Safety check failed: legacy GDevelop GauntletDiagnostic remains in project JSON.')
-    folder_children = folder.get('children') if isinstance(folder, dict) else []
-    if any(child.get('objectName') == LEGACY_DIAGNOSTIC_OBJECT for child in folder_children):
-        raise SystemExit('Safety check failed: legacy GDevelop GauntletDiagnostic remains in object folders.')
 
 
 def find_brawler_events(project: dict) -> list[dict]:
@@ -194,11 +177,48 @@ def find_brawler_events(project: dict) -> list[dict]:
         for event in layout.get('events', []):
             if event.get('type') != 'BuiltinCommonInstructions::JsCode':
                 continue
-            inline = event.get('inlineCode', [])
-            text = '\n'.join(inline)
+            text = '\n'.join(event.get('inlineCode', []))
             if MARKER in text or 'initializeHavocMobileInput' in text or 'initializeBrawlerCombat' in text:
                 found.append(event)
     return found
+
+
+def verify_equipment_runtime(equipment_source: str) -> None:
+    required = (
+        "modelObjectName: 'IronGauntlet'",
+        'function updateHavocEquipmentAttachments(runtimeScene)',
+        'mixamorig:RightHand',
+        'function attachHavocEquipmentVisualToBone',
+        'function detachHavocEquipmentVisual',
+        'const loadedChild = renderer.children',
+        'bone.add(visualRoot)',
+        'binding.baseQuaternion',
+        'binding.baseScale',
+        'node.frustumCulled = false',
+        'equipmentObject.isHidden',
+    )
+    missing = [token for token in required if token not in equipment_source]
+    forbidden = (
+        'function applyHavocEquipmentWorldTransform',
+        'bone.matrixWorld',
+        'parentInverse',
+        'targetWorldMatrix',
+        'setWidth(',
+        'setHeight(',
+        'setDepth(',
+        'positionOffset:',
+        'rotationOffsetDegrees:',
+        'socketPoint',
+        'bone.add(equipmentRendererObject)',
+    )
+    present_forbidden = [token for token in forbidden if token in equipment_source]
+    if missing or present_forbidden:
+        details = []
+        if missing:
+            details.append('Missing: ' + ', '.join(missing))
+        if present_forbidden:
+            details.append('Forbidden: ' + ', '.join(present_forbidden))
+        raise SystemExit('Safety check failed: equipment attachment architecture is not the bone-parented visual implementation. ' + ' '.join(details))
 
 
 def main() -> None:
@@ -206,15 +226,11 @@ def main() -> None:
     events = find_brawler_events(project)
     if len(events) != 1:
         raise SystemExit(f'Safety check failed: expected exactly one brawler inline JS event, found {len(events)}.')
+
     ensure_gauntlet_object_definition(project)
-    source = build_inline_source()
-    events[0]['inlineCode'] = source
-    serialized = json.dumps(project, ensure_ascii=False)
-    for token in OBSOLETE:
-        if token in serialized:
-            raise SystemExit(f'Safety check failed: obsolete target indicator reference remains: {token}')
-    if TARGET_ICON not in serialized:
-        raise SystemExit('Safety check failed: TargetSelectionIcon is missing. Refusing to modify the project.')
+    equipment_source = (ROOT / 'scripts' / 'equipment' / 'equipment-attachment.js').read_text(encoding='utf-8')
+    verify_equipment_runtime(equipment_source)
+
     combat_source = (ROOT / 'scripts' / 'characters' / 'brawler' / 'combat.js').read_text(encoding='utf-8')
     required_target_validity = (
         'function brawlerTargetIsValid(target) {' in combat_source
@@ -225,50 +241,38 @@ def main() -> None:
     )
     if not required_target_validity:
         raise SystemExit('Safety check failed: Brawler target validity guard is missing the current null, destroyed, and living-state checks.')
-    equipment_source = (ROOT / 'scripts' / 'equipment' / 'equipment-attachment.js').read_text(encoding='utf-8')
-    required_equipment_runtime = (
-        "modelObjectName: 'IronGauntlet'" in equipment_source
-        and 'function updateHavocEquipmentAttachments(runtimeScene)' in equipment_source
-        and 'mixamorig:RightHand' in equipment_source
-        and 'function attachHavocEquipmentRendererToBone' in equipment_source
-        and 'function applyHavocEquipmentWorldTransform' in equipment_source
-        and 'bone.matrixWorld' in equipment_source
-        and 'equipmentRendererObject.position.setFromMatrixPosition' in equipment_source
-        and 'equipmentRendererObject.visible = true' in equipment_source
-        and 'bone.add(equipmentRendererObject)' not in equipment_source
-        and 'equipmentRendererObject.parent' not in equipment_source
-        and 'collectHavocEquipmentDiagnostic' not in equipment_source
-        and 'setWidth(' not in equipment_source
-        and 'setHeight(' not in equipment_source
-        and 'setDepth(' not in equipment_source
-    )
-    if not required_equipment_runtime:
-        raise SystemExit('Safety check failed: Brawler equipment attachment runtime is incomplete, resizes the model, uses skeleton parenting, or contains stale diagnostics.')
+
     enhancement_vfx_source = (ROOT / 'scripts' / 'enhancement' / 'vfx.js').read_text(encoding='utf-8')
     if 'function updateHavocEnhancement(runtimeScene, dt)' not in enhancement_vfx_source:
         raise SystemExit('Safety check failed: enhancement VFX runtime boundary is missing.')
+
+    source = build_inline_source()
     generated_inline = '\n'.join(source)
     if 'updateHavocEquipmentAttachments(runtimeScene);' not in generated_inline:
         raise SystemExit('Safety check failed: generated inline code does not call the equipment runtime.')
     if 'updateHavocGauntletDiagnostic(runtimeScene);' not in generated_inline:
         raise SystemExit('Safety check failed: generated inline code does not call the desktop gauntlet diagnostic.')
-    if 'collectHavocEquipmentDiagnostic' in generated_inline:
-        raise SystemExit('Safety check failed: stale gauntlet diagnostic reference remains in generated inline code.')
-    if 'function updateHavocGauntletDiagnostic(runtimeScene)' not in generated_inline:
-        raise SystemExit('Safety check failed: desktop gauntlet diagnostic function was not generated.')
-    if 'document.createElement(' not in generated_inline or 'appendChild(overlay)' not in generated_inline:
-        raise SystemExit('Safety check failed: desktop gauntlet diagnostic is not using a DOM overlay.')
+    if TARGET_ICON not in json.dumps(project, ensure_ascii=False):
+        raise SystemExit('Safety check failed: TargetSelectionIcon is missing. Refusing to modify the project.')
+    serialized = json.dumps(project, ensure_ascii=False)
+    for token in OBSOLETE:
+        if token in serialized:
+            raise SystemExit(f'Safety check failed: obsolete target indicator reference remains: {token}')
+
+    events[0]['inlineCode'] = source
     backup = PROJECT.with_name(PROJECT.name + '.before-brawler-inline-sync.bak')
     backup.write_text(PROJECT.read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
     PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
+
     print('Brawler inline-code synchronization complete.')
     print('Replaced exactly one brawler inline JS event from the external source files.')
     print('Registered IronGauntlet as a GDevelop Model3D object definition.')
     print('Removed the obsolete world-space GauntletDiagnostic object.')
-    print('Added a desktop DOM diagnostic modeled after the working Killer Clown diagnostic.')
-    print('Equipment runtime no longer overrides Model3D width/height/depth.')
-    print('Equipment runtime keeps GDevelop object transforms synchronized with the RightHand bone.')
-    print('Equipment renderer mesh frustum culling is disabled for the dynamically attached model.')
+    print('Added a desktop DOM diagnostic for the bone-parented visual root.')
+    print('Equipment runtime uses direct GLTF visual parenting to the RightHand bone.')
+    print('Equipment runtime preserves the existing GDevelop model scale and rotation.')
+    print('Equipment runtime does not modify Model3D width/height/depth.')
+    print('Equipment renderer mesh frustum culling is disabled for the attached visual.')
     print('Enhancement VFX remains behind its current runtime boundary.')
     print('Preserved TargetSelectionIcon and refused obsolete target-arrow objects.')
     print('Current combat target validity: null + destroyed + living-state checks.')
