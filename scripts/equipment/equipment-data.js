@@ -35,7 +35,7 @@ function createHavocEquipmentInstance(itemId, enhancementLevel = 0) {
 
   return {
     instanceId: null,
-    itemId: definition.id,
+    itemId,
     slot: definition.slot,
     classId: definition.classId,
     attachmentProfile: definition.attachmentProfile,
