@@ -1,10 +1,11 @@
 /**
  * Character equipment attachment contract and runtime binding state.
  *
- * Equipment remains a normal GDevelop Model3D object. GDevelop owns the
- * object transform, so the attachment runtime updates the GDevelop object
- * position/rotation from the character hand bone every frame instead of
- * parenting the renderer to the skeleton.
+ * Equipment remains a normal GDevelop Model3D object. The attachment runtime
+ * updates the renderer in the renderer parent's LOCAL coordinate space from
+ * the character hand bone's WORLD transform. It does not parent the renderer
+ * to the skeleton and does not feed raw Three.js world coordinates back into
+ * GDevelop's object transform setters.
  */
 const HAVOC_EQUIPMENT_ATTACHMENT_PROFILES = Object.freeze({
   brawler_hands: Object.freeze({
@@ -140,9 +141,6 @@ function prepareHavocEquipmentRenderer(equipmentRendererObject) {
     equipmentRendererObject.traverse((node) => {
       if (!node) return;
       if (node.isMesh) {
-        // GDevelop has known 3D frustum-culling issues for dynamically moved
-        // model objects. The gauntlet follows a skeleton bone every frame,
-        // so disabling mesh culling is necessary for this attachment.
         node.frustumCulled = false;
         node.visible = true;
         if (node.geometry && typeof node.geometry.computeBoundingSphere === 'function') {
@@ -178,10 +176,18 @@ function captureHavocEquipmentBaseTransform(equipmentObject, equipmentRendererOb
 function applyHavocEquipmentWorldTransform(equipmentObject, binding, bone) {
   if (!equipmentObject || !binding || !bone) return false;
   if (typeof equipmentObject.get3DRendererObject !== 'function') return false;
+  if (typeof THREE === 'undefined' ||
+      typeof THREE.Matrix4 !== 'function' ||
+      typeof THREE.Vector3 !== 'function' ||
+      typeof THREE.Quaternion !== 'function' ||
+      typeof THREE.Euler !== 'function') {
+    return false;
+  }
 
   const equipmentRendererObject = equipmentObject.get3DRendererObject();
-  if (!equipmentRendererObject) return false;
-  if (!equipmentRendererObject.position || !equipmentRendererObject.quaternion) return false;
+  if (!equipmentRendererObject || !equipmentRendererObject.position || !equipmentRendererObject.quaternion) {
+    return false;
+  }
 
   if (typeof bone.updateWorldMatrix === 'function') {
     bone.updateWorldMatrix(true, false);
@@ -189,52 +195,42 @@ function applyHavocEquipmentWorldTransform(equipmentObject, binding, bone) {
     bone.updateMatrixWorld(true);
   }
 
-  if (!bone.matrixWorld || typeof equipmentRendererObject.position.setFromMatrixPosition !== 'function') {
-    return false;
+  if (!bone.matrixWorld) return false;
+
+  const parent = equipmentRendererObject.parent || null;
+  if (parent && typeof parent.updateMatrixWorld === 'function') {
+    parent.updateMatrixWorld(true);
   }
 
-  equipmentRendererObject.position.setFromMatrixPosition(bone.matrixWorld);
-
-  if (typeof THREE !== 'undefined' && typeof THREE.Quaternion === 'function' && typeof THREE.Euler === 'function') {
-    const boneQuaternion = new THREE.Quaternion();
-    boneQuaternion.setFromRotationMatrix(bone.matrixWorld);
-
-    const finalQuaternion = boneQuaternion.clone();
-    if (binding.baseQuaternion) {
-      finalQuaternion.multiply(binding.baseQuaternion);
-    }
-
-    const offsetEuler = new THREE.Euler(
-      HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.x * Math.PI / 180,
-      HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.y * Math.PI / 180,
-      HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.z * Math.PI / 180,
-      'ZYX'
-    );
-    finalQuaternion.multiply(new THREE.Quaternion().setFromEuler(offsetEuler));
-
-    const finalEuler = new THREE.Euler().setFromQuaternion(finalQuaternion, 'ZYX');
-    const toDegrees = 180 / Math.PI;
-
-    // Keep GDevelop's object state synchronized with the bone. This prevents
-    // the Model3D renderer from overwriting our direct Three.js transform on
-    // the next frame.
-    if (typeof equipmentObject.setX === 'function') equipmentObject.setX(equipmentRendererObject.position.x + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.x);
-    if (typeof equipmentObject.setY === 'function') equipmentObject.setY(equipmentRendererObject.position.y + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.y);
-    if (typeof equipmentObject.setZ === 'function') equipmentObject.setZ(equipmentRendererObject.position.z + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.z);
-    if (typeof equipmentObject.setRotationX === 'function') equipmentObject.setRotationX(finalEuler.x * toDegrees);
-    if (typeof equipmentObject.setRotationY === 'function') equipmentObject.setRotationY(finalEuler.y * toDegrees);
-    if (typeof equipmentObject.setAngle === 'function') equipmentObject.setAngle(finalEuler.z * toDegrees);
-
-    equipmentRendererObject.quaternion.copy(finalQuaternion);
-  } else if (typeof equipmentRendererObject.quaternion.setFromRotationMatrix === 'function') {
-    equipmentRendererObject.quaternion.setFromRotationMatrix(bone.matrixWorld);
-  } else {
-    return false;
+  // The hand bone is expressed in world space, while Object3D.position and
+  // quaternion are local to the Model3D renderer's parent. Convert explicitly
+  // instead of assigning world coordinates directly to the renderer.
+  const localMatrix = bone.matrixWorld.clone();
+  if (parent && parent.matrixWorld) {
+    const parentInverse = new THREE.Matrix4().copy(parent.matrixWorld).invert();
+    localMatrix.premultiply(parentInverse);
   }
 
-  equipmentRendererObject.position.x += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.x;
-  equipmentRendererObject.position.y += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.y;
-  equipmentRendererObject.position.z += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.z;
+  const localPosition = new THREE.Vector3();
+  const localQuaternion = new THREE.Quaternion();
+  const localScale = new THREE.Vector3();
+  localMatrix.decompose(localPosition, localQuaternion, localScale);
+
+  const finalQuaternion = localQuaternion.clone();
+  if (binding.baseQuaternion) {
+    finalQuaternion.multiply(binding.baseQuaternion);
+  }
+
+  const offsetEuler = new THREE.Euler(
+    HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.x * Math.PI / 180,
+    HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.y * Math.PI / 180,
+    HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.z * Math.PI / 180,
+    'ZYX'
+  );
+  finalQuaternion.multiply(new THREE.Quaternion().setFromEuler(offsetEuler));
+
+  equipmentRendererObject.position.copy(localPosition);
+  equipmentRendererObject.quaternion.copy(finalQuaternion);
 
   if (binding.baseScale && equipmentRendererObject.scale) {
     equipmentRendererObject.scale.set(
@@ -243,6 +239,10 @@ function applyHavocEquipmentWorldTransform(equipmentObject, binding, bone) {
       binding.baseScale.z
     );
   }
+
+  equipmentRendererObject.position.x += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.x;
+  equipmentRendererObject.position.y += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.y;
+  equipmentRendererObject.position.z += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.z;
 
   prepareHavocEquipmentRenderer(equipmentRendererObject);
 
