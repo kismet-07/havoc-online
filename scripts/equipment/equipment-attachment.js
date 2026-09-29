@@ -1,16 +1,9 @@
 /**
  * Character equipment attachment contract and runtime binding state.
  *
- * The GDevelop Model3D object owns the equipment resource/lifecycle. The
- * imported GLTF scene is the visual payload and is attached directly to the
- * character skeleton bone, following the same scene-graph model used by the
- * reference Ran Online equipment system.
- *
- * IMPORTANT:
- * - No per-frame world-space decomposition is used.
- * - No runtime width/height/depth changes are made.
- * - The existing GDevelop model rotation/scale are captured once and applied
- *   to the GLTF visual as its local bone-space transform.
+ * Equipment remains a GDevelop Model3D object. The imported GLTF visual is
+ * detached from the GDevelop wrapper and parented directly to the character
+ * hand bone. GDevelop continues to own the resource/object lifecycle.
  */
 const HAVOC_EQUIPMENT_ATTACHMENT_PROFILES = Object.freeze({
   brawler_hands: Object.freeze({
@@ -85,9 +78,7 @@ function detachHavocEquipmentVisual(binding) {
   const visualRoot = binding.visualRoot;
   const originalParent = binding.originalParent;
 
-  if (visualRoot.parent) {
-    visualRoot.parent.remove(visualRoot);
-  }
+  if (visualRoot.parent) visualRoot.parent.remove(visualRoot);
 
   if (originalParent && typeof originalParent.add === 'function') {
     originalParent.add(visualRoot);
@@ -123,9 +114,7 @@ function getHavocEquipmentAttachment(runtimeScene, itemInstanceId) {
 }
 
 function normalizeHavocBoneName(name) {
-  return String(name || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
+  return String(name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
 function findHavocAttachmentBone(player, boneName) {
@@ -210,8 +199,6 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
 
   if (!captureHavocEquipmentBaseTransform(renderer, binding)) return false;
 
-  // The GLTF scene is loaded asynchronously by GDevelop. Until the imported
-  // scene exists, there is nothing to attach.
   let visualRoot = binding.visualRoot;
   const loadedChild = renderer.children && renderer.children.length > 0
     ? renderer.children[0]
@@ -231,12 +218,40 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
     bone.add(visualRoot);
   }
 
-  // Ran-style rigid equipment attachment: the equipment's local transform is
-  // defined in the hand-bone coordinate space. No world-space offset is
-  // invented here. The GLB/GDevelop asset transform remains authoritative.
-  visualRoot.position.set(0, 0, 0);
-  visualRoot.quaternion.copy(binding.baseQuaternion);
-  visualRoot.scale.copy(binding.baseScale);
+  /*
+   * Repository inspection of basic_iron_gauntlet.glb gives mesh bounds:
+   *   X: -0.075 .. 0.117
+   *   Y:  0.000 .. 0.345
+   *   Z: -0.075 .. 0.075
+   *
+   * The cuff opening is centered at approximately [0.021, 0, 0].
+   *
+   * The previous implementation translated this point as though the visual
+   * had unit scale. That was incorrect because the GDevelop wrapper scale
+   * is transferred to the GLTF visual. The correct parent-space correction is
+   * the negative rotated, scaled mesh-space socket point:
+   *
+   *   parentOffset = -R * (S * socketPoint)
+   *
+   * This keeps the cuff opening on the RightHand bone instead of leaving the
+   * entire gauntlet displaced by its scaled mesh-origin offset.
+   */
+  const cuffPoint = new THREE.Vector3(0.021, 0, 0);
+  const baseQuaternion = binding.baseQuaternion
+    ? binding.baseQuaternion.clone()
+    : new THREE.Quaternion();
+  const baseScale = binding.baseScale
+    ? binding.baseScale.clone()
+    : new THREE.Vector3(1, 1, 1);
+
+  const cuffOffset = cuffPoint
+    .multiply(baseScale)
+    .applyQuaternion(baseQuaternion)
+    .multiplyScalar(-1);
+
+  visualRoot.position.copy(cuffOffset);
+  visualRoot.quaternion.copy(baseQuaternion);
+  visualRoot.scale.copy(baseScale);
 
   prepareHavocEquipmentVisual(visualRoot);
   setHavocEquipmentVisualVisibility(equipmentObject, visualRoot);
