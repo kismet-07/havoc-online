@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   sync:
-    if: ${{ !startsWith(github.event.pull_request.head.sha, '') && github.event.pull_request.head.ref == 'feature/brawler-enhancement-vfx' && !startsWith(github.event.pull_request.title, '[generated]') }}
+    if: ${{ github.event.pull_request.head.ref == 'feature/brawler-enhancement-vfx' && !startsWith(github.event.pull_request.title, '[generated]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
