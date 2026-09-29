@@ -108,7 +108,7 @@ def main() -> None:
 
     equipment_source = (ROOT / 'scripts' / 'equipment' / 'equipment-attachment.js').read_text(encoding='utf-8')
     required_equipment_runtime = (
-        "modelObjectName: 'BrawlerGauntlet'" in equipment_source
+        "modelObjectName: 'IronGauntlet'" in equipment_source
         and 'function updateHavocEquipmentAttachments(runtimeScene)' in equipment_source
         and 'mixamorig:RightHand' in equipment_source
         and 'equipmentObject.setRotationX(' in equipment_source
