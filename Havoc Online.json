@@ -713,6 +713,32 @@
               }
             ]
           }
+        },
+        {
+          "assetStoreId": "",
+          "name": "IronGauntlet",
+          "persistentUuid": "52d9b0b5-b923-4ae1-98f7-addf7db1ee94",
+          "type": "Scene3D::Model3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "centerLocation": "CenteredOnZ",
+            "crossfadeDuration": 0.10000000149011612,
+            "depth": 100,
+            "height": 100,
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "keepAspectRatio": true,
+            "materialType": "StandardWithoutMetalness",
+            "modelResourceName": "basic_iron_gauntlet.glb",
+            "originLocation": "ModelOrigin",
+            "rotationX": 90,
+            "rotationY": 0,
+            "rotationZ": 90,
+            "width": 100,
+            "animations": []
+          }
         }
       ],
       "objectsFolderStructure": {
@@ -744,6 +770,9 @@
           },
           {
             "objectName": "TargetSelectionIcon"
+          },
+          {
+            "objectName": "IronGauntlet"
           }
         ]
       },
@@ -2859,6 +2888,10 @@
           "type": "AnimatableCapability::AnimatableBehavior"
         },
         {
+          "name": "Effect",
+          "type": "EffectCapability::EffectBehavior"
+        },
+        {
           "name": "Flippable",
           "type": "FlippableCapability::FlippableBehavior"
         },
@@ -2867,12 +2900,20 @@
           "type": "Scene3D::Base3DBehavior"
         },
         {
+          "name": "Opacity",
+          "type": "OpacityCapability::OpacityBehavior"
+        },
+        {
           "name": "Resizable",
           "type": "ResizableCapability::ResizableBehavior"
         },
         {
           "name": "Scale",
           "type": "ScalableCapability::ScalableBehavior"
+        },
+        {
+          "name": "Text",
+          "type": "TextContainerCapability::TextContainerBehavior"
         }
       ]
     }
