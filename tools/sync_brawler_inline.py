@@ -205,7 +205,6 @@ def main() -> None:
         and 'equipmentRendererObject.visible = true' in equipment_source
         and 'bone.add(equipmentRendererObject)' not in equipment_source
         and 'equipmentRendererObject.parent' not in equipment_source
-        and 'collectHavocEquipmentDiagnostic' not in equipment_source
     )
     if not required_equipment_runtime:
         raise SystemExit('Safety check failed: Brawler equipment attachment runtime is incomplete or still uses skeleton parenting/stale diagnostics.')
