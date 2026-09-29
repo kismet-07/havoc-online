@@ -226,15 +226,17 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
    *
    * The cuff opening is centered at approximately [0.021, 0, 0].
    *
-   * The previous implementation translated this point as though the visual
-   * had unit scale. That was incorrect because the GDevelop wrapper scale
-   * is transferred to the GLTF visual. The correct parent-space correction is
-   * the negative rotated, scaled mesh-space cuff point:
+   * The visual is parented directly to the animated hand bone. That means
+   * the character's world scale is inherited by the visual. The GDevelop
+   * wrapper scale is already a world-space target scale, so applying that
+   * scale directly to the bone child would scale the gauntlet twice.
    *
-   *   parentOffset = -R * (S * cuffPoint)
+   * Convert the wrapper scale into the bone's local scale first:
    *
-   * This keeps the cuff opening on the RightHand bone instead of leaving the
-   * entire gauntlet displaced by its scaled mesh-origin offset.
+   *   localScale = baseScale / boneWorldScale
+   *
+   * The same local scale must be used when converting the cuff point to the
+   * bone-local translation.
    */
   const cuffPoint = new THREE.Vector3(0.021, 0, 0);
   const baseQuaternion = binding.baseQuaternion
@@ -244,14 +246,25 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
     ? binding.baseScale.clone()
     : new THREE.Vector3(1, 1, 1);
 
+  const boneWorldScale = new THREE.Vector3(1, 1, 1);
+  if (typeof bone.getWorldScale === 'function') {
+    bone.getWorldScale(boneWorldScale);
+  }
+
+  const localScale = new THREE.Vector3(
+    baseScale.x / (Math.abs(boneWorldScale.x) || 1),
+    baseScale.y / (Math.abs(boneWorldScale.y) || 1),
+    baseScale.z / (Math.abs(boneWorldScale.z) || 1)
+  );
+
   const cuffOffset = cuffPoint
-    .multiply(baseScale)
+    .multiply(localScale)
     .applyQuaternion(baseQuaternion)
     .multiplyScalar(-1);
 
   visualRoot.position.copy(cuffOffset);
   visualRoot.quaternion.copy(baseQuaternion);
-  visualRoot.scale.copy(baseScale);
+  visualRoot.scale.copy(localScale);
 
   prepareHavocEquipmentVisual(visualRoot);
   setHavocEquipmentVisualVisibility(equipmentObject, visualRoot);
