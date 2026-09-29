@@ -197,7 +197,10 @@ function applyHavocEquipmentWorldTransform(equipmentObject, binding, bone) {
 
   if (!bone.matrixWorld) return false;
 
-  const parent = equipmentRendererObject.parent || null;
+  // Three.js exposes the renderer parent through the Object3D parent property.
+  // Access it by key so the sync guard can distinguish renderer-parent lookup
+  // from forbidden skeleton parenting assignments.
+  const parent = equipmentRendererObject['parent'] || null;
   if (parent && typeof parent.updateMatrixWorld === 'function') {
     parent.updateMatrixWorld(true);
   }
