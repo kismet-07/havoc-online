@@ -84,17 +84,46 @@ function getHavocEquipmentAttachment(runtimeScene, itemInstanceId) {
   return state.bindings[itemInstanceId] || null;
 }
 
+function normalizeHavocBoneName(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
 function findHavocAttachmentBone(player, boneName) {
   if (!player || typeof player.get3DRendererObject !== 'function') return null;
 
   const root = player.get3DRendererObject();
-  if (!root || typeof root.getObjectByName !== 'function') return null;
+  if (!root) return null;
 
   if (typeof root.updateMatrixWorld === 'function') {
     root.updateMatrixWorld(true);
   }
 
-  return root.getObjectByName(boneName) || null;
+  if (typeof root.getObjectByName === 'function') {
+    const exact = root.getObjectByName(boneName);
+    if (exact) return exact;
+  }
+
+  if (typeof root.traverse !== 'function') return null;
+
+  const wanted = normalizeHavocBoneName(boneName);
+  const candidates = new Set([
+    wanted,
+    normalizeHavocBoneName('mixamorig:' + boneName.replace(/^mixamorig:/i, '')),
+    normalizeHavocBoneName(boneName.replace(/^mixamorig:/i, '')),
+  ]);
+
+  let matchedBone = null;
+  root.traverse((node) => {
+    if (matchedBone || !node || !node.name) return;
+    const normalized = normalizeHavocBoneName(node.name);
+    if (candidates.has(normalized)) {
+      matchedBone = node;
+    }
+  });
+
+  return matchedBone;
 }
 
 function havocQuaternionToEulerZYXDegrees(quaternion) {
@@ -138,8 +167,6 @@ function havocQuaternionToEulerZYXDegrees(quaternion) {
 function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding) {
   if (!player || !equipmentObject || !binding) return false;
   if (typeof equipmentObject.get3DRendererObject !== 'function') return false;
-  if (typeof THREE === 'undefined') return false;
-  if (typeof THREE.Vector3 !== 'function' || typeof THREE.Quaternion !== 'function') return false;
 
   const boneName = HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.activeHand === 'left'
     ? binding.leftAnchor
@@ -155,13 +182,17 @@ function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding
 
   if (
     typeof bone.getWorldPosition !== 'function' ||
-    typeof bone.getWorldQuaternion !== 'function'
+    typeof bone.getWorldQuaternion !== 'function' ||
+    !bone.position ||
+    typeof bone.position.clone !== 'function' ||
+    !bone.quaternion ||
+    typeof bone.quaternion.clone !== 'function'
   ) {
     return false;
   }
 
-  const worldPosition = new THREE.Vector3();
-  const worldQuaternion = new THREE.Quaternion();
+  const worldPosition = bone.position.clone();
+  const worldQuaternion = bone.quaternion.clone();
 
   bone.getWorldPosition(worldPosition);
   bone.getWorldQuaternion(worldQuaternion);
@@ -190,7 +221,7 @@ function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding
   );
 
   binding.modelAttached = true;
-  binding.activeBone = boneName;
+  binding.activeBone = bone.name || boneName;
   return true;
 }
 
