@@ -113,7 +113,7 @@ def main() -> None:
         and 'mixamorig:RightHand' in equipment_source
         and 'equipmentObject.setRotationX(' in equipment_source
         and 'equipmentObject.setRotationY(' in equipment_source
-        and 'equipmentObject.setRotationZ(' in equipment_source
+        and 'equipmentObject.turnAroundZ(' in equipment_source
     )
     if not required_equipment_runtime:
         raise SystemExit(
