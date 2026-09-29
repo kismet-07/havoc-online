@@ -12,11 +12,6 @@ const HAVOC_EQUIPMENT_DEFINITIONS = Object.freeze({
     modelObjectName: 'IronGauntlet',
     attachmentProfile: 'brawler_hands',
     enhancementAllowed: true,
-    defaultSize: Object.freeze({
-      width: 15,
-      height: 38,
-      depth: 9,
-    }),
   }),
 });
 
