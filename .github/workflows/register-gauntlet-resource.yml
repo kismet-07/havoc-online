@@ -1,0 +1,58 @@
+name: Register Gauntlet Resource
+
+on:
+  push:
+    branches:
+      - feature/brawler-enhancement-vfx
+
+permissions:
+  contents: write
+
+jobs:
+  register-gauntlet:
+    if: ${{ !contains(github.event.head_commit.message, 'register gauntlet model resource') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Register gauntlet model in GDevelop project
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          project = Path('Havoc Online.json')
+          resource_file = 'assets/equipment/brawler/basic_iron_gauntlet.glb'
+          resource_name = 'basic_iron_gauntlet.glb'
+
+          with project.open('r', encoding='utf-8') as f:
+              data = json.load(f)
+
+          resources = data.setdefault('resources', {}).setdefault('resources', [])
+
+          if not any(r.get('file') == resource_file for r in resources):
+              resources.append({
+                  'file': resource_file,
+                  'kind': 'model3D',
+                  'metadata': '',
+                  'name': resource_name,
+                  'userAdded': True
+              })
+
+              with project.open('w', encoding='utf-8', newline='\n') as f:
+                  json.dump(data, f, indent=2, ensure_ascii=False)
+                  f.write('\n')
+          PY
+
+      - name: Commit registration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'Havoc Online.json'
+          if git diff --cached --quiet; then
+            echo 'Resource already registered.'
+            exit 0
+          fi
+          git commit -m 'chore: register gauntlet model resource'
+          git push origin HEAD:feature/brawler-enhancement-vfx
