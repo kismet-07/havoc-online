@@ -112,12 +112,15 @@ def main() -> None:
         and 'function updateHavocEquipmentAttachments(runtimeScene)' in equipment_source
         and 'mixamorig:RightHand' in equipment_source
         and 'function attachHavocEquipmentRendererToBone' in equipment_source
-        and 'bone.add(equipmentRendererObject)' in equipment_source
+        and 'function applyHavocEquipmentWorldTransform' in equipment_source
+        and 'bone.getWorldPosition' in equipment_source
+        and 'bone.getWorldQuaternion' in equipment_source
         and 'equipmentRendererObject.visible = true' in equipment_source
+        and 'bone.add(equipmentRendererObject)' not in equipment_source
     )
     if not required_equipment_runtime:
         raise SystemExit(
-            'Safety check failed: Brawler equipment attachment runtime is incomplete.'
+            'Safety check failed: Brawler equipment attachment runtime is incomplete or still uses skeleton parenting.'
         )
 
     enhancement_vfx_source = (ROOT / 'scripts' / 'enhancement' / 'vfx.js').read_text(encoding='utf-8')
@@ -137,7 +140,7 @@ def main() -> None:
     print('Brawler inline-code synchronization complete.')
     print('Replaced exactly one inline brawler JS event from the external source files.')
     print('Included enhancement foundation and equipment attachment runtime.')
-    print('Runtime entry point now parents the Brawler gauntlet renderer to the right-hand bone.')
+    print('Runtime entry point now applies the Brawler gauntlet world transform from the right-hand bone.')
     print('Enhancement VFX remains behind its current disabled presentation boundary.')
     print('Preserved TargetSelectionIcon and refused obsolete target-arrow objects.')
     print('Current combat target validity: null + destroyed + living-state checks.')
