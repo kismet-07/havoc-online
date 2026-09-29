@@ -43,8 +43,7 @@ def build_inline_source() -> list[str]:
     for path in SOURCE_FILES:
         rel = path.relative_to(ROOT).as_posix()
         lines.append(f'// --- {rel} ---')
-        source_lines = path.read_text(encoding='utf-8').splitlines()
-        lines.extend(source_lines)
+        lines.extend(path.read_text(encoding='utf-8').splitlines())
         lines.append('')
 
     lines.extend([
@@ -189,16 +188,33 @@ def ensure_gauntlet_object_definition(project: dict) -> None:
         if existing.get('type') != 'Scene3D::Model3DObject' or content.get('modelResourceName') != GAUNTLET_RESOURCE:
             raise SystemExit('Safety check failed: existing IronGauntlet object is not a Model3DObject using basic_iron_gauntlet.glb.')
 
-    # The diagnostic is deliberately DOM-based, matching the existing Killer
-    # Clown desktop diagnostic. Remove the obsolete GDevelop Text object so
-    # we never depend on a world-space text instance being visible.
+    # The diagnostic is DOM-based and therefore must not exist as a GDevelop
+    # Text object. Remove any legacy definition/instance/folder entry.
     layout['objects'] = [obj for obj in objects if obj.get('name') != LEGACY_DIAGNOSTIC_OBJECT]
     layout['instances'] = [inst for inst in instances if inst.get('name') != LEGACY_DIAGNOSTIC_OBJECT]
     folder = layout.get('objectsFolderStructure')
-    if isinstance(folder, dict):
-        children = folder.get('children')
-        if isinstance(children, list):
-            folder['children'] = [child for child in children if child.get('objectName') != LEGACY_DIAGNOSTIC_OBJECT]
+    if isinstance(folder, dict) and isinstance(folder.get('children'), list):
+        folder['children'] = [
+            child for child in folder['children']
+            if child.get('objectName') != LEGACY_DIAGNOSTIC_OBJECT
+        ]
+
+    legacy_remaining = [
+        obj.get('name')
+        for obj in layout['objects']
+        if obj.get('name') == LEGACY_DIAGNOSTIC_OBJECT
+    ]
+    legacy_instance_remaining = [
+        inst.get('name')
+        for inst in layout['instances']
+        if inst.get('name') == LEGACY_DIAGNOSTIC_OBJECT
+    ]
+    if legacy_remaining or legacy_instance_remaining:
+        raise SystemExit('Safety check failed: legacy GDevelop GauntletDiagnostic remains in project JSON.')
+
+    folder_children = folder.get('children') if isinstance(folder, dict) else []
+    if any(child.get('objectName') == LEGACY_DIAGNOSTIC_OBJECT for child in folder_children):
+        raise SystemExit('Safety check failed: legacy GDevelop GauntletDiagnostic remains in object folders.')
 
 
 def find_brawler_events(project: dict) -> list[dict]:
@@ -273,8 +289,11 @@ def main() -> None:
         raise SystemExit('Safety check failed: generated inline code does not call the desktop gauntlet diagnostic.')
     if 'collectHavocEquipmentDiagnostic' in generated_inline:
         raise SystemExit('Safety check failed: stale gauntlet diagnostic reference remains in generated inline code.')
-    if 'GauntletDiagnostic' in generated_inline:
-        raise SystemExit('Safety check failed: legacy GDevelop GauntletDiagnostic object remains in generated inline code.')
+
+    if 'function updateHavocGauntletDiagnostic(runtimeScene)' not in generated_inline:
+        raise SystemExit('Safety check failed: desktop gauntlet diagnostic function was not generated.')
+    if 'document.createElement("div")' not in generated_inline:
+        raise SystemExit('Safety check failed: desktop gauntlet diagnostic is not using the DOM overlay.')
 
     backup = PROJECT.with_name(PROJECT.name + '.before-brawler-inline-sync.bak')
     backup.write_text(PROJECT.read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
