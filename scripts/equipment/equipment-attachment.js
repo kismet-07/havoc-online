@@ -229,9 +229,9 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
    * The previous implementation translated this point as though the visual
    * had unit scale. That was incorrect because the GDevelop wrapper scale
    * is transferred to the GLTF visual. The correct parent-space correction is
-   * the negative rotated, scaled mesh-space socket point:
+   * the negative rotated, scaled mesh-space cuff point:
    *
-   *   parentOffset = -R * (S * socketPoint)
+   *   parentOffset = -R * (S * cuffPoint)
    *
    * This keeps the cuff opening on the RightHand bone instead of leaving the
    * entire gauntlet displaced by its scaled mesh-origin offset.
