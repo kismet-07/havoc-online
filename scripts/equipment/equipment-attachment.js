@@ -176,28 +176,42 @@ function applyHavocEquipmentWorldTransform(player, equipmentObject, binding, bon
     bone.updateMatrixWorld(true);
   }
 
-  if (typeof bone.getWorldPosition !== 'function' || typeof bone.getWorldQuaternion !== 'function') {
+  if (!bone.matrixWorld || typeof equipmentRendererObject.position.setFromMatrixPosition !== 'function') {
     return false;
   }
 
-  const worldPosition = equipmentRendererObject.position.clone
-    ? equipmentRendererObject.position.clone()
-    : { x: 0, y: 0, z: 0 };
-  const worldQuaternion = equipmentRendererObject.quaternion.clone
-    ? equipmentRendererObject.quaternion.clone()
-    : null;
+  equipmentRendererObject.position.setFromMatrixPosition(bone.matrixWorld);
 
-  if (!worldPosition || !worldQuaternion) return false;
+  if (bone.matrixWorld.decompose && equipmentRendererObject.quaternion.setFromRotationMatrix) {
+    const matrixScale = equipmentRendererObject.scale && typeof equipmentRendererObject.scale.clone === 'function'
+      ? equipmentRendererObject.scale.clone()
+      : null;
+    if (matrixScale) {
+      bone.matrixWorld.decompose(
+        equipmentRendererObject.position,
+        equipmentRendererObject.quaternion,
+        matrixScale
+      );
+    } else {
+      equipmentRendererObject.quaternion.setFromRotationMatrix(bone.matrixWorld);
+    }
+  } else if (typeof bone.getWorldQuaternion === 'function') {
+    const worldQuaternion = equipmentRendererObject.quaternion.clone();
+    bone.getWorldQuaternion(worldQuaternion);
+    equipmentRendererObject.quaternion.copy(worldQuaternion);
+  } else {
+    return false;
+  }
 
-  bone.getWorldPosition(worldPosition);
-  bone.getWorldQuaternion(worldQuaternion);
+  equipmentRendererObject.position.x += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.x;
+  equipmentRendererObject.position.y += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.y;
+  equipmentRendererObject.position.z += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.z;
 
-  worldPosition.x += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.x;
-  worldPosition.y += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.y;
-  worldPosition.z += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.z;
-
-  equipmentRendererObject.position.copy(worldPosition);
-  equipmentRendererObject.quaternion.copy(worldQuaternion);
+  equipmentRendererObject.scale.set(
+    binding.baseScale.x,
+    binding.baseScale.y,
+    binding.baseScale.z
+  );
 
   if (typeof equipmentRendererObject.rotateX === 'function' && HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.x) {
     equipmentRendererObject.rotateX(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.x * Math.PI / 180);
@@ -208,12 +222,6 @@ function applyHavocEquipmentWorldTransform(player, equipmentObject, binding, bon
   if (typeof equipmentRendererObject.rotateZ === 'function' && HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.z) {
     equipmentRendererObject.rotateZ(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.z * Math.PI / 180);
   }
-
-  equipmentRendererObject.scale.set(
-    binding.baseScale.x,
-    binding.baseScale.y,
-    binding.baseScale.z
-  );
 
   return true;
 }
