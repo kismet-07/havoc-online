@@ -228,61 +228,6 @@ function applyHavocEquipmentWorldTransform(player, equipmentObject, binding, bon
   return true;
 }
 
-function updateHavocGauntletDiagnostic(runtimeScene) {
-  if (!runtimeScene) return;
-  let diagnosticObject = runtimeScene.getObjects('GauntletDiagnostic')[0];
-  if (!diagnosticObject && typeof runtimeScene.createObject === 'function') {
-    diagnosticObject = runtimeScene.createObject('GauntletDiagnostic');
-  }
-  if (!diagnosticObject) return;
-
-  const state = runtimeScene.__havocEquipmentAttachments;
-  const player = runtimeScene.getObjects('Character')[0];
-  const gauntlet = runtimeScene.getObjects('IronGauntlet')[0];
-  const binding = state && state.bindings
-    ? state.bindings.brawler_starter_gauntlets_test
-    : null;
-  const bone = player && binding
-    ? findHavocAttachmentBone(player, binding.rightAnchor)
-    : null;
-  const definition = getHavocEquipmentDefinition(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId);
-  const playerRenderer = player && typeof player.get3DRendererObject === 'function'
-    ? player.get3DRendererObject()
-    : null;
-  const gauntletRenderer = gauntlet && typeof gauntlet.get3DRendererObject === 'function'
-    ? gauntlet.get3DRendererObject()
-    : null;
-
-  const lines = [
-    'GAUNTLET DIAGNOSTIC',
-    'Character: ' + (player ? 'FOUND' : 'MISSING'),
-    'Character renderer: ' + (playerRenderer ? 'FOUND' : 'MISSING'),
-    'IronGauntlet: ' + (gauntlet ? 'FOUND' : 'MISSING'),
-    'Gauntlet renderer: ' + (gauntletRenderer ? 'FOUND' : 'MISSING'),
-    'Definition: ' + (definition ? 'FOUND' : 'MISSING'),
-    'Item ID: ' + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId,
-    'Model object: ' + (binding ? binding.modelObjectName : 'NONE'),
-    'Model resource: ' + (binding ? binding.modelId : 'NONE'),
-    'Requested bone: ' + (binding ? binding.rightAnchor : 'mixamorig:RightHand'),
-    'RightHand: ' + (bone ? 'FOUND' : 'MISSING'),
-    'Actual bone: ' + (bone && bone.name ? bone.name : 'NONE'),
-    'MatrixWorld: ' + (bone && bone.matrixWorld ? 'OK' : 'MISSING'),
-    'Base transform: ' + (binding && binding.baseTransformCaptured ? 'OK' : 'MISSING'),
-    'Transform applied: ' + (binding && binding.modelAttached ? 'YES' : 'NO'),
-    'Renderer visible: ' + (gauntletRenderer && gauntletRenderer.visible ? 'YES' : 'NO'),
-    'Scale: ' + (gauntletRenderer && gauntletRenderer.scale
-      ? [gauntletRenderer.scale.x.toFixed(3), gauntletRenderer.scale.y.toFixed(3), gauntletRenderer.scale.z.toFixed(3)].join(', ')
-      : 'NONE'),
-    'Position: ' + (gauntletRenderer && gauntletRenderer.position
-      ? [gauntletRenderer.position.x.toFixed(3), gauntletRenderer.position.y.toFixed(3), gauntletRenderer.position.z.toFixed(3)].join(', ')
-      : 'NONE'),
-  ];
-
-  if (typeof diagnosticObject.setString === 'function') diagnosticObject.setString(lines.join('\n'));
-  if (typeof diagnosticObject.setX === 'function') diagnosticObject.setX(20);
-  if (typeof diagnosticObject.setY === 'function') diagnosticObject.setY(20);
-  if (typeof diagnosticObject.setZOrder === 'function') diagnosticObject.setZOrder(100000);
-}
 
 function attachHavocEquipmentRendererToBone(runtimeScene, player, equipmentObject, binding) {
   if (!player || !equipmentObject || !binding) return false;
