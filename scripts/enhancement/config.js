@@ -38,3 +38,5 @@ function getHavocEnhancementProfile(level) {
   if (!Number.isFinite(numericLevel) || numericLevel <= 0) return null;
   return HAVOC_ENHANCEMENT_LEVELS[numericLevel] || HAVOC_ENHANCEMENT_LEVELS[10];
 }
+
+// Phase 2 prototype verified against Brawler_inplace.glb hand-bone names.
