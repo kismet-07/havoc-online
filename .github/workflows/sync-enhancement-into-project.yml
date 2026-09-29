@@ -19,28 +19,20 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 1
 
-      - name: Inspect project JavaScript structure
+      - name: Inspect GDevelop JavaScript event
         run: |
           python3 - <<'PY'
           import json
           from pathlib import Path
           project = json.loads(Path('Havoc Online.json').read_text(encoding='utf-8'))
-          marker = '// --- Brawler runtime entry point ---'
-          hits = []
-          def walk(value, path='root'):
-              if isinstance(value, dict):
-                  for key, child in value.items():
-                      walk(child, f'{path}.{key}')
-              elif isinstance(value, list):
-                  for index, child in enumerate(value):
-                      walk(child, f'{path}[{index}]')
-              elif isinstance(value, str) and marker in value:
-                  hits.append((path, value))
-          walk(project)
-          print('MARKER_HITS=', len(hits))
-          for path, value in hits:
-              print('PATH=', path)
-              print('VALUE_TAIL=', value[-1000:])
+          code = project['layouts'][0]['events'][0]['inlineCode']
+          print('INLINE_CODE_COUNT=', len(code))
+          for i in range(max(0, len(code)-30), len(code)):
+              print(f'CODE[{i}]=', repr(code[i]))
+          print('ENTRY_MATCHES=')
+          for i, line in enumerate(code):
+              if 'updateBrawlerCombat' in line or 'brawlerDt' in line:
+                  print(i, repr(line))
           PY
 
       - name: Inject enhancement modules into GDevelop project
@@ -53,49 +45,35 @@ jobs:
           project = json.loads(project_path.read_text(encoding='utf-8'))
           config = Path('scripts/enhancement/config.js').read_text(encoding='utf-8').strip()
           vfx = Path('scripts/enhancement/vfx.js').read_text(encoding='utf-8').strip()
+          code = project['layouts'][0]['events'][0]['inlineCode']
+
           marker = '// --- Brawler runtime entry point ---'
           entry_call = 'updateBrawlerCombat(runtimeScene, brawlerDt);'
           enhancement_call = 'updateHavocEnhancement(runtimeScene, brawlerDt);'
-          matches = []
 
-          def walk(value, path='root'):
-              if isinstance(value, dict):
-                  for key, child in value.items():
-                      walk(child, f'{path}.{key}')
-              elif isinstance(value, list):
-                  for index, child in enumerate(value):
-                      walk(child, f'{path}[{index}]')
-              elif isinstance(value, str) and marker in value:
-                  matches.append((path, value))
-          walk(project)
-          if len(matches) != 1:
-              raise SystemExit(f'Expected exactly one Brawler JavaScript string, found {len(matches)}')
+          marker_index = next((i for i, line in enumerate(code) if marker in line), None)
+          if marker_index is None:
+              raise SystemExit('Brawler runtime marker not found')
 
-          path, code = matches[0]
-          if '// --- scripts/enhancement/config.js ---' not in code:
-              injected = ('// --- scripts/enhancement/config.js ---\\n' + config +
-                          '\\n\\n// --- scripts/enhancement/vfx.js ---\\n' + vfx + '\\n\\n')
-              code = code.replace(marker, injected + marker, 1)
+          entry_index = next((i for i, line in enumerate(code) if entry_call in line), None)
+          if entry_index is None:
+              raise SystemExit('Brawler runtime entry call not found')
 
-          if enhancement_call not in code:
-              if entry_call not in code:
-                  raise SystemExit('Brawler entry call not found inside marker string')
-              code = code.replace(entry_call, entry_call + '\\n' + enhancement_call, 1)
+          if not any('// --- scripts/enhancement/config.js ---' in line for line in code):
+              enhancement_source = (
+                  '// --- scripts/enhancement/config.js ---\\n' + config +
+                  '\\n\\n// --- scripts/enhancement/vfx.js ---\\n' + vfx
+              )
+              code.insert(marker_index, enhancement_source)
+              if entry_index >= marker_index:
+                  entry_index += 1
 
-          def replace_at(value, target_path, replacement, current='root'):
-              if current == target_path:
-                  return replacement
-              if isinstance(value, dict):
-                  for key in list(value.keys()):
-                      value[key] = replace_at(value[key], target_path, replacement, f'{current}.{key}')
-              elif isinstance(value, list):
-                  for index in range(len(value)):
-                      value[index] = replace_at(value[index], target_path, replacement, f'{current}[{index}]')
-              return value
+          if not any(enhancement_call in line for line in code):
+              code[entry_index] = code[entry_index] + '\\n' + enhancement_call
 
-          project = replace_at(project, path, code)
+          project['layouts'][0]['events'][0]['inlineCode'] = code
           project_path.write_text(json.dumps(project, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          print(f'Updated JavaScript event at {path}')
+          print('Enhancement code injected into inlineCode.')
           PY
 
       - name: Commit generated project update and remove temporary workflow
