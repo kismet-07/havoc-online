@@ -62,6 +62,7 @@ function attachHavocEquipmentInstance(runtimeScene, player, itemInstance) {
     modelObjectName: definition.modelObjectName || profile.modelObjectName || null,
     modelId: definition.modelId || null,
     modelAttached: false,
+    sizeApplied: false,
   };
 
   return true;
@@ -146,8 +147,7 @@ function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding
   const bone = findHavocAttachmentBone(player, boneName);
   if (!bone) return false;
 
-  const rendererObject = equipmentObject.get3DRendererObject();
-  if (!rendererObject) return false;
+  if (!equipmentObject.get3DRendererObject()) return false;
 
   if (typeof bone.updateMatrixWorld === 'function') {
     bone.updateMatrixWorld(true);
@@ -194,6 +194,23 @@ function syncHavocEquipmentToBone(runtimeScene, player, equipmentObject, binding
   return true;
 }
 
+function applyHavocEquipmentModelSize(equipmentObject, definition, binding) {
+  if (!equipmentObject || !definition || !definition.defaultSize || binding.sizeApplied) return;
+
+  const size = definition.defaultSize;
+  if (typeof equipmentObject.setWidth === 'function') {
+    equipmentObject.setWidth(size.width);
+  }
+  if (typeof equipmentObject.setHeight === 'function') {
+    equipmentObject.setHeight(size.height);
+  }
+  if (typeof equipmentObject.setDepth === 'function') {
+    equipmentObject.setDepth(size.depth);
+  }
+
+  binding.sizeApplied = true;
+}
+
 function ensureHavocBrawlerGauntletBinding(runtimeScene, player, equipmentObject) {
   const state = initializeHavocEquipmentAttachments(runtimeScene);
   const definition = getHavocEquipmentDefinition(
@@ -223,6 +240,7 @@ function ensureHavocBrawlerGauntletBinding(runtimeScene, player, equipmentObject
     return null;
   }
 
+  applyHavocEquipmentModelSize(equipmentObject, definition, binding);
   return binding || null;
 }
 
