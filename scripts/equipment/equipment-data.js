@@ -8,9 +8,15 @@ const HAVOC_EQUIPMENT_DEFINITIONS = Object.freeze({
     slot: 'hands',
     classId: 'brawler',
     displayName: 'Brawler Starter Gauntlets',
-    modelId: null,
+    modelId: 'assets/equipment/brawler/basic_iron_gauntlet.glb',
+    modelObjectName: 'BrawlerGauntlet',
     attachmentProfile: 'brawler_hands',
     enhancementAllowed: true,
+    defaultSize: Object.freeze({
+      width: 15,
+      height: 38,
+      depth: 9,
+    }),
   }),
 });
 
@@ -33,6 +39,8 @@ function createHavocEquipmentInstance(itemId, enhancementLevel = 0) {
     slot: definition.slot,
     classId: definition.classId,
     attachmentProfile: definition.attachmentProfile,
+    modelId: definition.modelId,
+    modelObjectName: definition.modelObjectName,
     enhancementAllowed: definition.enhancementAllowed,
     enhancementLevel: level,
   };
