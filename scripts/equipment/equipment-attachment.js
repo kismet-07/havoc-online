@@ -67,6 +67,11 @@ function attachHavocEquipmentInstance(runtimeScene, player, itemInstance) {
     originalParent: null,
     baseScale: null,
     baseQuaternion: null,
+    baseVisualPosition: null,
+    baseVisualQuaternion: null,
+    baseVisualScale: null,
+    standaloneSize: null,
+    fitScale: 1,
   };
 
   return true;
@@ -83,8 +88,13 @@ function detachHavocEquipmentVisual(binding) {
   if (originalParent && typeof originalParent.add === 'function') {
     originalParent.add(visualRoot);
     visualRoot.position.set(0, 0, 0);
-    if (binding.baseQuaternion) visualRoot.quaternion.copy(binding.baseQuaternion);
-    if (binding.baseScale) visualRoot.scale.copy(binding.baseScale);
+    if (binding.baseVisualPosition) visualRoot.position.copy(binding.baseVisualPosition);
+    if (binding.baseVisualQuaternion) visualRoot.quaternion.copy(binding.baseVisualQuaternion);
+    if (binding.baseVisualScale) visualRoot.scale.copy(binding.baseVisualScale);
+    visualRoot.matrixAutoUpdate = true;
+    if (typeof visualRoot.updateMatrixWorld === 'function') {
+      visualRoot.updateMatrixWorld(true);
+    }
   }
 
   binding.visualRoot = null;
@@ -92,6 +102,11 @@ function detachHavocEquipmentVisual(binding) {
   binding.modelAttached = false;
   binding.rendererParented = false;
   binding.activeBone = null;
+  binding.baseVisualPosition = null;
+  binding.baseVisualQuaternion = null;
+  binding.baseVisualScale = null;
+  binding.standaloneSize = null;
+  binding.fitScale = 1;
   return true;
 }
 
@@ -179,6 +194,46 @@ function captureHavocEquipmentBaseTransform(equipmentRendererObject, binding) {
   return true;
 }
 
+function captureHavocEquipmentVisualTransform(visualRoot, renderer, binding) {
+  if (!visualRoot || !renderer || !binding) return false;
+  if (binding.baseVisualScale && binding.standaloneSize) return true;
+
+  binding.baseVisualPosition = visualRoot.position.clone();
+  binding.baseVisualQuaternion = visualRoot.quaternion.clone();
+  binding.baseVisualScale = visualRoot.scale.clone();
+
+  if (typeof renderer.updateWorldMatrix === 'function') {
+    renderer.updateWorldMatrix(true, true);
+  } else if (typeof renderer.updateMatrixWorld === 'function') {
+    renderer.updateMatrixWorld(true);
+  }
+
+  if (typeof THREE !== 'undefined' && THREE.Box3 && THREE.Vector3) {
+    const box = new THREE.Box3().setFromObject(visualRoot, true);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    binding.standaloneSize = size;
+  }
+
+  return !!binding.standaloneSize;
+}
+
+function getHavocAttachmentSegmentLength(bone) {
+  if (!bone || !bone.parent || typeof THREE === 'undefined') return 0;
+
+  const bonePosition = new THREE.Vector3();
+  const parentPosition = new THREE.Vector3();
+
+  if (typeof bone.getWorldPosition === 'function') {
+    bone.getWorldPosition(bonePosition);
+  }
+  if (typeof bone.parent.getWorldPosition === 'function') {
+    bone.parent.getWorldPosition(parentPosition);
+  }
+
+  return bonePosition.distanceTo(parentPosition);
+}
+
 function setHavocEquipmentVisualVisibility(equipmentObject, visualRoot) {
   if (!visualRoot) return;
 
@@ -209,9 +264,10 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
     visualRoot = loadedChild;
     binding.visualRoot = visualRoot;
     binding.originalParent = renderer;
+    captureHavocEquipmentVisualTransform(visualRoot, renderer, binding);
   }
 
-  if (!visualRoot) return false;
+  if (!visualRoot || !binding.baseVisualScale || !binding.standaloneSize) return false;
 
   if (visualRoot.parent !== bone) {
     if (visualRoot.parent) visualRoot.parent.remove(visualRoot);
@@ -219,25 +275,49 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
   }
 
   /*
-   * The GDevelop Model3D wrapper already computes the correct equipment
-   * scale from the GLB bounds and the object's width/height/depth settings.
-   * Once the GLTF scene root is reparented to the character bone, preserve
-   * that exact scale instead of inventing a second asset-to-character scale.
+   * Do not copy the GDevelop wrapper rotation/scale onto the GLTF root.
+   * GDevelop's Model3D renderer already normalized the GLTF root internally
+   * with its own rotation and scale before this root was detached. Replacing
+   * those values with renderer.scale/renderer.quaternion destroys that
+   * normalization and was the cause of the oversized gauntlet.
    *
-   * The previous fixed 0.043478... scale was incorrect: it discarded the
-   * Model3D wrapper's non-uniform scale and made the gauntlet effectively
-   * microscopic after bone parenting.
+   * Preserve the GLTF root's own transform and calculate the final size from
+   * the actual rig. The RightHand bone's parent is the Mixamo forearm bone,
+   * so the distance between those two joints is a real runtime measurement
+   * of the forearm segment. The gauntlet's longest dimension is fitted to
+   * that measured segment without introducing an arbitrary magic scale.
    */
-  const baseQuaternion = binding.baseQuaternion
-    ? binding.baseQuaternion.clone()
-    : new THREE.Quaternion();
-  const baseScale = binding.baseScale
-    ? binding.baseScale.clone()
-    : new THREE.Vector3(1, 1, 1);
+  visualRoot.position.copy(binding.baseVisualPosition);
+  visualRoot.quaternion.copy(binding.baseVisualQuaternion);
+  visualRoot.scale.copy(binding.baseVisualScale);
+  visualRoot.matrixAutoUpdate = true;
 
-  visualRoot.position.set(0, 0, 0);
-  visualRoot.quaternion.copy(baseQuaternion);
-  visualRoot.scale.copy(baseScale);
+  if (typeof bone.updateWorldMatrix === 'function') {
+    bone.updateWorldMatrix(true, true, true);
+  } else if (typeof bone.updateMatrixWorld === 'function') {
+    bone.updateMatrixWorld(true);
+  }
+
+  if (typeof THREE !== 'undefined' && THREE.Box3 && THREE.Vector3) {
+    const currentBox = new THREE.Box3().setFromObject(visualRoot, true);
+    const currentSize = new THREE.Vector3();
+    currentBox.getSize(currentSize);
+
+    const currentLongest = Math.max(currentSize.x, currentSize.y, currentSize.z);
+    const segmentLength = getHavocAttachmentSegmentLength(bone);
+    const standaloneLongest = Math.max(
+      binding.standaloneSize.x,
+      binding.standaloneSize.y,
+      binding.standaloneSize.z
+    );
+
+    if (currentLongest > 0 && segmentLength > 0 && standaloneLongest > 0) {
+      const targetScale = segmentLength / standaloneLongest;
+      const parentCompensation = targetScale / (currentLongest / standaloneLongest);
+      visualRoot.scale.multiplyScalar(parentCompensation);
+      binding.fitScale = targetScale;
+    }
+  }
 
   prepareHavocEquipmentVisual(visualRoot);
   setHavocEquipmentVisualVisibility(equipmentObject, visualRoot);
