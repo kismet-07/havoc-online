@@ -136,6 +136,13 @@
         "metadata": "",
         "name": "target_icon.glb",
         "userAdded": true
+      },
+      {
+        "file": "assets/equipment/brawler/basic_iron_gauntlet.glb",
+        "kind": "model3D",
+        "metadata": "",
+        "name": "basic_iron_gauntlet.glb",
+        "userAdded": true
       }
     ]
   },
