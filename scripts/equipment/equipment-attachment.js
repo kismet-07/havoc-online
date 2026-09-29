@@ -219,25 +219,25 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
   }
 
   /*
-   * The gauntlet GLB is authored in small normalized mesh units while the
-   * Brawler character is authored at the larger GDevelop scene scale.
+   * The GDevelop Model3D wrapper already computes the correct equipment
+   * scale from the GLB bounds and the object's width/height/depth settings.
+   * Once the GLTF scene root is reparented to the character bone, preserve
+   * that exact scale instead of inventing a second asset-to-character scale.
    *
-   * Use a fixed equipment scale derived from the character/equipment asset
-   * relationship instead of multiplying by the animated hand-bone scale.
-   * The hand bone is responsible only for pose and position.
+   * The previous fixed 0.043478... scale was incorrect: it discarded the
+   * Model3D wrapper's non-uniform scale and made the gauntlet effectively
+   * microscopic after bone parenting.
    */
-  const attachmentScale = 0.04347826087;
   const baseQuaternion = binding.baseQuaternion
     ? binding.baseQuaternion.clone()
     : new THREE.Quaternion();
+  const baseScale = binding.baseScale
+    ? binding.baseScale.clone()
+    : new THREE.Vector3(1, 1, 1);
 
   visualRoot.position.set(0, 0, 0);
   visualRoot.quaternion.copy(baseQuaternion);
-  visualRoot.scale.set(
-    attachmentScale,
-    attachmentScale,
-    attachmentScale
-  );
+  visualRoot.scale.copy(baseScale);
 
   prepareHavocEquipmentVisual(visualRoot);
   setHavocEquipmentVisualVisibility(equipmentObject, visualRoot);
