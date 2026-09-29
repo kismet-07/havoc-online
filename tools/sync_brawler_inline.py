@@ -54,7 +54,7 @@ def build_inline_source() -> list[str]:
         '  runtimeScene.__havocGauntletDiagnostic = diagnosticState;',
         '',
         '  const diagnosticDocument = typeof document !== "undefined" ? document : null;',
-        '  if (!diagnosticDocument) return;',
+        '  if (!diagnosticDocument || !diagnosticDocument.body) return;',
         '',
         '  if (!diagnosticState.overlay || !diagnosticDocument.body.contains(diagnosticState.overlay)) {',
         '    diagnosticState.overlay = diagnosticDocument.getElementById("havoc-gauntlet-diagnostic");',
@@ -145,16 +145,13 @@ def ensure_gauntlet_object_definition(project: dict) -> None:
     layouts = project.get('layouts', [])
     if not layouts:
         raise SystemExit('Safety check failed: project has no layouts.')
-
     layout = layouts[0]
     objects = layout.setdefault('objects', [])
     instances = layout.setdefault('instances', [])
-
     resources = project.get('resources', {}).get('resources', [])
     resource_names = {r.get('name') for r in resources}
     if GAUNTLET_RESOURCE not in resource_names:
         raise SystemExit(f'Safety check failed: {GAUNTLET_RESOURCE} is not registered as a project resource.')
-
     existing = next((obj for obj in objects if obj.get('name') == GAUNTLET_OBJECT), None)
     if not existing:
         objects.append({
@@ -162,56 +159,30 @@ def ensure_gauntlet_object_definition(project: dict) -> None:
             'name': GAUNTLET_OBJECT,
             'persistentUuid': '9d8f5f8e-6d0a-4c9a-8e42-1d6b7a3c5f20',
             'type': 'Scene3D::Model3DObject',
-            'variables': [],
-            'effects': [],
-            'behaviors': [],
+            'variables': [], 'effects': [], 'behaviors': [],
             'content': {
-                'centerLocation': 'CenteredOnZ',
-                'crossfadeDuration': 0.1,
-                'depth': 100,
-                'height': 100,
-                'isCastingShadow': True,
-                'isReceivingShadow': True,
-                'keepAspectRatio': True,
+                'centerLocation': 'CenteredOnZ', 'crossfadeDuration': 0.1,
+                'depth': 100, 'height': 100, 'isCastingShadow': True,
+                'isReceivingShadow': True, 'keepAspectRatio': True,
                 'materialType': 'StandardWithoutMetalness',
                 'modelResourceName': GAUNTLET_RESOURCE,
-                'originLocation': 'ModelOrigin',
-                'rotationX': 90,
-                'rotationY': 0,
-                'rotationZ': 90,
-                'width': 100,
-                'animations': [],
+                'originLocation': 'ModelOrigin', 'rotationX': 90,
+                'rotationY': 0, 'rotationZ': 90, 'width': 100, 'animations': [],
             },
         })
     else:
         content = existing.get('content', {})
         if existing.get('type') != 'Scene3D::Model3DObject' or content.get('modelResourceName') != GAUNTLET_RESOURCE:
             raise SystemExit('Safety check failed: existing IronGauntlet object is not a Model3DObject using basic_iron_gauntlet.glb.')
-
-    # The diagnostic is DOM-based and therefore must not exist as a GDevelop
-    # Text object. Remove any legacy definition/instance/folder entry.
     layout['objects'] = [obj for obj in objects if obj.get('name') != LEGACY_DIAGNOSTIC_OBJECT]
     layout['instances'] = [inst for inst in instances if inst.get('name') != LEGACY_DIAGNOSTIC_OBJECT]
     folder = layout.get('objectsFolderStructure')
     if isinstance(folder, dict) and isinstance(folder.get('children'), list):
-        folder['children'] = [
-            child for child in folder['children']
-            if child.get('objectName') != LEGACY_DIAGNOSTIC_OBJECT
-        ]
-
-    legacy_remaining = [
-        obj.get('name')
-        for obj in layout['objects']
-        if obj.get('name') == LEGACY_DIAGNOSTIC_OBJECT
-    ]
-    legacy_instance_remaining = [
-        inst.get('name')
-        for inst in layout['instances']
-        if inst.get('name') == LEGACY_DIAGNOSTIC_OBJECT
-    ]
-    if legacy_remaining or legacy_instance_remaining:
+        folder['children'] = [child for child in folder['children'] if child.get('objectName') != LEGACY_DIAGNOSTIC_OBJECT]
+    if any(obj.get('name') == LEGACY_DIAGNOSTIC_OBJECT for obj in layout['objects']):
         raise SystemExit('Safety check failed: legacy GDevelop GauntletDiagnostic remains in project JSON.')
-
+    if any(inst.get('name') == LEGACY_DIAGNOSTIC_OBJECT for inst in layout['instances']):
+        raise SystemExit('Safety check failed: legacy GDevelop GauntletDiagnostic remains in project JSON.')
     folder_children = folder.get('children') if isinstance(folder, dict) else []
     if any(child.get('objectName') == LEGACY_DIAGNOSTIC_OBJECT for child in folder_children):
         raise SystemExit('Safety check failed: legacy GDevelop GauntletDiagnostic remains in object folders.')
@@ -235,18 +206,15 @@ def main() -> None:
     events = find_brawler_events(project)
     if len(events) != 1:
         raise SystemExit(f'Safety check failed: expected exactly one brawler inline JS event, found {len(events)}.')
-
     ensure_gauntlet_object_definition(project)
     source = build_inline_source()
     events[0]['inlineCode'] = source
-
     serialized = json.dumps(project, ensure_ascii=False)
     for token in OBSOLETE:
         if token in serialized:
             raise SystemExit(f'Safety check failed: obsolete target indicator reference remains: {token}')
     if TARGET_ICON not in serialized:
         raise SystemExit('Safety check failed: TargetSelectionIcon is missing. Refusing to modify the project.')
-
     combat_source = (ROOT / 'scripts' / 'characters' / 'brawler' / 'combat.js').read_text(encoding='utf-8')
     required_target_validity = (
         'function brawlerTargetIsValid(target) {' in combat_source
@@ -257,7 +225,6 @@ def main() -> None:
     )
     if not required_target_validity:
         raise SystemExit('Safety check failed: Brawler target validity guard is missing the current null, destroyed, and living-state checks.')
-
     equipment_source = (ROOT / 'scripts' / 'equipment' / 'equipment-attachment.js').read_text(encoding='utf-8')
     required_equipment_runtime = (
         "modelObjectName: 'IronGauntlet'" in equipment_source
@@ -277,11 +244,9 @@ def main() -> None:
     )
     if not required_equipment_runtime:
         raise SystemExit('Safety check failed: Brawler equipment attachment runtime is incomplete, resizes the model, uses skeleton parenting, or contains stale diagnostics.')
-
     enhancement_vfx_source = (ROOT / 'scripts' / 'enhancement' / 'vfx.js').read_text(encoding='utf-8')
     if 'function updateHavocEnhancement(runtimeScene, dt)' not in enhancement_vfx_source:
         raise SystemExit('Safety check failed: enhancement VFX runtime boundary is missing.')
-
     generated_inline = '\n'.join(source)
     if 'updateHavocEquipmentAttachments(runtimeScene);' not in generated_inline:
         raise SystemExit('Safety check failed: generated inline code does not call the equipment runtime.')
@@ -289,16 +254,13 @@ def main() -> None:
         raise SystemExit('Safety check failed: generated inline code does not call the desktop gauntlet diagnostic.')
     if 'collectHavocEquipmentDiagnostic' in generated_inline:
         raise SystemExit('Safety check failed: stale gauntlet diagnostic reference remains in generated inline code.')
-
     if 'function updateHavocGauntletDiagnostic(runtimeScene)' not in generated_inline:
         raise SystemExit('Safety check failed: desktop gauntlet diagnostic function was not generated.')
-    if 'document.createElement("div")' not in generated_inline:
-        raise SystemExit('Safety check failed: desktop gauntlet diagnostic is not using the DOM overlay.')
-
+    if 'document.createElement(' not in generated_inline or 'appendChild(overlay)' not in generated_inline:
+        raise SystemExit('Safety check failed: desktop gauntlet diagnostic is not using a DOM overlay.')
     backup = PROJECT.with_name(PROJECT.name + '.before-brawler-inline-sync.bak')
     backup.write_text(PROJECT.read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
     PROJECT.write_text(json.dumps(project, indent=2, ensure_ascii=False), encoding='utf-8', newline='\n')
-
     print('Brawler inline-code synchronization complete.')
     print('Replaced exactly one brawler inline JS event from the external source files.')
     print('Registered IronGauntlet as a GDevelop Model3D object definition.')
