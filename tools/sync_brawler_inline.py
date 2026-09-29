@@ -111,9 +111,9 @@ def main() -> None:
         "modelObjectName: 'IronGauntlet'" in equipment_source
         and 'function updateHavocEquipmentAttachments(runtimeScene)' in equipment_source
         and 'mixamorig:RightHand' in equipment_source
-        and 'equipmentObject.setRotationX(' in equipment_source
-        and 'equipmentObject.setRotationY(' in equipment_source
-        and 'equipmentObject.turnAroundZ(' in equipment_source
+        and 'function attachHavocEquipmentRendererToBone' in equipment_source
+        and 'bone.add(equipmentRendererObject)' in equipment_source
+        and 'equipmentRendererObject.visible = true' in equipment_source
     )
     if not required_equipment_runtime:
         raise SystemExit(
@@ -137,7 +137,7 @@ def main() -> None:
     print('Brawler inline-code synchronization complete.')
     print('Replaced exactly one inline brawler JS event from the external source files.')
     print('Included enhancement foundation and equipment attachment runtime.')
-    print('Runtime entry point now updates the Brawler gauntlet attachment each frame.')
+    print('Runtime entry point now parents the Brawler gauntlet renderer to the right-hand bone.')
     print('Enhancement VFX remains behind its current disabled presentation boundary.')
     print('Preserved TargetSelectionIcon and refused obsolete target-arrow objects.')
     print('Current combat target validity: null + destroyed + living-state checks.')
