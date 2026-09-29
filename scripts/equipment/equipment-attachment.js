@@ -1,9 +1,10 @@
 /**
  * Character equipment attachment contract and runtime binding state.
  *
- * Standalone equipment models are represented by their own GDevelop 3D Model
- * object. The renderer object is parented directly to the animated character
- * hand bone so the equipment follows the bone transform every frame.
+ * Equipment uses a standalone GDevelop 3D Model object. Its renderer is
+ * parented to the animated Mixamo hand bone. The GDevelop object itself is
+ * kept at the player position so its normal visibility/culling system still
+ * considers the equipment near the player.
  */
 const HAVOC_EQUIPMENT_ATTACHMENT_PROFILES = Object.freeze({
   brawler_hands: Object.freeze({
@@ -119,8 +120,7 @@ function findHavocAttachmentBone(player, boneName) {
   let matchedBone = null;
   root.traverse((node) => {
     if (matchedBone || !node || !node.name) return;
-    const normalized = normalizeHavocBoneName(node.name);
-    if (candidates.has(normalized)) {
+    if (candidates.has(normalizeHavocBoneName(node.name))) {
       matchedBone = node;
     }
   });
@@ -132,15 +132,9 @@ function applyHavocEquipmentModelSize(equipmentObject, definition, binding) {
   if (!equipmentObject || !definition || !definition.defaultSize || binding.sizeApplied) return;
 
   const size = definition.defaultSize;
-  if (typeof equipmentObject.setWidth === 'function') {
-    equipmentObject.setWidth(size.width);
-  }
-  if (typeof equipmentObject.setHeight === 'function') {
-    equipmentObject.setHeight(size.height);
-  }
-  if (typeof equipmentObject.setDepth === 'function') {
-    equipmentObject.setDepth(size.depth);
-  }
+  if (typeof equipmentObject.setWidth === 'function') equipmentObject.setWidth(size.width);
+  if (typeof equipmentObject.setHeight === 'function') equipmentObject.setHeight(size.height);
+  if (typeof equipmentObject.setDepth === 'function') equipmentObject.setDepth(size.depth);
 
   binding.sizeApplied = true;
 }
@@ -154,15 +148,34 @@ function attachHavocEquipmentRendererToBone(runtimeScene, player, equipmentObjec
     ? binding.leftAnchor
     : binding.rightAnchor;
   const bone = findHavocAttachmentBone(player, boneName);
-  if (!bone) return false;
+  if (!bone || typeof bone.add !== 'function') return false;
 
   const equipmentRendererObject = equipmentObject.get3DRendererObject();
-  if (!equipmentRendererObject || typeof bone.add !== 'function') return false;
+  if (!equipmentRendererObject) return false;
+
+  /*
+   * Keep the runtime object's scene-space position on the player. GDevelop
+   * uses the runtime object's AABB for visibility culling. The actual model
+   * renderer is then placed at the hand as a child of the bone.
+   */
+  if (typeof equipmentObject.setX === 'function' && typeof player.getX === 'function') {
+    equipmentObject.setX(player.getX());
+  }
+  if (typeof equipmentObject.setY === 'function' && typeof player.getY === 'function') {
+    equipmentObject.setY(player.getY());
+  }
+  if (typeof equipmentObject.setZ === 'function' && typeof player.getZ === 'function') {
+    equipmentObject.setZ(player.getZ());
+  }
 
   if (equipmentRendererObject.parent !== bone) {
     bone.add(equipmentRendererObject);
   }
 
+  /* GDevelop updates the model renderer from its own object transform.
+   * Reset that transform after parenting so the bone is the sole positional
+   * parent and the equipment offsets remain local to the hand.
+   */
   if (equipmentRendererObject.position && typeof equipmentRendererObject.position.set === 'function') {
     equipmentRendererObject.position.set(
       HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.x,
@@ -180,7 +193,9 @@ function attachHavocEquipmentRendererToBone(runtimeScene, player, equipmentObjec
     );
   }
 
+  if (typeof equipmentObject.hide === 'function') equipmentObject.hide(false);
   equipmentRendererObject.visible = true;
+
   binding.modelAttached = true;
   binding.rendererParented = true;
   binding.activeBone = bone.name || boneName;
@@ -189,9 +204,7 @@ function attachHavocEquipmentRendererToBone(runtimeScene, player, equipmentObjec
 
 function ensureHavocBrawlerGauntletBinding(runtimeScene, player, equipmentObject) {
   const state = initializeHavocEquipmentAttachments(runtimeScene);
-  const definition = getHavocEquipmentDefinition(
-    HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId
-  );
+  const definition = getHavocEquipmentDefinition(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId);
   if (!definition) {
     console.warn('[Havoc Equipment] Missing definition:', HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId);
     return null;
@@ -201,17 +214,11 @@ function ensureHavocBrawlerGauntletBinding(runtimeScene, player, equipmentObject
   let binding = state.bindings[instanceId];
 
   if (!binding) {
-    const instance = createHavocEquipmentInstance(
-      HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId,
-      0
-    );
+    const instance = createHavocEquipmentInstance(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId, 0);
     if (!instance) return null;
     instance.instanceId = instanceId;
 
-    if (!attachHavocEquipmentInstance(runtimeScene, player, instance)) {
-      return null;
-    }
-
+    if (!attachHavocEquipmentInstance(runtimeScene, player, instance)) return null;
     binding = state.bindings[instanceId];
   }
 
@@ -262,11 +269,7 @@ function updateHavocEquipmentAttachments(runtimeScene) {
   state.warnedMissingPlayer = false;
   state.warnedMissingModel = false;
 
-  const binding = ensureHavocBrawlerGauntletBinding(
-    runtimeScene,
-    player,
-    equipmentObject
-  );
+  const binding = ensureHavocBrawlerGauntletBinding(runtimeScene, player, equipmentObject);
   if (!binding) return;
 
   const synced = attachHavocEquipmentRendererToBone(
