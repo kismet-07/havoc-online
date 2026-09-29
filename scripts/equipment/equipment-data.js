@@ -9,7 +9,7 @@ const HAVOC_EQUIPMENT_DEFINITIONS = Object.freeze({
     classId: 'brawler',
     displayName: 'Brawler Starter Gauntlets',
     modelId: 'assets/equipment/brawler/basic_iron_gauntlet.glb',
-    modelObjectName: 'BrawlerGauntlet',
+    modelObjectName: 'IronGauntlet',
     attachmentProfile: 'brawler_hands',
     enhancementAllowed: true,
     defaultSize: Object.freeze({
