@@ -1,20 +1,22 @@
 name: Sync Enhancement Into GDevelop Project
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize]
     branches:
-      - feature/brawler-enhancement-vfx
+      - feature/brawler-boxer-attacks
 
 permissions:
   contents: write
 
 jobs:
   sync:
-    if: ${{ !startsWith(github.event.head_commit.message, 'build: sync enhancement into GDevelop project') }}
+    if: ${{ !startsWith(github.event.pull_request.head.sha, '') && github.event.pull_request.head.ref == 'feature/brawler-enhancement-vfx' && !startsWith(github.event.pull_request.title, '[generated]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 1
 
       - name: Inject enhancement modules into GDevelop project
@@ -50,15 +52,12 @@ jobs:
                       matches.append((path, value))
 
           walk(project)
-
           if len(matches) != 1:
               raise SystemExit(f'Expected exactly one Brawler JavaScript event, found {len(matches)}')
 
           path, code = matches[0]
-
           if '// --- scripts/enhancement/config.js ---' not in code:
               code = code.replace(marker, injected + marker, 1)
-
           if enhancement_call not in code:
               code = code.replace(entry_call, entry_call + '\\n' + enhancement_call, 1)
 
@@ -67,12 +66,10 @@ jobs:
                   return replacement
               if isinstance(value, dict):
                   for key in list(value.keys()):
-                      child_path = f'{current}.{key}'
-                      value[key] = replace_at(value[key], target_path, replacement, child_path)
+                      value[key] = replace_at(value[key], target_path, replacement, f'{current}.{key}')
               elif isinstance(value, list):
                   for index in range(len(value)):
-                      child_path = f'{current}[{index}]'
-                      value[index] = replace_at(value[index], target_path, replacement, child_path)
+                      value[index] = replace_at(value[index], target_path, replacement, f'{current}[{index}]')
               return value
 
           project = replace_at(project, path, code)
@@ -87,4 +84,4 @@ jobs:
           git rm .github/workflows/sync-enhancement-into-project.yml
           git add 'Havoc Online.json' scripts/enhancement/config.js scripts/enhancement/vfx.js
           git commit -m 'build: sync enhancement into GDevelop project'
-          git push
+          git push origin HEAD:${{ github.head_ref }}
