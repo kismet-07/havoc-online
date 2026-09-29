@@ -1,25 +1,21 @@
 /**
- * Runtime enhancement state manager.
- * Stores enhancement state only. Visual presentation is separate.
+ * Enhancement policy manager.
+ *
+ * Enhancement level belongs to the equipment instance. This module resolves
+ * enhancement state without creating a second copy of that state.
  */
-function initializeHavocEnhancementManager(runtimeScene) {
-  if (!runtimeScene.__havocEnhancementManager) {
-    runtimeScene.__havocEnhancementManager = {
-      itemLevels: Object.create(null),
-    };
-  }
-  return runtimeScene.__havocEnhancementManager;
+function getHavocEnhancementLevelFromItem(itemInstance) {
+  if (!itemInstance) return 0;
+  return normalizeHavocEnhancementLevel(itemInstance.enhancementLevel);
 }
 
-function setHavocItemEnhancementLevel(runtimeScene, itemInstanceId, level) {
-  if (!runtimeScene || !itemInstanceId) return false;
-  const state = initializeHavocEnhancementManager(runtimeScene);
-  state.itemLevels[itemInstanceId] = normalizeHavocEnhancementLevel(level);
+function canHavocItemBeEnhanced(itemInstance) {
+  if (!itemInstance || itemInstance.enhancementAllowed === false) return false;
+  return Number.isFinite(Number(itemInstance.enhancementLevel));
+}
+
+function setHavocItemEnhancementLevel(itemInstance, level) {
+  if (!itemInstance || itemInstance.enhancementAllowed === false) return false;
+  itemInstance.enhancementLevel = normalizeHavocEnhancementLevel(level);
   return true;
-}
-
-function getHavocItemEnhancementLevel(runtimeScene, itemInstanceId) {
-  if (!runtimeScene || !itemInstanceId) return 0;
-  const state = initializeHavocEnhancementManager(runtimeScene);
-  return state.itemLevels[itemInstanceId] || 0;
 }
