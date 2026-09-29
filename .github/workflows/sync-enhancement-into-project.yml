@@ -1,0 +1,90 @@
+name: Sync Enhancement Into GDevelop Project
+
+on:
+  push:
+    branches:
+      - feature/brawler-enhancement-vfx
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: ${{ !startsWith(github.event.head_commit.message, 'build: sync enhancement into GDevelop project') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Inject enhancement modules into GDevelop project
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          project_path = Path('Havoc Online.json')
+          project = json.loads(project_path.read_text(encoding='utf-8'))
+          config = Path('scripts/enhancement/config.js').read_text(encoding='utf-8').strip()
+          vfx = Path('scripts/enhancement/vfx.js').read_text(encoding='utf-8').strip()
+
+          marker = '// --- Brawler runtime entry point ---'
+          entry_call = 'updateBrawlerCombat(runtimeScene, brawlerDt);'
+          enhancement_call = 'updateHavocEnhancement(runtimeScene, brawlerDt);'
+          injected = (
+              '// --- scripts/enhancement/config.js ---\\n' + config +
+              '\\n\\n// --- scripts/enhancement/vfx.js ---\\n' + vfx + '\\n\\n'
+          )
+
+          matches = []
+
+          def walk(value, path='root'):
+              if isinstance(value, dict):
+                  for key, child in value.items():
+                      walk(child, f'{path}.{key}')
+              elif isinstance(value, list):
+                  for index, child in enumerate(value):
+                      walk(child, f'{path}[{index}]')
+              elif isinstance(value, str):
+                  if marker in value and entry_call in value:
+                      matches.append((path, value))
+
+          walk(project)
+
+          if len(matches) != 1:
+              raise SystemExit(f'Expected exactly one Brawler JavaScript event, found {len(matches)}')
+
+          path, code = matches[0]
+
+          if '// --- scripts/enhancement/config.js ---' not in code:
+              code = code.replace(marker, injected + marker, 1)
+
+          if enhancement_call not in code:
+              code = code.replace(entry_call, entry_call + '\\n' + enhancement_call, 1)
+
+          def replace_at(value, target_path, replacement, current='root'):
+              if current == target_path:
+                  return replacement
+              if isinstance(value, dict):
+                  for key in list(value.keys()):
+                      child_path = f'{current}.{key}'
+                      value[key] = replace_at(value[key], target_path, replacement, child_path)
+              elif isinstance(value, list):
+                  for index in range(len(value)):
+                      child_path = f'{current}[{index}]'
+                      value[index] = replace_at(value[index], target_path, replacement, child_path)
+              return value
+
+          project = replace_at(project, path, code)
+          project_path.write_text(json.dumps(project, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(f'Updated JavaScript event at {path}')
+          PY
+
+      - name: Commit generated project update and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/sync-enhancement-into-project.yml
+          git add 'Havoc Online.json' scripts/enhancement/config.js scripts/enhancement/vfx.js
+          git commit -m 'build: sync enhancement into GDevelop project'
+          git push
