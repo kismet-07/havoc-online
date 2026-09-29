@@ -14,6 +14,10 @@ SOURCE_FILES = [
     ROOT / 'scripts' / 'characters' / 'brawler' / 'movement.js',
     ROOT / 'scripts' / 'characters' / 'brawler' / 'basic_attacks.js',
     ROOT / 'scripts' / 'characters' / 'brawler' / 'combat.js',
+    ROOT / 'scripts' / 'equipment' / 'equipment-slots.js',
+    ROOT / 'scripts' / 'equipment' / 'equipment-data.js',
+    ROOT / 'scripts' / 'equipment' / 'equipment-manager.js',
+    ROOT / 'scripts' / 'equipment' / 'equipment-attachment.js',
 ]
 
 MARKER = '// HAVOC_BRAWLER_CHARACTER_V1'
@@ -43,6 +47,7 @@ def build_inline_source() -> list[str]:
         'updateHavocMobileInput(runtimeScene);',
         'updateBrawlerMovement(runtimeScene, brawlerDt);',
         'updateBrawlerCombat(runtimeScene, brawlerDt);',
+        'updateHavocEquipmentAttachments(runtimeScene);',
     ])
     return lines
 
@@ -97,6 +102,20 @@ def main() -> None:
             'Safety check failed: Brawler target validity guard is missing the current null, destroyed, and living-state checks.'
         )
 
+    equipment_source = (ROOT / 'scripts' / 'equipment' / 'equipment-attachment.js').read_text(encoding='utf-8')
+    required_equipment_runtime = (
+        "modelObjectName: 'BrawlerGauntlet'" in equipment_source
+        and 'function updateHavocEquipmentAttachments(runtimeScene)' in equipment_source
+        and 'mixamorig:RightHand' in equipment_source
+        and 'equipmentObject.setRotationX(' in equipment_source
+        and 'equipmentObject.setRotationY(' in equipment_source
+        and 'equipmentObject.setRotationZ(' in equipment_source
+    )
+    if not required_equipment_runtime:
+        raise SystemExit(
+            'Safety check failed: Brawler equipment attachment runtime is incomplete.'
+        )
+
     backup = PROJECT.with_name(PROJECT.name + '.before-brawler-inline-sync.bak')
     backup.write_text(PROJECT.read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
     PROJECT.write_text(
@@ -107,6 +126,8 @@ def main() -> None:
 
     print('Brawler inline-code synchronization complete.')
     print('Replaced exactly one inline brawler JS event from the external source files.')
+    print('Included equipment data, slots, manager, and runtime attachment code.')
+    print('Runtime entry point now updates the Brawler gauntlet attachment each frame.')
     print('Preserved TargetSelectionIcon and refused obsolete target-arrow objects.')
     print('Current combat target validity: null + destroyed + living-state checks.')
     print('Desktop target selection: mouse press transition.')
