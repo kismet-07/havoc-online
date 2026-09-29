@@ -59,11 +59,7 @@ def build_inline_source() -> list[str]:
 
 
 def ensure_gauntlet_object_definition(project: dict) -> None:
-    """Register IronGauntlet as a real GDevelop Model3D object type.
-
-    The GLB resource alone is not enough for runtimeScene.createObject().
-    The object definition must exist in the layout object registry first.
-    """
+    """Register IronGauntlet as a real GDevelop Model3D object type."""
     layouts = project.get('layouts', [])
     if not layouts:
         raise SystemExit('Safety check failed: project has no layouts.')
@@ -166,10 +162,11 @@ def main() -> None:
         and 'mixamorig:RightHand' in equipment_source
         and 'function attachHavocEquipmentRendererToBone' in equipment_source
         and 'function applyHavocEquipmentWorldTransform' in equipment_source
-        and 'bone.getWorldPosition' in equipment_source
-        and 'bone.getWorldQuaternion' in equipment_source
+        and 'bone.matrixWorld' in equipment_source
+        and 'equipmentRendererObject.position.setFromMatrixPosition' in equipment_source
         and 'equipmentRendererObject.visible = true' in equipment_source
         and 'bone.add(equipmentRendererObject)' not in equipment_source
+        and 'equipmentRendererObject.parent' not in equipment_source
     )
     if not required_equipment_runtime:
         raise SystemExit(
