@@ -32,27 +32,38 @@ jobs:
           code = project['layouts'][0]['events'][0]['inlineCode']
 
           marker = '// --- Brawler runtime entry point ---'
+          config_marker = '// --- scripts/enhancement/config.js ---'
+          vfx_marker = '// --- scripts/enhancement/vfx.js ---'
           entry_call = 'updateBrawlerCombat(runtimeScene, brawlerDt);'
           enhancement_call = 'updateHavocEnhancement(runtimeScene, brawlerDt);'
+
+          # Remove the earlier prototype injection if this branch already contains it.
+          cleaned = []
+          for line in code:
+              if config_marker in line and vfx_marker in line:
+                  continue
+              if entry_call in line and enhancement_call in line:
+                  line = entry_call
+              cleaned.append(line)
+          code = cleaned
 
           marker_index = next((i for i, line in enumerate(code) if marker in line), None)
           if marker_index is None:
               raise SystemExit('Brawler runtime marker not found')
 
-          entry_index = next((i for i, line in enumerate(code) if entry_call in line), None)
+          entry_index = next((i for i, line in enumerate(code) if line.strip() == entry_call), None)
           if entry_index is None:
               raise SystemExit('Brawler runtime entry call not found')
 
-          if not any('// --- scripts/enhancement/config.js ---' in line for line in code):
-              injected_lines = (
-                  ['// --- scripts/enhancement/config.js ---'] +
-                  config_lines +
-                  ['', '// --- scripts/enhancement/vfx.js ---'] +
-                  vfx_lines +
-                  ['']
-              )
-              code[marker_index:marker_index] = injected_lines
-              entry_index += len(injected_lines)
+          injected_lines = (
+              [config_marker] +
+              config_lines +
+              ['', vfx_marker] +
+              vfx_lines +
+              ['']
+          )
+          code[marker_index:marker_index] = injected_lines
+          entry_index += len(injected_lines)
 
           if not any(line.strip() == enhancement_call for line in code):
               code.insert(entry_index + 1, enhancement_call)
@@ -69,17 +80,16 @@ jobs:
           from pathlib import Path
           project = json.loads(Path('Havoc Online.json').read_text(encoding='utf-8'))
           code = project['layouts'][0]['events'][0]['inlineCode']
-          required = [
+          required = {
               '// --- scripts/enhancement/config.js ---',
               '// --- scripts/enhancement/vfx.js ---',
               'function updateHavocEnhancement(runtimeScene, dt) {',
               'updateHavocEnhancement(runtimeScene, brawlerDt);',
-          ]
-          for item in required:
-              if item not in code:
-                  raise SystemExit(f'Missing generated code: {item}')
-          bad = [line for line in code if '\\n' in line and ('HAVOC_ENHANCEMENT' in line or 'updateHavocEnhancement' in line)]
-          if bad:
+          }
+          missing = sorted(item for item in required if item not in code)
+          if missing:
+              raise SystemExit('Missing generated code: ' + ', '.join(missing))
+          if any('\\n' in line and ('HAVOC_ENHANCEMENT' in line or 'updateHavocEnhancement' in line) for line in code):
               raise SystemExit('Generated enhancement code contains literal backslash-n sequences')
           print('Generated project validation passed.')
           PY
