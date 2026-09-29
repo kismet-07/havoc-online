@@ -249,10 +249,10 @@ function updateHavocEquipmentAttachments(runtimeScene) {
 
   const state = initializeHavocEquipmentAttachments(runtimeScene);
   const players = runtimeScene.getObjects(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.playerObjectName);
-  const equipmentObjects = runtimeScene.getObjects('BrawlerGauntlet');
+  let equipmentObjects = runtimeScene.getObjects('BrawlerGauntlet');
 
   const player = players && players[0];
-  const equipmentObject = equipmentObjects && equipmentObjects[0];
+  let equipmentObject = equipmentObjects && equipmentObjects[0];
 
   if (!player) {
     if (!state.warnedMissingPlayer) {
@@ -262,10 +262,15 @@ function updateHavocEquipmentAttachments(runtimeScene) {
     return;
   }
 
+  if (!equipmentObject && typeof runtimeScene.createObject === 'function') {
+    equipmentObject = runtimeScene.createObject('BrawlerGauntlet');
+    equipmentObjects = equipmentObject ? [equipmentObject] : [];
+  }
+
   if (!equipmentObject) {
     if (!state.warnedMissingModel) {
       state.warnedMissingModel = true;
-      console.warn('[Havoc Equipment] BrawlerGauntlet object not found.');
+      console.warn('[Havoc Equipment] Unable to create BrawlerGauntlet runtime instance.');
     }
     return;
   }
