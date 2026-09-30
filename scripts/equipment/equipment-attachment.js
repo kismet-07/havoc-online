@@ -248,6 +248,7 @@ function orientHavocEquipmentAlongForearm(visualRoot, binding, bone) {
   const boneWorldQuaternion = new THREE.Quaternion();
   const inverseBoneWorldQuaternion = new THREE.Quaternion();
   const alignmentQuaternion = new THREE.Quaternion();
+  const handRollQuaternion = new THREE.Quaternion();
   const desiredQuaternion = new THREE.Quaternion();
 
   bone.getWorldPosition(handWorld);
@@ -263,7 +264,18 @@ function orientHavocEquipmentAlongForearm(visualRoot, binding, bone) {
 
   baseAxisLocal.applyQuaternion(binding.baseVisualQuaternion).normalize();
   alignmentQuaternion.setFromUnitVectors(baseAxisLocal, forearmDirectionLocal);
-  desiredQuaternion.copy(alignmentQuaternion).multiply(binding.baseVisualQuaternion).normalize();
+
+  /*
+   * The gauntlet's forearm axis is now correct, but its hand-face is rotated
+   * a quarter turn around that axis relative to the Brawler hand. Apply the
+   * measured 90-degree hand-roll in the gauntlet's local axis space.
+   */
+  handRollQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
+  desiredQuaternion
+    .copy(alignmentQuaternion)
+    .multiply(binding.baseVisualQuaternion)
+    .multiply(handRollQuaternion)
+    .normalize();
 
   visualRoot.quaternion.copy(desiredQuaternion);
   return true;
