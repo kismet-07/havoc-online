@@ -61,7 +61,11 @@ def patch_project_resource() -> None:
             fail(f'expected exactly one registered {OLD_RESOURCE} resource, found {len(old_entries)}.')
         old_entry = old_entries[0]
         old_entry['name'] = NEW_RESOURCE
-        new_entries = [old_entry]
+        old_entry['file'] = NEW_RESOURCE
+    else:
+        if len(new_entries) != 1:
+            fail(f'expected exactly one registered {NEW_RESOURCE} resource, found {len(new_entries)}.')
+        new_entries[0]['file'] = NEW_RESOURCE
 
     for layout in project.get('layouts', []):
         for obj in layout.get('objects', []):
@@ -84,9 +88,9 @@ def main() -> None:
     patch_equipment_data()
     patch_attachment_axis()
 
-    # The existing sync script validates the old resource name. Run it first so
-    # its other generated-code safety checks remain authoritative, then switch
-    # the registered project resource to the replacement asset.
+    # Run the existing synchronization first so its generated-code safety checks
+    # remain authoritative. The replacement resource is switched immediately
+    # afterward in the project JSON.
     subprocess.run(['python', str(SYNC)], cwd=ROOT, check=True)
     patch_project_resource()
 
