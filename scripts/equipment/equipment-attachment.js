@@ -198,64 +198,56 @@ function captureHavocEquipmentBaseTransform(equipmentRendererObject, binding) {
 
 function captureHavocEquipmentVisualTransform(visualRoot, renderer, binding) {
   if (!visualRoot || !renderer || !binding) return false;
-  if (binding.baseVisualScale && binding.standaloneSize) return true;
+  if (binding.baseVisualScale && binding.baseVisualQuaternion && binding.standaloneSize) return true;
 
   /*
-   * The GLTF child is currently under the GDevelop Model3D renderer. Once we
-   * move that child to a character bone, it will no longer inherit the
-   * renderer's rotation/scale. Fold the renderer transform into the visual
-   * root before detaching it.
+   * The GLTF root is initially under the GDevelop Model3D renderer. When it
+   * moves to the hand bone it stops inheriting the renderer transform.
+   *
+   * Preserve the renderer's full local transform by baking it into the GLTF
+   * root before reparenting. Position must also be preserved, not just scale
+   * and rotation.
    */
-  const rendererQuaternion = renderer.quaternion && renderer.quaternion.clone
-    ? renderer.quaternion.clone()
-    : null;
-  const rendererScale = renderer.scale && renderer.scale.clone
-    ? renderer.scale.clone()
-    : null;
+  if (
+    typeof visualRoot.applyMatrix4 !== 'function' ||
+    !renderer.matrixWorld ||
+    typeof renderer.updateWorldMatrix !== 'function'
+  ) {
+    return false;
+  }
 
-  const childQuaternion = visualRoot.quaternion && visualRoot.quaternion.clone
-    ? visualRoot.quaternion.clone()
-    : null;
-  const childScale = visualRoot.scale && visualRoot.scale.clone
-    ? visualRoot.scale.clone()
-    : null;
+  renderer.updateWorldMatrix(true, true);
+
+  const rendererInverseParent = renderer.parent && renderer.parent.matrixWorld
+    ? renderer.parent.matrixWorld.clone().invert()
+    : new THREE.Matrix4().identity();
+
+  const rendererLocalMatrix = renderer.matrixWorld.clone().premultiply(rendererInverseParent);
+  const childLocalMatrix = visualRoot.matrix.clone();
+
+  const effectiveMatrix = new THREE.Matrix4()
+    .copy(rendererLocalMatrix)
+    .multiply(childLocalMatrix);
+
+  effectiveMatrix.decompose(
+    visualRoot.position,
+    visualRoot.quaternion,
+    visualRoot.scale
+  );
 
   binding.baseVisualPosition = visualRoot.position.clone();
-
-  if (rendererQuaternion && childQuaternion) {
-    binding.baseVisualQuaternion = rendererQuaternion.multiply(childQuaternion);
-  } else if (childQuaternion) {
-    binding.baseVisualQuaternion = childQuaternion;
-  } else {
-    binding.baseVisualQuaternion = null;
-  }
-
-  if (rendererScale && childScale) {
-    binding.baseVisualScale = rendererScale.multiply(childScale);
-  } else if (childScale) {
-    binding.baseVisualScale = childScale;
-  } else {
-    binding.baseVisualScale = null;
-  }
-
-  if (!binding.baseVisualScale || !binding.baseVisualQuaternion) return false;
-
-  if (typeof renderer.updateWorldMatrix === 'function') {
-    renderer.updateWorldMatrix(true, true);
-  } else if (typeof renderer.updateMatrixWorld === 'function') {
-    renderer.updateMatrixWorld(true);
-  }
+  binding.baseVisualQuaternion = visualRoot.quaternion.clone();
+  binding.baseVisualScale = visualRoot.scale.clone();
 
   if (typeof THREE !== 'undefined' && THREE.Box3 && THREE.Vector3) {
-    const box = new THREE.Box3().setFromObject(visualRoot, true);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-    binding.standaloneSize = size;
+    const standaloneBox = new THREE.Box3().setFromObject(visualRoot, true);
+    const standaloneSize = new THREE.Vector3();
+    standaloneBox.getSize(standaloneSize);
+    binding.standaloneSize = standaloneSize;
   }
 
   return !!binding.standaloneSize;
 }
-
 function getHavocAttachmentSegmentLength(bone) {
   if (!bone || !bone.parent || typeof THREE === 'undefined') return 0;
 
