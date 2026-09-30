@@ -200,16 +200,8 @@ function captureHavocEquipmentVisualTransform(visualRoot, renderer, binding) {
   if (!visualRoot || !renderer || !binding) return false;
   if (binding.baseVisualScale && binding.baseVisualQuaternion && binding.standaloneSize) return true;
 
-  /*
-   * The GLTF root is initially under the GDevelop Model3D renderer. When it
-   * moves to the hand bone it stops inheriting the renderer transform.
-   *
-   * Preserve the renderer's full local transform by baking it into the GLTF
-   * root before reparenting. Position must also be preserved, not just scale
-   * and rotation.
-   */
   if (
-    typeof visualRoot.applyMatrix4 !== 'function' ||
+    !visualRoot.matrix ||
     !renderer.matrixWorld ||
     typeof renderer.updateWorldMatrix !== 'function'
   ) {
@@ -217,6 +209,7 @@ function captureHavocEquipmentVisualTransform(visualRoot, renderer, binding) {
   }
 
   renderer.updateWorldMatrix(true, true);
+  if (typeof visualRoot.updateMatrixWorld === 'function') visualRoot.updateMatrixWorld(true);
 
   const rendererInverseParent = renderer.parent && renderer.parent.matrixWorld
     ? renderer.parent.matrixWorld.clone().invert()
@@ -248,6 +241,7 @@ function captureHavocEquipmentVisualTransform(visualRoot, renderer, binding) {
 
   return !!binding.standaloneSize;
 }
+
 function getHavocAttachmentSegmentLength(bone) {
   if (!bone || !bone.parent || typeof THREE === 'undefined') return 0;
 
@@ -373,8 +367,12 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
   if (!visualRoot || !binding.baseVisualScale || !binding.baseVisualQuaternion || !binding.standaloneSize) return false;
 
   if (visualRoot.parent !== bone) {
-    if (visualRoot.parent) visualRoot.parent.remove(visualRoot);
-    bone.add(visualRoot);
+    if (typeof bone.attach === 'function') {
+      bone.attach(visualRoot);
+    } else {
+      if (visualRoot.parent) visualRoot.parent.remove(visualRoot);
+      bone.add(visualRoot);
+    }
   }
 
   visualRoot.position.copy(getHavocHandCoverageLocalPosition(bone));
