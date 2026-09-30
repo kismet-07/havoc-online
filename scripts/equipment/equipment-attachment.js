@@ -234,6 +234,41 @@ function getHavocAttachmentSegmentLength(bone) {
   return bonePosition.distanceTo(parentPosition);
 }
 
+function orientHavocEquipmentAlongForearm(visualRoot, binding, bone) {
+  if (!visualRoot || !binding || !binding.baseVisualQuaternion || !bone || !bone.parent) return false;
+  if (typeof THREE === 'undefined' || !THREE.Vector3 || !THREE.Quaternion) return false;
+  if (typeof bone.getWorldPosition !== 'function' || typeof bone.parent.getWorldPosition !== 'function') return false;
+  if (typeof bone.getWorldQuaternion !== 'function') return false;
+
+  const handWorld = new THREE.Vector3();
+  const parentWorld = new THREE.Vector3();
+  const forearmDirectionWorld = new THREE.Vector3();
+  const forearmDirectionLocal = new THREE.Vector3();
+  const baseAxisLocal = new THREE.Vector3(0, 1, 0);
+  const boneWorldQuaternion = new THREE.Quaternion();
+  const inverseBoneWorldQuaternion = new THREE.Quaternion();
+  const alignmentQuaternion = new THREE.Quaternion();
+  const desiredQuaternion = new THREE.Quaternion();
+
+  bone.getWorldPosition(handWorld);
+  bone.parent.getWorldPosition(parentWorld);
+  forearmDirectionWorld.subVectors(parentWorld, handWorld);
+
+  if (forearmDirectionWorld.lengthSq() <= 1e-10) return false;
+  forearmDirectionWorld.normalize();
+
+  bone.getWorldQuaternion(boneWorldQuaternion);
+  inverseBoneWorldQuaternion.copy(boneWorldQuaternion).invert();
+  forearmDirectionLocal.copy(forearmDirectionWorld).applyQuaternion(inverseBoneWorldQuaternion).normalize();
+
+  baseAxisLocal.applyQuaternion(binding.baseVisualQuaternion).normalize();
+  alignmentQuaternion.setFromUnitVectors(baseAxisLocal, forearmDirectionLocal);
+  desiredQuaternion.copy(alignmentQuaternion).multiply(binding.baseVisualQuaternion).normalize();
+
+  visualRoot.quaternion.copy(desiredQuaternion);
+  return true;
+}
+
 function setHavocEquipmentVisualVisibility(equipmentObject, visualRoot) {
   if (!visualRoot) return;
 
@@ -275,20 +310,16 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
   }
 
   /*
-   * Do not copy the GDevelop wrapper rotation/scale onto the GLTF root.
-   * GDevelop's Model3D renderer already normalized the GLTF root internally
-   * with its own rotation and scale before this root was detached. Replacing
-   * those values with renderer.scale/renderer.quaternion destroys that
-   * normalization and was the cause of the oversized gauntlet.
-   *
-   * Preserve the GLTF root's own transform and calculate the final size from
-   * the actual rig. The RightHand bone's parent is the Mixamo forearm bone,
-   * so the distance between those two joints is a real runtime measurement
-   * of the forearm segment. The gauntlet's longest dimension is fitted to
-   * that measured segment without introducing an arbitrary magic scale.
+   * Keep the GLTF root at the RightHand bone origin. Its original visual
+   * quaternion was authored in the standalone GDevelop renderer space, so
+   * do not use it directly as the final bone-local orientation. Instead,
+   * align the gauntlet's local forearm axis with the runtime RightHand to
+   * parent-bone direction. This removes the old parent-space rotation while
+   * preserving the GLTF root's authored roll.
    */
   visualRoot.position.set(0, 0, 0);
   visualRoot.quaternion.copy(binding.baseVisualQuaternion);
+  orientHavocEquipmentAlongForearm(visualRoot, binding, bone);
   visualRoot.scale.copy(binding.baseVisualScale);
   visualRoot.matrixAutoUpdate = true;
 
