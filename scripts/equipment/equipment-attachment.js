@@ -252,7 +252,7 @@ function orientHavocEquipmentAlongForearm(visualRoot, binding, bone) {
 
   bone.getWorldPosition(handWorld);
   bone.parent.getWorldPosition(parentWorld);
-  forearmDirectionWorld.subVectors(parentWorld, handWorld);
+  forearmDirectionWorld.subVectors(handWorld, parentWorld);
 
   if (forearmDirectionWorld.lengthSq() <= 1e-10) return false;
   forearmDirectionWorld.normalize();
