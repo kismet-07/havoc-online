@@ -1,389 +1,84 @@
 # Havoc Online
 
-# Phase 2 — Character Locomotion & Combat Foundation
+## Development Roadmap
 
-## Purpose
+### Phase 2 — Equipment Enhancement & Upgrade Glow System
 
-Phase 2 establishes the reusable character gameplay foundation for Havoc Online. The current Brawler + Killer Clown combat slice is considered a working baseline and should not be unnecessarily rewritten while this phase is implemented.
+The equipment enhancement system is intended to capture the visual identity of classic MMORPGs such as Ran Online, where higher upgrade levels progressively change the weapon or armor's energy, glow, particles, and overall visual intensity.
 
-The objective is to make the existing behavior reusable across the four planned character classes:
+**Important design decision:** the upgrade glow should be implemented as a **runtime visual-effect system**, not baked permanently into every weapon/armor model. The base equipment model remains reusable, while the enhancement level controls the effect profile applied to it.
 
-- Brawler
-- Swordsman
-- Shaman
-- Archer
+This allows the same weapon or armor asset to support multiple enhancement levels without creating separate models for `+7`, `+10`, `+25`, `+40`, `+50`, etc.
 
-The architecture should separate shared character behavior from class-specific combat and skills.
+#### Upgrade progression target
+
+| Upgrade | Target visual |
+|---:|---|
+| `+0` | Normal equipment. No enhancement glow. |
+| `+7` | Faint orange. |
+| `+9` | Gold. |
+| `+10` | Blue, inspired by the classic Ran Online look; noticeable but not excessively bright. |
+| `+15` | Brighter blue / white energy. |
+| `+20` | Blue + cyan particles. |
+| `+25` | Blue/cyan energy + orbiting particles + stronger bloom. |
+| `+30` | Transition toward purple. |
+| `+35` | Purple / magenta energy. |
+| `+40` | Red / crimson + magenta + a white-hot core. |
+| `+50` | Rainbow / maximum enhancement. |
+
+### Visual reference
+
+The following repository-native reference graphic defines the intended progression. It is a **design target**, not a statement that the current game already implements these effects.
+
+![Havoc Online weapon upgrade glow progression](docs/assets/upgrade-glow-progression.svg)
+
+### Planned implementation
+
+The effect system should eventually separate the following concerns:
+
+- **Equipment model** — the actual weapon or armor geometry and materials.
+- **Enhancement data** — the item's current upgrade value, e.g. `+25`.
+- **Effect profile** — maps the upgrade value to color, intensity, bloom, particles, and animation behavior.
+- **Runtime VFX** — creates and updates the visible glow without modifying the underlying equipment asset.
+- **Performance controls** — limits particle counts, bloom, and update frequency so high-enhancement equipment does not create unnecessary GPU/CPU load.
+
+A future configuration can follow this general structure:
+
+```js
+const UPGRADE_VFX = {
+  0:  { color: 'none', intensity: 0 },
+  7:  { color: 'orange', intensity: 'faint' },
+  9:  { color: 'gold', intensity: 'medium' },
+  10: { color: 'blue', intensity: 'medium' },
+  15: { color: 'blueWhite', intensity: 'bright' },
+  20: { color: 'blueCyan', particles: true },
+  25: { color: 'blueCyan', particles: true, orbit: true, bloom: 'strong' },
+  30: { color: 'purpleTransition', particles: true },
+  35: { color: 'purpleMagenta', particles: true },
+  40: { color: 'crimsonMagenta', particles: true, whiteHotCore: true },
+  50: { color: 'rainbow', particles: true, orbit: true, bloom: 'maximum' },
+};
+```
+
+The exact GDevelop implementation will be designed and tested separately. We should **not** start by creating individual baked glow models for every enhancement level unless a specific visual effect cannot be achieved satisfactorily through runtime materials, lights, particles, bloom, or shader-based techniques.
+
+### Equipment pipeline requirements
+
+Before implementing the complete enhancement system, the project will need:
+
+1. A clean base weapon/armor asset pipeline.
+2. A consistent material/emissive setup for equipment.
+3. A way to identify the equipped item at runtime.
+4. An enhancement value stored with the item.
+5. A centralized upgrade-to-VFX configuration.
+6. Reusable particle/effect objects or emitters.
+7. A controlled bloom/emissive strategy.
+8. Performance limits for characters and mobs visible simultaneously.
+
+The Brawler gauntlet is the first planned equipment test asset for this system.
 
 ---
 
-## Phase 2 Baseline
+## Current Development Status
 
-The following behavior is already working and should be treated as the regression baseline:
-
-- Brawler idle, walk, and run
-- Target selection
-- Auto-approach toward a selected mob
-- Run during long-distance auto-approach
-- Attack execution
-- Attack cancellation through joystick movement
-- Attack cancellation through WASD movement
-- Killer Clown wandering
-- Killer Clown aggro/chase
-- Killer Clown attack
-- Killer Clown return/leash behavior
-- Multiple Killer Clowns chasing the player
-- Mob crowd separation
-- Mob attack from any player-facing direction
-- Hard combat spacing
-- 15-mob population
-- Mobile joystick input
-- Keyboard WASD input
-
-**Rule:** Do not modify working combat behavior unless a regression or architectural requirement is identified and tested.
-
----
-
-# 1. Shared Character Locomotion
-
-Create a reusable locomotion layer instead of implementing movement independently for every class.
-
-Expected states:
-
-```text
-Character
-├── IDLE
-├── WALK
-├── RUN
-└── TURN
-```
-
-The locomotion layer should own:
-
-- movement input
-- walk speed
-- run speed
-- direction
-- facing/rotation
-- movement animation selection
-- walk/run animation transitions
-- keyboard input
-- mobile joystick input
-- movement interruption of automated combat movement
-
-Class-specific combat code should not duplicate basic movement logic.
-
----
-
-# 2. Targeting System
-
-Formalize target selection and validation so combat systems do not independently manage target references.
-
-Conceptual responsibility:
-
-```text
-TargetManager
-├── Select target
-├── Current target
-├── Validate target
-├── Clear target
-├── Target destroyed/dead
-├── Target distance
-└── Target indicator
-```
-
-The target system must safely handle:
-
-- target destroyed
-- target removed from the scene
-- target becoming invalid
-- target switching
-- player movement
-- target movement
-- combat cancellation
-
-No combat routine should continue operating on an invalid target.
-
----
-
-# 3. Brawler Combat State Machine
-
-Move the Brawler toward an explicit combat state model.
-
-```text
-IDLE
-  ↓
-MOVING
-  ↓
-TARGET_SELECTED
-  ↓
-APPROACHING
-  ↓
-ATTACKING
-  ↓
-ATTACK_RECOVERY
-  ↓
-IDLE
-```
-
-Important interruption paths:
-
-```text
-APPROACHING
-    ↓
-PLAYER MOVEMENT
-    ↓
-CANCELLED
-    ↓
-MOVING
-```
-
-```text
-ATTACKING
-    ↓
-TARGET DEAD / INVALID
-    ↓
-IDLE
-```
-
-```text
-APPROACHING
-    ↓
-TARGET MOVES
-    ↓
-RECALCULATE
-```
-
-The state machine should make transitions explicit rather than relying on scattered boolean flags.
-
----
-
-# 4. Combat Data Model
-
-Combat values should become data-driven wherever practical.
-
-A combat/attack definition should eventually support values such as:
-
-```text
-Skill / Attack
-├── ID
-├── Name
-├── Animation
-├── Animation speed
-├── Damage
-├── Range
-├── Cooldown
-├── MP cost
-├── Cast time
-├── Hit delay
-├── Target type
-└── Cancel rules
-```
-
-The exact implementation can remain JavaScript-based for now. The important requirement is that combat behavior should not become one large class-specific script containing every attack and skill.
-
----
-
-# 5. Brawler Attack Organization
-
-The Brawler's class-specific combat should be organized so basic attacks and level-based skills can evolve independently.
-
-Target structure:
-
-```text
-scripts/
-└── characters/
-    └── brawler/
-        ├── combat.js
-        ├── basic_attacks.js
-        ├── skill_level_7.js
-        ├── skill_level_17.js
-        └── skill_level_27.js
-```
-
-`combat.js` should handle class combat orchestration and state integration. Individual attack/skill modules should contain their own attack definitions and execution logic where appropriate.
-
-Do not duplicate shared locomotion or target-management code inside these files.
-
----
-
-# 6. Expand the Four Character Classes
-
-Once the shared foundation is stable, use the Brawler as the reference implementation for the remaining classes.
-
-## Brawler
-
-```text
-Locomotion
-Targeting
-Basic attacks
-Class skills
-```
-
-## Swordsman
-
-```text
-Locomotion → shared
-Targeting  → shared
-Combat     → class-specific
-Skills     → class-specific
-```
-
-## Shaman
-
-```text
-Locomotion → shared
-Targeting  → shared
-Combat     → class-specific
-Skills     → class-specific
-```
-
-## Archer
-
-```text
-Locomotion → shared
-Targeting  → shared
-Combat     → class-specific
-Skills     → class-specific
-```
-
-The shared foundation should prevent four independent implementations of the same movement and targeting behavior.
-
----
-
-# 7. Mob Combat Foundation
-
-The Killer Clown is the current reference mob AI.
-
-Its established behavior is:
-
-```text
-IDLE
-  ↓
-WANDER
-  ↓
-AGGRO
-  ↓
-CHASE
-  ↓
-ATTACK
-  ↓
-RETURN
-```
-
-The next mob-combat layer should eventually formalize:
-
-- HP
-- damage received
-- death
-- respawn
-- aggro radius
-- attack cooldown
-- target loss
-- leash distance
-- EXP reward
-- drops
-
-Do not add complex boss behavior yet.
-
----
-
-# 8. Regression Requirements
-
-Every significant change to locomotion, targeting, or combat must be tested against the existing Brawler + Killer Clown baseline.
-
-Minimum regression test:
-
-1. Select a Killer Clown.
-2. Attack while inside attack range.
-3. Attack while outside attack range.
-4. Confirm the Brawler runs toward the target rather than walks.
-5. Move with the joystick during auto-approach.
-6. Confirm the attack/approach is cancelled.
-7. Move with WASD during auto-approach.
-8. Confirm the attack/approach is cancelled.
-9. Allow the Killer Clown to chase the player.
-10. Allow the player to escape and verify the mob returns.
-11. Lure multiple mobs together.
-12. Confirm mobs do not glue together or overlap.
-13. Allow a mob to reach combat range.
-14. Confirm it stops moving and attacks.
-15. Stand at different angles relative to the mob.
-16. Confirm the mob can attack regardless of the player's facing direction.
-17. Confirm all expected mobs spawn.
-
-Any regression should be fixed before continuing to the next feature.
-
----
-
-# 9. What We Are NOT Building Yet
-
-Do not begin the following systems during the initial Phase 2 foundation work unless a dependency makes one necessary:
-
-- full inventory system
-- equipment persistence
-- quests
-- guilds
-- trading
-- complex backend persistence
-- large-scale multiplayer synchronization
-- boss phase systems
-- complete MMORPG economy
-
-The immediate goal is a reliable gameplay foundation, not the complete MMORPG infrastructure.
-
----
-
-# Phase 2 Development Order
-
-```text
-CURRENT WORKING BASELINE
-        │
-        ▼
-1. Shared Character Locomotion
-        │
-        ▼
-2. Targeting System
-        │
-        ▼
-3. Brawler Combat State Machine
-        │
-        ▼
-4. Data-driven Brawler Attacks
-        │
-        ▼
-5. Swordsman
-        │
-        ▼
-6. Shaman
-        │
-        ▼
-7. Archer
-        │
-        ▼
-8. Mob HP / Damage / Death / Respawn
-        │
-        ▼
-9. EXP / Drops
-        │
-        ▼
-10. Skills
-        │
-        ▼
-11. Inventory / Equipment
-```
-
-## Phase 2 Completion Criteria
-
-Phase 2 is considered complete when:
-
-- Shared locomotion is reusable by all four classes.
-- Target selection and validation are centralized and reliable.
-- Brawler combat uses explicit, predictable states.
-- Brawler basic attacks are separated from future skills.
-- Swordsman, Shaman, and Archer can use the shared character foundation.
-- Mob HP, damage, death, and respawn are functional.
-- Existing Killer Clown behavior remains stable.
-- The regression test passes after major changes.
-
-**Principle:** build the foundation once, reuse it across classes, and avoid patching class-specific behavior into unrelated systems.
+The current combat milestone has been tested successfully on the target machine. Brawler combat and Killer Clown combat are stable enough to move forward into the next development phase.
