@@ -20,7 +20,7 @@ const HAVOC_EQUIPMENT_ATTACHMENT_CONFIG = Object.freeze({
   playerObjectName: 'Character',
   testItemId: 'BRAWLER_STARTER_GAUNTLETS',
   testInstanceId: 'brawler_starter_gauntlets_test',
-  activeHand: 'right',
+  activeHand: 'left',
 });
 
 function getHavocEquipmentAttachmentProfile(profileId) {
@@ -268,9 +268,13 @@ function orientHavocEquipmentAlongForearm(visualRoot, binding, bone) {
   /*
    * The gauntlet's forearm axis is now correct, but its hand-face is rotated
    * a quarter turn around that axis relative to the Brawler hand. Apply the
-   * measured 90-degree hand-roll in the gauntlet's local axis space.
+   * measured hand-roll in the gauntlet's local axis space. The mirrored left
+   * hand uses the opposite roll direction.
    */
-  handRollQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
+  const rollAngle = HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.activeHand === 'left'
+    ? Math.PI / 2
+    : -Math.PI / 2;
+  handRollQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rollAngle);
   desiredQuaternion
     .copy(alignmentQuaternion)
     .multiply(binding.baseVisualQuaternion)
@@ -321,14 +325,6 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
     bone.add(visualRoot);
   }
 
-  /*
-   * Keep the GLTF root at the RightHand bone origin. Its original visual
-   * quaternion was authored in the standalone GDevelop renderer space, so
-   * do not use it directly as the final bone-local orientation. Instead,
-   * align the gauntlet's local forearm axis with the runtime RightHand to
-   * parent-bone direction. This removes the old parent-space rotation while
-   * preserving the GLTF root's authored roll.
-   */
   visualRoot.position.set(0, 0, 0);
   visualRoot.quaternion.copy(binding.baseVisualQuaternion);
   orientHavocEquipmentAlongForearm(visualRoot, binding, bone);
