@@ -8,7 +8,7 @@ const HAVOC_EQUIPMENT_DEFINITIONS = Object.freeze({
     slot: 'hands',
     classId: 'brawler',
     displayName: 'Brawler Starter Gauntlets',
-    modelId: 'assets/equipment/brawler/basic_iron_gauntlet.glb',
+    modelId: 'assets/equipment/brawler/brawler_starter_gauntlet_v2.glb',
     modelObjectName: 'IronGauntlet',
     attachmentProfile: 'brawler_hands',
     enhancementAllowed: true,
