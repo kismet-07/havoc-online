@@ -3,7 +3,9 @@
  *
  * Equipment remains a GDevelop Model3D object. The imported GLTF visual is
  * detached from the GDevelop wrapper and parented directly to the character
- * hand bone. GDevelop continues to own the resource/object lifecycle.
+ * hand bone. The effective GDevelop wrapper transform is folded into the
+ * detached visual before parenting so the imported model does not lose its
+ * editor orientation or scale.
  */
 const HAVOC_EQUIPMENT_ATTACHMENT_PROFILES = Object.freeze({
   brawler_hands: Object.freeze({
@@ -198,9 +200,45 @@ function captureHavocEquipmentVisualTransform(visualRoot, renderer, binding) {
   if (!visualRoot || !renderer || !binding) return false;
   if (binding.baseVisualScale && binding.standaloneSize) return true;
 
+  /*
+   * The GLTF child is currently under the GDevelop Model3D renderer. Once we
+   * move that child to a character bone, it will no longer inherit the
+   * renderer's rotation/scale. Fold the renderer transform into the visual
+   * root before detaching it.
+   */
+  const rendererQuaternion = renderer.quaternion && renderer.quaternion.clone
+    ? renderer.quaternion.clone()
+    : null;
+  const rendererScale = renderer.scale && renderer.scale.clone
+    ? renderer.scale.clone()
+    : null;
+
+  const childQuaternion = visualRoot.quaternion && visualRoot.quaternion.clone
+    ? visualRoot.quaternion.clone()
+    : null;
+  const childScale = visualRoot.scale && visualRoot.scale.clone
+    ? visualRoot.scale.clone()
+    : null;
+
   binding.baseVisualPosition = visualRoot.position.clone();
-  binding.baseVisualQuaternion = visualRoot.quaternion.clone();
-  binding.baseVisualScale = visualRoot.scale.clone();
+
+  if (rendererQuaternion && childQuaternion) {
+    binding.baseVisualQuaternion = rendererQuaternion.multiply(childQuaternion);
+  } else if (childQuaternion) {
+    binding.baseVisualQuaternion = childQuaternion;
+  } else {
+    binding.baseVisualQuaternion = null;
+  }
+
+  if (rendererScale && childScale) {
+    binding.baseVisualScale = rendererScale.multiply(childScale);
+  } else if (childScale) {
+    binding.baseVisualScale = childScale;
+  } else {
+    binding.baseVisualScale = null;
+  }
+
+  if (!binding.baseVisualScale || !binding.baseVisualQuaternion) return false;
 
   if (typeof renderer.updateWorldMatrix === 'function') {
     renderer.updateWorldMatrix(true, true);
@@ -224,12 +262,8 @@ function getHavocAttachmentSegmentLength(bone) {
   const bonePosition = new THREE.Vector3();
   const parentPosition = new THREE.Vector3();
 
-  if (typeof bone.getWorldPosition === 'function') {
-    bone.getWorldPosition(bonePosition);
-  }
-  if (typeof bone.parent.getWorldPosition === 'function') {
-    bone.parent.getWorldPosition(parentPosition);
-  }
+  if (typeof bone.getWorldPosition === 'function') bone.getWorldPosition(bonePosition);
+  if (typeof bone.parent.getWorldPosition === 'function') bone.parent.getWorldPosition(parentPosition);
 
   return bonePosition.distanceTo(parentPosition);
 }
@@ -261,8 +295,6 @@ function getHavocHandCoverageLocalPosition(bone) {
   if (fingerCount === 0) return new THREE.Vector3(0, 0, 0);
 
   fingerBasesWorld.multiplyScalar(1 / fingerCount);
-
-  /* Place the gauntlet root at the palm midpoint between wrist and finger bases. */
   const palmWorld = handWorld.clone().lerp(fingerBasesWorld, 0.5);
   return bone.worldToLocal(palmWorld);
 }
@@ -302,6 +334,7 @@ function orientHavocEquipmentAlongForearm(visualRoot, binding, bone) {
     ? Math.PI / 2
     : -Math.PI / 2;
   handRollQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rollAngle);
+
   desiredQuaternion
     .copy(alignmentQuaternion)
     .multiply(binding.baseVisualQuaternion)
@@ -342,10 +375,10 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
     visualRoot = loadedChild;
     binding.visualRoot = visualRoot;
     binding.originalParent = renderer;
-    captureHavocEquipmentVisualTransform(visualRoot, renderer, binding);
+    if (!captureHavocEquipmentVisualTransform(visualRoot, renderer, binding)) return false;
   }
 
-  if (!visualRoot || !binding.baseVisualScale || !binding.standaloneSize) return false;
+  if (!visualRoot || !binding.baseVisualScale || !binding.baseVisualQuaternion || !binding.standaloneSize) return false;
 
   if (visualRoot.parent !== bone) {
     if (visualRoot.parent) visualRoot.parent.remove(visualRoot);
@@ -359,7 +392,7 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
   visualRoot.matrixAutoUpdate = true;
 
   if (typeof bone.updateWorldMatrix === 'function') {
-    bone.updateWorldMatrix(true, true, true);
+    bone.updateWorldMatrix(true, true);
   } else if (typeof bone.updateMatrixWorld === 'function') {
     bone.updateMatrixWorld(true);
   }
@@ -388,9 +421,7 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
   prepareHavocEquipmentVisual(visualRoot);
   setHavocEquipmentVisualVisibility(equipmentObject, visualRoot);
 
-  if (typeof visualRoot.updateMatrixWorld === 'function') {
-    visualRoot.updateMatrixWorld(true);
-  }
+  if (typeof visualRoot.updateMatrixWorld === 'function') visualRoot.updateMatrixWorld(true);
 
   binding.modelAttached = true;
   binding.rendererParented = true;
