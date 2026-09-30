@@ -234,6 +234,39 @@ function getHavocAttachmentSegmentLength(bone) {
   return bonePosition.distanceTo(parentPosition);
 }
 
+function getHavocHandCoverageLocalPosition(bone) {
+  if (!bone || typeof THREE === 'undefined' || !THREE.Vector3) return new THREE.Vector3(0, 0, 0);
+  if (!bone.children || typeof bone.getWorldPosition !== 'function' || typeof bone.worldToLocal !== 'function') {
+    return new THREE.Vector3(0, 0, 0);
+  }
+
+  const handWorld = new THREE.Vector3();
+  const fingerBasesWorld = new THREE.Vector3();
+  let fingerCount = 0;
+
+  bone.getWorldPosition(handWorld);
+
+  bone.children.forEach((child) => {
+    if (!child || !child.name || typeof child.getWorldPosition !== 'function') return;
+    const normalized = normalizeHavocBoneName(child.name);
+    if (!normalized.includes('hand')) return;
+    if (!/(thumb|index|middle|ring|pinky)/.test(normalized)) return;
+
+    const childWorld = new THREE.Vector3();
+    child.getWorldPosition(childWorld);
+    fingerBasesWorld.add(childWorld);
+    fingerCount += 1;
+  });
+
+  if (fingerCount === 0) return new THREE.Vector3(0, 0, 0);
+
+  fingerBasesWorld.multiplyScalar(1 / fingerCount);
+
+  /* Place the gauntlet root at the palm midpoint between wrist and finger bases. */
+  const palmWorld = handWorld.clone().lerp(fingerBasesWorld, 0.5);
+  return bone.worldToLocal(palmWorld);
+}
+
 function orientHavocEquipmentAlongForearm(visualRoot, binding, bone) {
   if (!visualRoot || !binding || !binding.baseVisualQuaternion || !bone || !bone.parent) return false;
   if (typeof THREE === 'undefined' || !THREE.Vector3 || !THREE.Quaternion) return false;
@@ -265,12 +298,6 @@ function orientHavocEquipmentAlongForearm(visualRoot, binding, bone) {
   baseAxisLocal.applyQuaternion(binding.baseVisualQuaternion).normalize();
   alignmentQuaternion.setFromUnitVectors(baseAxisLocal, forearmDirectionLocal);
 
-  /*
-   * The gauntlet's forearm axis is now correct, but its hand-face is rotated
-   * a quarter turn around that axis relative to the Brawler hand. Apply the
-   * measured hand-roll in the gauntlet's local axis space. The mirrored left
-   * hand uses the opposite roll direction.
-   */
   const rollAngle = HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.activeHand === 'left'
     ? Math.PI / 2
     : -Math.PI / 2;
@@ -325,7 +352,7 @@ function attachHavocEquipmentVisualToBone(equipmentObject, binding, bone) {
     bone.add(visualRoot);
   }
 
-  visualRoot.position.set(0, 0, 0);
+  visualRoot.position.copy(getHavocHandCoverageLocalPosition(bone));
   visualRoot.quaternion.copy(binding.baseVisualQuaternion);
   orientHavocEquipmentAlongForearm(visualRoot, binding, bone);
   visualRoot.scale.copy(binding.baseVisualScale);
