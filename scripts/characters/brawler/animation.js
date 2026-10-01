@@ -31,12 +31,11 @@ function setBrawlerAnimation(player, animationName, options) {
 function setBrawlerIdlePose(player) {
   if (!player) return;
 
-  const idleAnimation = BRAWLER_CONFIG.animations.idle;
+  // The current GLB has no dedicated idle animation. Keep the walk clip selected
+  // but freeze it at its first frame so standing still is a true static state.
+  const idleAnimation = BRAWLER_CONFIG.animations.walk;
 
-  // The current MainChar does not have a dedicated idle clip. Use the first
-  // frame of the walk clip as the static idle pose instead of assigning a
-  // continuously playing locomotion animation.
-  if (idleAnimation && player.getAnimationName() !== idleAnimation) {
+  if (player.getAnimationName() !== idleAnimation) {
     player.setAnimationName(idleAnimation);
   }
 
