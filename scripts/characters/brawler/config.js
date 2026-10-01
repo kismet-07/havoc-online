@@ -6,7 +6,7 @@
  */
 
 const BRAWLER_CONFIG = {
-  objectName: 'Character',
+  objectName: 'MainChar',
   movement: {
     walkSpeed: 300,
     runSpeed: 600,
@@ -21,9 +21,9 @@ const BRAWLER_CONFIG = {
     },
   },
   animations: {
-    idle: 'Idle',
-    walk: 'Walk',
-    run: 'Run',
+    idle: 'Brawler_Idle',
+    walk: 'Brawler_Walk',
+    run: 'Brawler_Run',
     attack1: 'Attack1',
     attack2: 'Attack2',
   },
