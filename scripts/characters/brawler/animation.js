@@ -20,9 +20,6 @@ function setBrawlerAnimation(player, animationName, options) {
     player.hasAnimationEnded() &&
     typeof player.setAnimationElapsedTime === 'function'
   ) {
-    // The current Brawler GLB exposes locomotion clips as non-looping in the
-    // GDevelop object definition. Replay them here so locomotion remains
-    // continuous while the character is actually moving.
     player.setAnimationElapsedTime(0);
   }
 
@@ -34,18 +31,21 @@ function setBrawlerAnimation(player, animationName, options) {
 function setBrawlerIdlePose(player) {
   if (!player) return;
 
-  // There is no dedicated idle clip yet. Keep the character visually static
-  // instead of incorrectly playing the Walk clip while standing still.
   const idleAnimation = BRAWLER_CONFIG.animations.idle;
+
+  // The current MainChar does not have a dedicated idle clip. Use the first
+  // frame of the walk clip as the static idle pose instead of assigning a
+  // continuously playing locomotion animation.
   if (idleAnimation && player.getAnimationName() !== idleAnimation) {
     player.setAnimationName(idleAnimation);
-    if (typeof player.setAnimationElapsedTime === 'function') {
-      player.setAnimationElapsedTime(0);
-    }
   }
 
   if (typeof player.setAnimationSpeedScale === 'function') {
     player.setAnimationSpeedScale(0);
+  }
+
+  if (typeof player.setAnimationElapsedTime === 'function') {
+    player.setAnimationElapsedTime(0);
   }
 }
 
