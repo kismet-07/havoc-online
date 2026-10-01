@@ -1,10 +1,11 @@
 /*
  * +100 Supernova presentation layer.
  *
- * The reference is a thick, volumetric MMORPG enhancement aura, not a thin
- * outline and not a ribbon/trail effect. This layer intentionally builds the
- * effect from additive radial sprites, a saturated white core, dense sparks,
- * and colored energy clouds around the existing gauntlet bounds.
+ * The effect is intentionally compact around the gauntlet. It uses a thick
+ * volumetric MMORPG-style aura made from overlapping additive radial sprites,
+ * a saturated white core, dense sparks, and colored energy clouds. It must
+ * read as energy surrounding the equipment, not as a large world-space
+ * explosion.
  */
 const HAVOC_PLUS100_SUPERNOVA_CONFIG = Object.freeze({
   cloudCount: 78,
@@ -72,12 +73,14 @@ function createHavocPlus100SupernovaVfx(renderer) {
   const center = group.userData.baseCenter;
   const size = group.userData.baseSize;
   const extent = Math.max(size.x, size.y, size.z);
-  const radialX = Math.max(size.x, size.z) * 0.95;
-  const radialZ = Math.max(size.x, size.z) * 0.95;
-  const vertical = Math.max(size.y * 0.72, extent * 0.58);
 
-  // Saturated central energy mass. These are deliberately large and overlap
-  // heavily so the result reads as a glowing volume rather than an outline.
+  // Keep the entire energy mass tightly wrapped around the gauntlet.
+  const radialX = Math.max(size.x, size.z) * 0.34;
+  const radialZ = Math.max(size.x, size.z) * 0.34;
+  const vertical = Math.max(size.y * 0.46, extent * 0.38);
+
+  // Saturated central energy mass. These overlap heavily so the result reads
+  // as a bright compact volume instead of a large radial explosion.
   for (let i = 0; i < HAVOC_PLUS100_SUPERNOVA_CONFIG.coreCount; i += 1) {
     const material = new THREE.SpriteMaterial({
       map: texture,
@@ -89,10 +92,10 @@ function createHavocPlus100SupernovaVfx(renderer) {
       depthTest: false,
     });
     const sprite = new THREE.Sprite(material);
-    const scale = extent * (0.48 + Math.random() * 0.42);
+    const scale = extent * (0.34 + Math.random() * 0.28);
     sprite.position.set(
       center.x + (Math.random() - 0.5) * radialX * 0.70,
-      center.y + (Math.random() - 0.5) * vertical * 0.82,
+      center.y + (Math.random() - 0.5) * vertical * 0.70,
       center.z + (Math.random() - 0.5) * radialZ * 0.70,
     );
     sprite.scale.set(scale, scale * (1.05 + Math.random() * 0.45), 1);
@@ -108,8 +111,7 @@ function createHavocPlus100SupernovaVfx(renderer) {
     group.add(sprite);
   }
 
-  // Thick colored cloud. Randomized 3D placement produces the compact,
-  // chaotic aura seen in the reference without creating circular paths.
+  // Compact colored cloud. Keep the sprites close to the gauntlet.
   for (let i = 0; i < HAVOC_PLUS100_SUPERNOVA_CONFIG.cloudCount; i += 1) {
     const color = HAVOC_PLUS100_SUPERNOVA_CONFIG.colors[i % 6];
     const material = new THREE.SpriteMaterial({
@@ -122,8 +124,8 @@ function createHavocPlus100SupernovaVfx(renderer) {
       depthTest: false,
     });
     const sprite = new THREE.Sprite(material);
-    const edge = 0.58 + Math.random() * 0.76;
-    const scale = extent * (0.28 + Math.random() * 0.48) * edge;
+    const edge = 0.22 + Math.random() * 0.34;
+    const scale = extent * (0.16 + Math.random() * 0.24) * (0.88 + edge * 0.40);
     sprite.position.set(
       center.x + (Math.random() * 2 - 1) * radialX * edge,
       center.y + (Math.random() * 2 - 1) * vertical * edge,
@@ -137,15 +139,16 @@ function createHavocPlus100SupernovaVfx(renderer) {
       baseScale: scale,
       phase: Math.random() * Math.PI * 2,
       speed: 0.25 + Math.random() * 0.65,
-      driftX: (Math.random() - 0.5) * extent * 0.10,
-      driftY: (Math.random() - 0.5) * extent * 0.12,
-      driftZ: (Math.random() - 0.5) * extent * 0.10,
+      driftX: (Math.random() - 0.5) * extent * 0.035,
+      driftY: (Math.random() - 0.5) * extent * 0.045,
+      driftZ: (Math.random() - 0.5) * extent * 0.035,
       baseOpacity: material.opacity,
     };
     group.add(sprite);
   }
 
-  // Compact explosive sparks. No persistent streak geometry is used.
+  // Compact explosive sparks. They remain close to the gauntlet instead of
+  // forming a large particle field around the character.
   for (let i = 0; i < HAVOC_PLUS100_SUPERNOVA_CONFIG.sparkCount; i += 1) {
     const color = HAVOC_PLUS100_SUPERNOVA_CONFIG.colors[i % 6];
     const material = new THREE.SpriteMaterial({
@@ -159,11 +162,11 @@ function createHavocPlus100SupernovaVfx(renderer) {
     });
     const sprite = new THREE.Sprite(material);
     const angle = Math.random() * Math.PI * 2;
-    const radius = Math.max(size.x, size.z) * (0.72 + Math.random() * 1.35);
-    const sparkSize = extent * (0.035 + Math.random() * 0.075);
+    const radius = Math.max(size.x, size.z) * (0.34 + Math.random() * 0.52);
+    const sparkSize = extent * (0.018 + Math.random() * 0.045);
     sprite.position.set(
       center.x + Math.cos(angle) * radius,
-      center.y + (Math.random() - 0.5) * size.y * 1.85,
+      center.y + (Math.random() - 0.5) * size.y * 0.95,
       center.z + Math.sin(angle) * radius,
     );
     sprite.scale.setScalar(sparkSize);
@@ -180,13 +183,13 @@ function createHavocPlus100SupernovaVfx(renderer) {
   }
 
   if (typeof THREE.PointLight === 'function') {
-    const white = new THREE.PointLight(0xffffff, 16, Math.max(8, extent * 8), 1.25);
+    const white = new THREE.PointLight(0xffffff, 16, Math.max(8, extent * 5), 1.25);
     white.name = 'HavocPlus100WhiteLight';
     white.position.copy(center);
     white.userData = { havocPlus100Supernova: true, kind: 'light', baseIntensity: 16 };
     group.add(white);
 
-    const magenta = new THREE.PointLight(0xff3bc7, 8, Math.max(10, extent * 10), 1.45);
+    const magenta = new THREE.PointLight(0xff3bc7, 8, Math.max(10, extent * 6), 1.45);
     magenta.name = 'HavocPlus100ColorLight';
     magenta.position.copy(center);
     magenta.userData = { havocPlus100Supernova: true, kind: 'light', baseIntensity: 8 };
