@@ -233,7 +233,7 @@
           "width": 124,
           "x": 3776,
           "y": 2048,
-          "z": 32,
+          "z": 25,
           "zOrder": 0,
           "numberProperties": [],
           "stringProperties": [],
@@ -342,9 +342,9 @@
           "name": "MainChar",
           "persistentUuid": "518c685b-4557-4413-a454-aaed1352d4db",
           "width": 61.643800769972145,
-          "x": 3808,
+          "x": 3776,
           "y": 2144,
-          "z": 32,
+          "z": 22,
           "zOrder": 0,
           "numberProperties": [],
           "stringProperties": [],
@@ -352,68 +352,6 @@
         }
       ],
       "objects": [
-        {
-          "assetStoreId": "",
-          "name": "Character",
-          "persistentUuid": "2addcba0-74ef-4371-9904-c0072bd97df4",
-          "type": "Scene3D::Model3DObject",
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "content": {
-            "centerLocation": "CenteredOnZ",
-            "crossfadeDuration": 0.10000000149011612,
-            "depth": 500,
-            "height": 500,
-            "isCastingShadow": true,
-            "isReceivingShadow": true,
-            "keepAspectRatio": true,
-            "materialType": "StandardWithoutMetalness",
-            "modelResourceName": "Brawler_inplace.glb",
-            "originLocation": "ModelOrigin",
-            "rotationX": 90,
-            "rotationY": 0,
-            "rotationZ": 90,
-            "width": 500,
-            "animations": [
-              {
-                "loop": true,
-                "name": "Idle",
-                "source": "idle.001"
-              },
-              {
-                "loop": true,
-                "name": "Run",
-                "source": "run.001"
-              },
-              {
-                "loop": false,
-                "name": "Attack1",
-                "source": "box_01.001"
-              },
-              {
-                "loop": false,
-                "name": "Baseball_punch_skill1",
-                "source": "pitch_baseball.001"
-              },
-              {
-                "loop": false,
-                "name": "Attack2",
-                "source": "box_03.001"
-              },
-              {
-                "loop": false,
-                "name": "Front_kick_skill2",
-                "source": "front_kick_02.001"
-              },
-              {
-                "loop": true,
-                "name": "Walk",
-                "source": "walk.001"
-              }
-            ]
-          }
-        },
         {
           "assetStoreId": "98e0b1ab2f5ff43f9a23361fe0b6dca0fbbe4ed6c6b513eac053b82b76721d67",
           "name": "Floor",
@@ -755,9 +693,6 @@
       "objectsFolderStructure": {
         "folderName": "__ROOT",
         "children": [
-          {
-            "objectName": "Character"
-          },
           {
             "objectName": "Floor"
           },
