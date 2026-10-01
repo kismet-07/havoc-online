@@ -25,9 +25,6 @@ function updateBrawlerMovement(runtimeScene, dt) {
   const mobileInput = initializeHavocMobileInput(runtimeScene);
   const combatState = initializeBrawlerCombat(runtimeScene);
 
-  // Manual movement cancels automatic combat before movement is evaluated.
-  // This makes WASD behave the same way as the mobile joystick: the player
-  // immediately regains control and can run away from the target.
   const manualKeyboardMovement =
     input.isKeyPressed(runtimeScene, 'a') ||
     input.isKeyPressed(runtimeScene, 'd') ||
@@ -101,17 +98,24 @@ function updateBrawlerMovement(runtimeScene, dt) {
       const length = Math.sqrt(moveX * moveX + moveY * moveY);
       moveX /= length;
       moveY /= length;
-      const speed = running ? BRAWLER_CONFIG.movement.runSpeed : BRAWLER_CONFIG.movement.walkSpeed;
+
+      const speed = running
+        ? BRAWLER_CONFIG.movement.runSpeed
+        : BRAWLER_CONFIG.movement.walkSpeed;
+
       movement.x += moveX * speed * dt;
       movement.y += moveY * speed * dt;
+
       const targetAngle = Math.atan2(moveY, moveX) * 180 / Math.PI;
       player.setAngle(targetAngle);
-      setBrawlerAnimation(
-        player,
-        running ? BRAWLER_CONFIG.animations.run : BRAWLER_CONFIG.animations.walk,
-      );
-    } else if (!combatLocked && player.getAnimationName() !== BRAWLER_CONFIG.animations.idle) {
-      setBrawlerAnimation(player, BRAWLER_CONFIG.animations.idle);
+
+      const movementAnimation = running
+        ? BRAWLER_CONFIG.animations.run
+        : BRAWLER_CONFIG.animations.walk;
+
+      setBrawlerAnimation(player, movementAnimation, { speedScale: 1 });
+    } else if (!combatLocked) {
+      setBrawlerIdlePose(player);
     }
 
     player.setPosition(movement.x, movement.y);
@@ -122,10 +126,13 @@ function updateBrawlerMovement(runtimeScene, dt) {
     const cameraX = movement.x + Math.sin(yawRadians) * horizontalDistance;
     const cameraY = movement.y - Math.cos(yawRadians) * horizontalDistance;
     const cameraZ = player.getZ() + Math.sin(pitchRadians) * camera.distance;
+
     layer.setCameraX(cameraX);
     layer.setCameraY(cameraY);
     gdjs.scene3d.camera.setCameraZ(runtimeScene, cameraZ, '', 0);
+
     const targetZ = player.getZ() + 120;
+
     gdjs.scene3d.camera.turnCameraTowardPosition(
       runtimeScene,
       movement.x,

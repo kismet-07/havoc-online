@@ -6,14 +6,12 @@
  */
 
 const BRAWLER_CONFIG = {
-  objectName: 'Character',
+  objectName: 'MainChar',
   movement: {
     walkSpeed: 300,
     runSpeed: 600,
   },
   combat: {
-    // 3D model centers can remain visually separated even when the character
-    // and mob are already in melee contact because their model bounds are large.
     attackRange: 450,
     animationSpeed: {
       Attack1: 1.35,
@@ -21,10 +19,10 @@ const BRAWLER_CONFIG = {
     },
   },
   animations: {
-    idle: 'Idle',
-    walk: 'Walk',
-    run: 'Run',
-    attack1: 'Attack1',
-    attack2: 'Attack2',
+    idle: 'Brawler_Idle',
+    walk: 'Brawler_Walk',
+    run: 'Brawler_Run',
+    attack1: 'Brawler_Smash',
+    attack2: 'Brawler_Punching',
   },
 };

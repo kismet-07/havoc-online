@@ -29,14 +29,11 @@ function createHavocEquipmentInstance(itemId, enhancementLevel = 0) {
     : 0;
 
   return {
-    instanceId: null,
     itemId,
+    instanceId: `${definition.id}-${Date.now()}`,
     slot: definition.slot,
     classId: definition.classId,
-    attachmentProfile: definition.attachmentProfile,
     modelId: definition.modelId,
-    modelObjectName: definition.modelObjectName,
-    enhancementAllowed: definition.enhancementAllowed,
     enhancementLevel: level,
   };
 }
