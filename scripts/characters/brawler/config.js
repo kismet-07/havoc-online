@@ -12,8 +12,6 @@ const BRAWLER_CONFIG = {
     runSpeed: 600,
   },
   combat: {
-    // 3D model centers can remain visually separated even when the character
-    // and mob are already in melee contact because their model bounds are large.
     attackRange: 450,
     animationSpeed: {
       Attack1: 1.35,
@@ -21,12 +19,10 @@ const BRAWLER_CONFIG = {
     },
   },
   animations: {
-    // No dedicated idle clip exists in the current Brawler GLB.
-    // Empty idle name means movement code will hold the first walk frame.
-    idle: '',
+    idle: 'Brawler_Idle',
     walk: 'Brawler_Walk',
     run: 'Brawler_Run',
-    attack1: 'Attack1',
-    attack2: 'Attack2',
+    attack1: 'Brawler_Smash',
+    attack2: 'Brawler_Punching',
   },
 };
