@@ -1,0 +1,51 @@
+name: Sync Brawler Inline Runtime
+
+on:
+  push:
+    branches:
+      - feature/brawler-gauntlet-new-model
+    paths:
+      - 'scripts/equipment/equipment-attachment.js'
+      - 'scripts/equipment/equipment-data.js'
+      - 'scripts/equipment/equipment-manager.js'
+      - 'scripts/equipment/equipment-slots.js'
+      - 'scripts/characters/brawler/**'
+      - 'scripts/enhancement/**'
+      - 'scripts/input/mobile-controller.js'
+      - 'scripts/combat/target-system.js'
+      - 'tools/sync_brawler_inline.py'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Regenerate GDevelop inline runtime
+        run: python tools/sync_brawler_inline.py
+
+      - name: Remove local sync backup
+        run: rm -f 'Havoc Online.json.before-brawler-inline-sync.bak'
+
+      - name: Commit generated project JSON
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'Havoc Online.json'
+          if git diff --cached --quiet; then
+            echo 'No generated project changes to commit.'
+            exit 0
+          fi
+          git commit -m 'chore(equipment): sync Brawler gauntlet runtime into GDevelop project'
+          git push origin HEAD:feature/brawler-gauntlet-new-model
