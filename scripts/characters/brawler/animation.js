@@ -7,8 +7,23 @@
 
 function setBrawlerAnimation(player, animationName, options) {
   if (!player || !animationName) return;
+
   if (player.getAnimationName() !== animationName) {
     player.setAnimationName(animationName);
+    if (typeof player.setAnimationElapsedTime === 'function') {
+      player.setAnimationElapsedTime(0);
+    }
+  } else if (
+    (animationName === BRAWLER_CONFIG.animations.walk ||
+     animationName === BRAWLER_CONFIG.animations.run) &&
+    typeof player.hasAnimationEnded === 'function' &&
+    player.hasAnimationEnded() &&
+    typeof player.setAnimationElapsedTime === 'function'
+  ) {
+    // The current Brawler GLB exposes locomotion clips as non-looping in the
+    // GDevelop object definition. Replay them here so locomotion remains
+    // continuous without modifying the imported GLB.
+    player.setAnimationElapsedTime(0);
   }
 
   if (options && typeof options.speedScale === 'number' && typeof player.setAnimationSpeedScale === 'function') {
