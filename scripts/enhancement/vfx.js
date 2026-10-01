@@ -1,10 +1,10 @@
 /**
  * Enhancement presentation runtime.
  *
- * +10 uses a dense MMORPG-style enhancement aura inspired by the heavy glow
- * used by classic online RPG equipment upgrades. The effect is built from
- * layered local shells and compact energy sparks. It intentionally avoids
- * spiral/curling ribbons and long magical trails.
+ * +100 uses an extreme MMORPG enhancement aura: a white-hot core surrounded
+ * by thick magenta, violet, blue, orange and gold energy, dense sparks, and
+ * compact explosive particles. It intentionally avoids ribbons, spirals,
+ * curling lines, and long trails.
  *
  * Everything is renderer-local. The equipment mesh, attachment transform,
  * and skeleton are never modified by the enhancement presentation.
@@ -13,7 +13,7 @@ const HAVOC_PLUS10_VFX_CONFIG = Object.freeze({
   itemObjectName: 'IronGauntlet',
   groupName: 'HavocPlus10VFX',
   coreColor: 0xffff9b22,
-  hotColor: 0xfffff4df,
+  hotColor: 0xffffffff,
   colors: Object.freeze([
     0xffff351d,
     0xffff7a18,
@@ -22,11 +22,11 @@ const HAVOC_PLUS10_VFX_CONFIG = Object.freeze({
     0xff8c35ff,
     0xff219cff,
   ]),
-  pulseSpeed: 5.2,
-  particleCount: 160,
-  particleSize: 0.095,
-  sparkCount: 72,
-  sparkSize: 0.052,
+  pulseSpeed: 4.6,
+  particleCount: 260,
+  particleSize: 0.12,
+  sparkCount: 120,
+  sparkSize: 0.065,
 });
 
 function getHavocPlus10RelativeMatrix(renderer, node) {
@@ -110,46 +110,7 @@ function addHavocPlus10ShellLayer(renderer, group, scaleFactor, opacity, color, 
   });
 }
 
-function addHavocPlus10Edges(renderer, group) {
-  if (!renderer || !group || typeof THREE === 'undefined') return;
-  if (typeof THREE.EdgesGeometry !== 'function' ||
-      typeof THREE.LineBasicMaterial !== 'function' ||
-      typeof THREE.LineSegments !== 'function') return;
-
-  getHavocPlus10SourceMeshes(renderer).forEach((node) => {
-    const relativeMatrix = getHavocPlus10RelativeMatrix(renderer, node);
-    if (!relativeMatrix) return;
-
-    const position = new THREE.Vector3();
-    const quaternion = new THREE.Quaternion();
-    const scale = new THREE.Vector3();
-    relativeMatrix.decompose(position, quaternion, scale);
-
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(node.geometry, 18),
-      new THREE.LineBasicMaterial({
-        color: HAVOC_PLUS10_VFX_CONFIG.hotColor,
-        transparent: true,
-        opacity: 0.62,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        depthTest: true,
-      }),
-    );
-
-    edges.name = 'HavocPlus10Edges';
-    edges.userData = edges.userData || {};
-    edges.userData.havocPlus10Vfx = true;
-    edges.userData.baseOpacity = 0.62;
-    edges.position.copy(position);
-    edges.quaternion.copy(quaternion);
-    edges.scale.copy(scale).multiplyScalar(1.022);
-    edges.renderOrder = 30;
-    group.add(edges);
-  });
-}
-
-function addHavocPlus10Particles(group, bounds, count, size, color, name, verticalSpread, radialScale) {
+function addHavocPlus10Particles(group, bounds, count, size, color, name, verticalSpread, radialScale, opacity) {
   if (!group || !bounds || typeof THREE === 'undefined') return;
   if (typeof THREE.BufferGeometry !== 'function' ||
       typeof THREE.Float32BufferAttribute !== 'function' ||
@@ -166,7 +127,7 @@ function addHavocPlus10Particles(group, bounds, count, size, color, name, vertic
 
   for (let i = 0; i < count; i += 1) {
     const angle = Math.random() * Math.PI * 2;
-    const radius = 0.72 + Math.random() * 0.58;
+    const radius = 0.62 + Math.random() * 0.70;
     const y = (Math.random() - 0.5) * boundsSize.y * verticalSpread;
 
     positions.push(
@@ -175,7 +136,7 @@ function addHavocPlus10Particles(group, bounds, count, size, color, name, vertic
       center.z + Math.sin(angle) * radialBase * radius,
     );
     phases.push(Math.random() * Math.PI * 2);
-    speeds.push(0.18 + Math.random() * 0.52);
+    speeds.push(0.15 + Math.random() * 0.70);
     radii.push(radius);
   }
 
@@ -186,7 +147,7 @@ function addHavocPlus10Particles(group, bounds, count, size, color, name, vertic
     color,
     size,
     transparent: true,
-    opacity: 0.9,
+    opacity: opacity === undefined ? 0.9 : opacity,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     depthTest: true,
@@ -203,6 +164,7 @@ function addHavocPlus10Particles(group, bounds, count, size, color, name, vertic
   particles.userData.phases = phases;
   particles.userData.speeds = speeds;
   particles.userData.radii = radii;
+  particles.userData.baseOpacity = opacity === undefined ? 0.9 : opacity;
   particles.renderOrder = 40;
   group.add(particles);
 }
@@ -219,49 +181,84 @@ function createHavocPlus10Vfx(renderer) {
   group.userData.havocPlus10Vfx = true;
   group.userData.elapsed = 0;
 
-  // Bright inner bloom-like shell.
-  addHavocPlus10ShellLayer(renderer, group, 1.022, 0.24, HAVOC_PLUS10_VFX_CONFIG.hotColor, 'HavocPlus10Shell');
+  // White-hot core. These close shells create the saturated center seen in
+  // the reference instead of a thin outline around the equipment.
+  addHavocPlus10ShellLayer(renderer, group, 1.012, 0.40, HAVOC_PLUS10_VFX_CONFIG.hotColor, 'HavocPlus10CoreWhite');
+  addHavocPlus10ShellLayer(renderer, group, 1.028, 0.31, HAVOC_PLUS10_VFX_CONFIG.hotColor, 'HavocPlus10CoreWhiteWide');
 
-  // Thick additive aura. Multiple shells create a broad glow instead of curls.
-  addHavocPlus10ShellLayer(renderer, group, 1.055, 0.20, HAVOC_PLUS10_VFX_CONFIG.coreColor, 'HavocPlus10AuraGold');
-  addHavocPlus10ShellLayer(renderer, group, 1.10, 0.15, HAVOC_PLUS10_VFX_CONFIG.colors[2], 'HavocPlus10AuraGoldWide');
-  addHavocPlus10ShellLayer(renderer, group, 1.16, 0.115, HAVOC_PLUS10_VFX_CONFIG.colors[3], 'HavocPlus10AuraMagenta');
-  addHavocPlus10ShellLayer(renderer, group, 1.23, 0.085, HAVOC_PLUS10_VFX_CONFIG.colors[0], 'HavocPlus10AuraRed');
-  addHavocPlus10ShellLayer(renderer, group, 1.31, 0.060, HAVOC_PLUS10_VFX_CONFIG.colors[4], 'HavocPlus10AuraPurple');
+  // Thick colored aura layers. They remain compact and volumetric, with no
+  // geometry that can form curling lines or ribbons.
+  addHavocPlus10ShellLayer(renderer, group, 1.055, 0.30, HAVOC_PLUS10_VFX_CONFIG.coreColor, 'HavocPlus10AuraGold');
+  addHavocPlus10ShellLayer(renderer, group, 1.095, 0.27, HAVOC_PLUS10_VFX_CONFIG.colors[2], 'HavocPlus10AuraGoldWide');
+  addHavocPlus10ShellLayer(renderer, group, 1.145, 0.235, HAVOC_PLUS10_VFX_CONFIG.colors[3], 'HavocPlus10AuraMagenta');
+  addHavocPlus10ShellLayer(renderer, group, 1.205, 0.19, HAVOC_PLUS10_VFX_CONFIG.colors[4], 'HavocPlus10AuraPurple');
+  addHavocPlus10ShellLayer(renderer, group, 1.275, 0.16, HAVOC_PLUS10_VFX_CONFIG.colors[5], 'HavocPlus10AuraBlue');
+  addHavocPlus10ShellLayer(renderer, group, 1.355, 0.115, HAVOC_PLUS10_VFX_CONFIG.colors[0], 'HavocPlus10AuraRed');
 
-  addHavocPlus10Edges(renderer, group);
-
-  // Dense compact particles provide the explosive enhancement feel without ribbons.
+  // Dense multi-color sparks. The reference has a storm of compact points,
+  // not continuous trails.
   addHavocPlus10Particles(
-    group,
-    bounds,
+    group, bounds,
     HAVOC_PLUS10_VFX_CONFIG.particleCount,
     HAVOC_PLUS10_VFX_CONFIG.particleSize,
     HAVOC_PLUS10_VFX_CONFIG.hotColor,
-    'HavocPlus10Particles',
-    1.35,
-    0.72,
+    'HavocPlus10ParticlesWhite',
+    1.55, 0.78, 0.88,
   );
 
   addHavocPlus10Particles(
-    group,
-    bounds,
+    group, bounds,
+    Math.floor(HAVOC_PLUS10_VFX_CONFIG.particleCount * 0.72),
+    HAVOC_PLUS10_VFX_CONFIG.particleSize * 0.92,
+    HAVOC_PLUS10_VFX_CONFIG.colors[3],
+    'HavocPlus10ParticlesMagenta',
+    1.70, 0.98, 0.74,
+  );
+
+  addHavocPlus10Particles(
+    group, bounds,
+    Math.floor(HAVOC_PLUS10_VFX_CONFIG.particleCount * 0.60),
+    HAVOC_PLUS10_VFX_CONFIG.particleSize * 0.82,
+    HAVOC_PLUS10_VFX_CONFIG.colors[5],
+    'HavocPlus10ParticlesBlue',
+    1.85, 1.08, 0.68,
+  );
+
+  addHavocPlus10Particles(
+    group, bounds,
     HAVOC_PLUS10_VFX_CONFIG.sparkCount,
     HAVOC_PLUS10_VFX_CONFIG.sparkSize,
-    HAVOC_PLUS10_VFX_CONFIG.colors[5],
-    'HavocPlus10Sparks',
-    1.65,
-    0.90,
+    HAVOC_PLUS10_VFX_CONFIG.colors[1],
+    'HavocPlus10SparksOrange',
+    1.95, 1.18, 0.92,
+  );
+
+  addHavocPlus10Particles(
+    group, bounds,
+    Math.floor(HAVOC_PLUS10_VFX_CONFIG.sparkCount * 0.65),
+    HAVOC_PLUS10_VFX_CONFIG.sparkSize * 0.86,
+    HAVOC_PLUS10_VFX_CONFIG.colors[2],
+    'HavocPlus10SparksGold',
+    2.05, 1.28, 0.86,
   );
 
   if (typeof THREE.PointLight === 'function') {
-    const radius = Math.max(3.4, bounds.getSize(new THREE.Vector3()).length() * 2.1);
-    const light = new THREE.PointLight(HAVOC_PLUS10_VFX_CONFIG.coreColor, 4.8, radius, 1.8);
-    light.name = 'HavocPlus10Light';
-    light.userData = light.userData || {};
-    light.userData.havocPlus10Vfx = true;
-    light.position.copy(bounds.getCenter(new THREE.Vector3()));
-    group.add(light);
+    const center = bounds.getCenter(new THREE.Vector3());
+    const radius = Math.max(4.8, bounds.getSize(new THREE.Vector3()).length() * 3.0);
+
+    const whiteLight = new THREE.PointLight(0xffffff, 8.5, radius, 1.55);
+    whiteLight.name = 'HavocPlus10LightWhite';
+    whiteLight.userData = whiteLight.userData || {};
+    whiteLight.userData.havocPlus10Vfx = true;
+    whiteLight.position.copy(center);
+    group.add(whiteLight);
+
+    const colorLight = new THREE.PointLight(HAVOC_PLUS10_VFX_CONFIG.colors[3], 4.2, radius * 1.25, 1.65);
+    colorLight.name = 'HavocPlus10LightColor';
+    colorLight.userData = colorLight.userData || {};
+    colorLight.userData.havocPlus10Vfx = true;
+    colorLight.position.copy(center);
+    group.add(colorLight);
   }
 
   renderer.add(group);
@@ -286,22 +283,23 @@ function updateHavocPlus10Particles(particles, elapsed, pulse) {
     const speed = speeds[i] || 0.2;
     const radius = radii[i] || 0.85;
     const travel = (elapsed * speed + phase / (Math.PI * 2)) % 1;
-    const angle = phase + elapsed * (0.55 + speed * 0.85);
+    const angle = phase + elapsed * (0.45 + speed * 0.70);
 
     position.setXYZ(
       i,
       center.x + Math.cos(angle) * radiusBase * radius,
-      center.y + (travel - 0.5) * size.y * 1.22,
+      center.y + (travel - 0.5) * size.y * 1.30,
       center.z + Math.sin(angle) * radiusBase * radius,
     );
   }
 
   position.needsUpdate = true;
   if (particles.material) {
-    particles.material.opacity = 0.58 + pulse * 0.40;
-    particles.material.size = particles.name === 'HavocPlus10Sparks'
-      ? HAVOC_PLUS10_VFX_CONFIG.sparkSize * (0.9 + pulse * 0.95)
-      : HAVOC_PLUS10_VFX_CONFIG.particleSize * (0.92 + pulse * 0.68);
+    const baseOpacity = Number(particles.userData.baseOpacity) || 0.8;
+    particles.material.opacity = baseOpacity * (0.72 + pulse * 0.52);
+    particles.material.size = particles.name.indexOf('Sparks') === 0
+      ? HAVOC_PLUS10_VFX_CONFIG.sparkSize * (0.88 + pulse * 1.10)
+      : HAVOC_PLUS10_VFX_CONFIG.particleSize * (0.90 + pulse * 0.72);
   }
 }
 
@@ -312,31 +310,33 @@ function updateHavocPlus10Vfx(group, dt) {
   group.userData.elapsed = (group.userData.elapsed || 0) + delta;
   const elapsed = group.userData.elapsed;
   const pulse = 0.5 + 0.5 * Math.sin(elapsed * HAVOC_PLUS10_VFX_CONFIG.pulseSpeed);
-  const flash = 0.5 + 0.5 * Math.sin(elapsed * 11.5 + 0.4);
+  const flash = 0.5 + 0.5 * Math.sin(elapsed * 13.5 + 0.4);
 
   group.children.forEach((child) => {
     if (!child) return;
 
-    if (child.userData && child.userData.havocPlus10Vfx && child.material && child.name.indexOf('HavocPlus10Aura') === 0) {
+    if (child.userData && child.userData.havocPlus10Vfx && child.material &&
+        child.name.indexOf('HavocPlus10Aura') === 0) {
       const base = Number(child.userData.baseOpacity) || 0.03;
-      child.material.opacity = base * (0.82 + pulse * 1.45 + flash * 0.28);
+      child.material.opacity = base * (0.74 + pulse * 1.55 + flash * 0.38);
     }
 
-    if (child.name === 'HavocPlus10Shell' && child.material) {
+    if (child.name.indexOf('HavocPlus10CoreWhite') === 0 && child.material) {
       const base = Number(child.userData && child.userData.baseOpacity) || 0.10;
-      child.material.opacity = base * (0.90 + pulse * 1.05 + flash * 0.25);
+      child.material.opacity = base * (0.78 + pulse * 1.25 + flash * 0.35);
     }
 
-    if (child.name === 'HavocPlus10Edges' && child.material) {
-      child.material.opacity = 0.48 + pulse * 0.42 + flash * 0.12;
-    }
-
-    if (child.name === 'HavocPlus10Particles' || child.name === 'HavocPlus10Sparks') {
+    if (child.name.indexOf('HavocPlus10Particles') === 0 ||
+        child.name.indexOf('HavocPlus10Sparks') === 0) {
       updateHavocPlus10Particles(child, elapsed, pulse);
     }
 
-    if (child.name === 'HavocPlus10Light' && child.isLight) {
-      child.intensity = 3.8 + pulse * 4.4 + flash * 1.8;
+    if (child.name === 'HavocPlus10LightWhite' && child.isLight) {
+      child.intensity = 6.0 + pulse * 7.5 + flash * 2.8;
+    }
+
+    if (child.name === 'HavocPlus10LightColor' && child.isLight) {
+      child.intensity = 2.8 + pulse * 4.8 + flash * 1.6;
     }
   });
 }
