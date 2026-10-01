@@ -150,6 +150,13 @@
         "metadata": "",
         "name": "Brawler_new.glb",
         "userAdded": false
+      },
+      {
+        "file": "Brawler2.glb",
+        "kind": "model3D",
+        "metadata": "",
+        "name": "Brawler2.glb",
+        "userAdded": false
       }
     ]
   },
@@ -337,13 +344,13 @@
         {
           "angle": 0,
           "customSize": false,
-          "height": 262.4413698190398,
+          "height": 174.9609554669933,
           "layer": "",
           "name": "MainChar",
-          "persistentUuid": "518c685b-4557-4413-a454-aaed1352d4db",
-          "width": 61.643800769972145,
-          "x": 3776,
-          "y": 2144,
+          "persistentUuid": "efa78bcb-1400-4000-a472-70d49b47ee4f",
+          "width": 41.09588459716136,
+          "x": 3616,
+          "y": 2176,
           "z": 22,
           "zOrder": 0,
           "numberProperties": [],
@@ -655,7 +662,7 @@
         {
           "assetStoreId": "",
           "name": "MainChar",
-          "persistentUuid": "e4a8c9a9-e8cc-4df5-953b-1b8d1d73bb8a",
+          "persistentUuid": "85836ac4-ca3a-44db-b6a1-48fc378ca611",
           "type": "Scene3D::Model3DObject",
           "variables": [],
           "effects": [],
@@ -669,7 +676,7 @@
             "isReceivingShadow": true,
             "keepAspectRatio": true,
             "materialType": "StandardWithoutMetalness",
-            "modelResourceName": "Brawler_new.glb",
+            "modelResourceName": "Brawler2.glb",
             "originLocation": "ModelOrigin",
             "rotationX": 90,
             "rotationY": 0,
@@ -678,13 +685,83 @@
             "animations": [
               {
                 "loop": false,
-                "name": "Brawler_Walk",
-                "source": "Brawler_Walk"
+                "name": "Brawler_Idle",
+                "source": "Brawler_Idle"
               },
               {
                 "loop": false,
-                "name": "Brawler_Run",
-                "source": "Brawler_Run"
+                "name": "Brawler_Smash.001",
+                "source": "Brawler_Smash.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Punching.001",
+                "source": "Brawler_Punching.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Punch_Combo.001",
+                "source": "Brawler_Punch_Combo.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Flair.001",
+                "source": "Brawler_Flair.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Back_Flip_To_Uppercut.001",
+                "source": "Brawler_Back_Flip_To_Uppercut.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Quad_Punch.001",
+                "source": "Brawler_Quad_Punch.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Knee_Jabs_To_Uppercut.001",
+                "source": "Brawler_Knee_Jabs_To_Uppercut.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Armada.001",
+                "source": "Brawler_Armada.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Fireball.001",
+                "source": "Brawler_Fireball.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Kicking.001",
+                "source": "Brawler_Kicking.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Flying_Kick.001",
+                "source": "Brawler_Flying_Kick.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Chapa_Giratoria.001",
+                "source": "Brawler_Chapa_Giratoria.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Martelo.001",
+                "source": "Brawler_Martelo.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Hurricane_Kick.001",
+                "source": "Brawler_Hurricane_Kick.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Fight_Idle.001",
+                "source": "Brawler_Fight_Idle.001"
               }
             ]
           }
