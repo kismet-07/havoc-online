@@ -2138,7 +2138,7 @@
             "  if (particles.material) {",
             "    const baseOpacity = Number(particles.userData.baseOpacity) || 0.8;",
             "    particles.material.opacity = baseOpacity * (0.72 + pulse * 0.52);",
-            "    particles.material.size = particles.name.indexOf('Sparks') === 0",
+            "    particles.material.size = particles.name.indexOf('Sparks') !== -1",
             "      ? HAVOC_PLUS10_VFX_CONFIG.sparkSize * (0.88 + pulse * 1.10)",
             "      : HAVOC_PLUS10_VFX_CONFIG.particleSize * (0.90 + pulse * 0.72);",
             "  }",
