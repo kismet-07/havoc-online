@@ -110,7 +110,12 @@ function updateBrawlerMovement(runtimeScene, dt) {
         player,
         running ? BRAWLER_CONFIG.animations.run : BRAWLER_CONFIG.animations.walk,
       );
-    } else if (!combatLocked && player.getAnimationName() !== BRAWLER_CONFIG.animations.idle) {
+    } else if (!combatLocked) {
+      // Walk is currently our temporary idle animation. It must still be
+      // serviced every frame while the player is stopped, because the GLB
+      // exposes the clip as non-looping. Previously this branch only called
+      // setBrawlerAnimation when the current animation name differed, so a
+      // stopped Walk clip could reach its end and freeze on its final frame.
       setBrawlerAnimation(player, BRAWLER_CONFIG.animations.idle);
     }
 
