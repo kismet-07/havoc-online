@@ -26,7 +26,11 @@ const HAVOC_EQUIPMENT_ATTACHMENT_CONFIG = Object.freeze({
   // Offset is expressed in the gauntlet's attachment-local axes, not in
   // renderer/world axes. This keeps the correction locked to the hand during
   // animation instead of introducing a world-space drift.
-  positionOffset: Object.freeze({ x: 0, y: -8, z: 0 }),
+  // The previous -8 correction was on the wrong side of the hand. The visual
+  // evidence shows the gauntlet palm/fingers sitting below the character hand,
+  // so the correction is reversed and increased along the gauntlet's local
+  // longitudinal axis.
+  positionOffset: Object.freeze({ x: 0, y: 18, z: 0 }),
   // The gauntlet reaches the correct hand but its local facing is reversed.
   // Rotate around the local X axis so the gauntlet's top and bottom are inverted.
   rotationOffsetDegrees: Object.freeze({ x: 180, y: 0, z: 0 }),
