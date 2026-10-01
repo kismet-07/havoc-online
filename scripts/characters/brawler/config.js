@@ -21,10 +21,9 @@ const BRAWLER_CONFIG = {
     },
   },
   animations: {
-    // The current Brawler GLB only has the locomotion clips we are enabling
-    // in this step. Walk is therefore the temporary non-moving fallback until
-    // a dedicated Brawler idle clip is added.
-    idle: 'Brawler_Walk',
+    // No dedicated idle clip exists in the current Brawler GLB.
+    // Empty idle name means movement code will hold the first walk frame.
+    idle: '',
     walk: 'Brawler_Walk',
     run: 'Brawler_Run',
     attack1: 'Attack1',
