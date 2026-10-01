@@ -14,15 +14,21 @@ const BRAWLER_CONFIG = {
   combat: {
     attackRange: 450,
     animationSpeed: {
-      Attack1: 1.35,
-      Attack2: 1.35,
+      'Brawler_Punching.001': 1.35,
+      'Brawler_Smash.001': 1.35,
+    },
+    // The Smash clip contains an unnecessary end hold after the impact.
+    // Transition a full second before the clip's reported end so the combo
+    // never waits through that held pose before the next Punching clip.
+    comboTransitionLeadTime: {
+      'Brawler_Smash.001': 1.0,
     },
   },
   animations: {
     idle: 'Brawler_Idle',
     walk: 'Brawler_Walk',
     run: 'Brawler_Run',
-    attack1: 'Brawler_Smash',
-    attack2: 'Brawler_Punching',
+    attack1: 'Brawler_Punching.001',
+    attack2: 'Brawler_Smash.001',
   },
 };
