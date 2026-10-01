@@ -17,6 +17,7 @@ SOURCE_FILES = [
     ROOT / 'scripts' / 'enhancement' / 'config.js',
     ROOT / 'scripts' / 'enhancement' / 'manager.js',
     ROOT / 'scripts' / 'enhancement' / 'vfx.js',
+    ROOT / 'scripts' / 'enhancement' / 'supernova.js',
     ROOT / 'scripts' / 'equipment' / 'equipment-slots.js',
     ROOT / 'scripts' / 'equipment' / 'equipment-data.js',
     ROOT / 'scripts' / 'equipment' / 'equipment-manager.js',
