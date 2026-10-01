@@ -1,10 +1,11 @@
 /**
  * Character equipment attachment contract and runtime binding state.
  *
- * Keep the equipment as a normal GDevelop Model3D object. The renderer is
- * positioned from the animated character hand bone every frame. This is the
- * known-good attachment path and avoids depending on the imported GLTF scene
- * hierarchy, which varies between equipment models.
+ * Equipment remains a normal GDevelop Model3D object. The attachment runtime
+ * updates the renderer in the renderer parent's LOCAL coordinate space from
+ * the character hand bone's WORLD transform. It does not parent the renderer
+ * to the skeleton and does not feed raw Three.js world coordinates back into
+ * GDevelop's object transform setters.
  */
 const HAVOC_EQUIPMENT_ATTACHMENT_PROFILES = Object.freeze({
   brawler_hands: Object.freeze({
@@ -21,7 +22,7 @@ const HAVOC_EQUIPMENT_ATTACHMENT_CONFIG = Object.freeze({
   playerObjectName: 'Character',
   testItemId: 'BRAWLER_STARTER_GAUNTLETS',
   testInstanceId: 'brawler_starter_gauntlets_test',
-  activeHand: 'left',
+  activeHand: 'right',
   positionOffset: Object.freeze({ x: 0, y: 0, z: 0 }),
   rotationOffsetDegrees: Object.freeze({ x: 0, y: 0, z: 0 }),
 });
@@ -37,7 +38,7 @@ function initializeHavocEquipmentAttachments(runtimeScene) {
       warnedMissingPlayer: false,
       warnedMissingModel: false,
       warnedMissingBone: false,
-      warnedRenderer: false,
+      warnedAttachFailure: false,
     };
   }
   return runtimeScene.__havocEquipmentAttachments;
@@ -64,6 +65,10 @@ function attachHavocEquipmentInstance(runtimeScene, player, itemInstance) {
     modelObjectName: definition.modelObjectName || profile.modelObjectName || null,
     modelId: definition.modelId || null,
     modelAttached: false,
+    rendererParented: false,
+    baseTransformCaptured: false,
+    baseScale: null,
+    baseQuaternion: null,
     activeBone: null,
   };
 
@@ -87,7 +92,9 @@ function getHavocEquipmentAttachment(runtimeScene, itemInstanceId) {
 }
 
 function normalizeHavocBoneName(name) {
-  return String(name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 }
 
 function findHavocAttachmentBone(player, boneName) {
@@ -125,17 +132,17 @@ function findHavocAttachmentBone(player, boneName) {
   return matchedBone;
 }
 
-function prepareHavocEquipmentRenderer(renderer) {
-  if (!renderer) return false;
+function prepareHavocEquipmentRenderer(equipmentRendererObject) {
+  if (!equipmentRendererObject) return false;
 
-  renderer.visible = true;
+  equipmentRendererObject.visible = true;
 
-  if (typeof renderer.traverse === 'function') {
-    renderer.traverse((node) => {
+  if (typeof equipmentRendererObject.traverse === 'function') {
+    equipmentRendererObject.traverse((node) => {
       if (!node) return;
-      node.visible = true;
       if (node.isMesh) {
         node.frustumCulled = false;
+        node.visible = true;
         if (node.geometry && typeof node.geometry.computeBoundingSphere === 'function') {
           node.geometry.computeBoundingSphere();
         }
@@ -146,120 +153,140 @@ function prepareHavocEquipmentRenderer(renderer) {
   return true;
 }
 
-function havocQuaternionToEulerZYXDegrees(quaternion) {
-  if (!quaternion) return null;
+function captureHavocEquipmentBaseTransform(equipmentObject, equipmentRendererObject, binding) {
+  if (!equipmentObject || !equipmentRendererObject || !binding || binding.baseTransformCaptured) return false;
+  if (!equipmentRendererObject.scale || !equipmentRendererObject.quaternion) return false;
 
-  const x = Number(quaternion.x) || 0;
-  const y = Number(quaternion.y) || 0;
-  const z = Number(quaternion.z) || 0;
-  const w = Number(quaternion.w);
-  const qw = Number.isFinite(w) ? w : 1;
+  binding.baseScale = {
+    x: equipmentRendererObject.scale.x,
+    y: equipmentRendererObject.scale.y,
+    z: equipmentRendererObject.scale.z,
+  };
 
-  const r00 = 1 - 2 * (y * y + z * z);
-  const r10 = 2 * (x * y + z * qw);
-  const r20 = 2 * (x * z - y * qw);
-  const r21 = 2 * (y * z + x * qw);
-  const r22 = 1 - 2 * (x * x + y * y);
-
-  const clamped = Math.max(-1, Math.min(1, -r20));
-  const rotationY = Math.asin(clamped);
-  const cosY = Math.cos(rotationY);
-
-  let rotationX;
-  let rotationZ;
-
-  if (Math.abs(cosY) > 1e-6) {
-    rotationX = Math.atan2(r21, r22);
-    rotationZ = Math.atan2(r10, r00);
+  if (typeof equipmentRendererObject.quaternion.clone === 'function') {
+    binding.baseQuaternion = equipmentRendererObject.quaternion.clone();
   } else {
-    rotationX = 0;
-    rotationZ = Math.atan2(
-      -2 * (x * y - z * qw),
-      1 - 2 * (y * y + z * z)
+    binding.baseQuaternion = null;
+  }
+
+  binding.baseTransformCaptured = true;
+  return true;
+}
+
+function applyHavocEquipmentWorldTransform(equipmentObject, binding, bone) {
+  if (!equipmentObject || !binding || !bone) return false;
+  if (typeof equipmentObject.get3DRendererObject !== 'function') return false;
+  if (typeof THREE === 'undefined' ||
+      typeof THREE.Matrix4 !== 'function' ||
+      typeof THREE.Vector3 !== 'function' ||
+      typeof THREE.Quaternion !== 'function' ||
+      typeof THREE.Euler !== 'function') {
+    return false;
+  }
+
+  const equipmentRendererObject = equipmentObject.get3DRendererObject();
+  if (!equipmentRendererObject || !equipmentRendererObject.position || !equipmentRendererObject.quaternion) {
+    return false;
+  }
+
+  if (typeof bone.updateWorldMatrix === 'function') {
+    bone.updateWorldMatrix(true, false);
+  } else if (typeof bone.updateMatrixWorld === 'function') {
+    bone.updateMatrixWorld(true);
+  }
+
+  if (!bone.matrixWorld) return false;
+
+  const parent = equipmentRendererObject.parent || null;
+  if (parent && typeof parent.updateMatrixWorld === 'function') {
+    parent.updateMatrixWorld(true);
+  }
+
+  const localMatrix = bone.matrixWorld.clone();
+  if (parent && parent.matrixWorld) {
+    const parentInverse = new THREE.Matrix4().copy(parent.matrixWorld).invert();
+    localMatrix.premultiply(parentInverse);
+  }
+
+  const localPosition = new THREE.Vector3();
+  const localQuaternion = new THREE.Quaternion();
+  const localScale = new THREE.Vector3();
+  localMatrix.decompose(localPosition, localQuaternion, localScale);
+
+  const finalQuaternion = localQuaternion.clone();
+  if (binding.baseQuaternion) {
+    finalQuaternion.multiply(binding.baseQuaternion);
+  }
+
+  const offsetEuler = new THREE.Euler(
+    HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.x * Math.PI / 180,
+    HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.y * Math.PI / 180,
+    HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.z * Math.PI / 180,
+    'ZYX'
+  );
+  finalQuaternion.multiply(new THREE.Quaternion().setFromEuler(offsetEuler));
+
+  equipmentRendererObject.position.copy(localPosition);
+  equipmentRendererObject.quaternion.copy(finalQuaternion);
+
+  if (binding.baseScale && equipmentRendererObject.scale) {
+    equipmentRendererObject.scale.set(
+      binding.baseScale.x,
+      binding.baseScale.y,
+      binding.baseScale.z
     );
   }
 
-  const radiansToDegrees = 180 / Math.PI;
-  return {
-    x: rotationX * radiansToDegrees,
-    y: rotationY * radiansToDegrees,
-    z: rotationZ * radiansToDegrees,
-  };
+  equipmentRendererObject.position.x += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.x;
+  equipmentRendererObject.position.y += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.y;
+  equipmentRendererObject.position.z += HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.z;
+
+  prepareHavocEquipmentRenderer(equipmentRendererObject);
+
+  if (typeof equipmentRendererObject.updateMatrixWorld === 'function') {
+    equipmentRendererObject.updateMatrixWorld(true);
+  }
+
+  return true;
 }
 
-function syncHavocEquipmentToBone(player, equipmentObject, binding) {
-  if (!player || !equipmentObject || !binding) return false;
+function attachHavocEquipmentRendererToBone(runtimeScene, player, equipmentObject, binding) {
+  if (!runtimeScene || !player || !equipmentObject || !binding) return false;
+  if (typeof player.get3DRendererObject !== 'function') return false;
   if (typeof equipmentObject.get3DRendererObject !== 'function') return false;
-  if (typeof THREE === 'undefined') return false;
-  if (typeof THREE.Vector3 !== 'function' || typeof THREE.Quaternion !== 'function') return false;
 
   const boneName = HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.activeHand === 'left'
     ? binding.leftAnchor
     : binding.rightAnchor;
-
   const bone = findHavocAttachmentBone(player, boneName);
-  if (!bone) return false;
-
-  const renderer = equipmentObject.get3DRendererObject();
-  if (!renderer) return false;
-
-  if (typeof bone.updateMatrixWorld === 'function') {
-    bone.updateMatrixWorld(true);
-  }
-
-  if (
-    typeof bone.getWorldPosition !== 'function' ||
-    typeof bone.getWorldQuaternion !== 'function'
-  ) {
+  if (!bone) {
+    binding.activeBone = null;
+    binding.modelAttached = false;
     return false;
   }
 
-  const worldPosition = new THREE.Vector3();
-  const worldQuaternion = new THREE.Quaternion();
+  const equipmentRendererObject = equipmentObject.get3DRendererObject();
+  if (!equipmentRendererObject) return false;
 
-  bone.getWorldPosition(worldPosition);
-  bone.getWorldQuaternion(worldQuaternion);
+  if (!binding.baseTransformCaptured && !captureHavocEquipmentBaseTransform(equipmentObject, equipmentRendererObject, binding)) {
+    return false;
+  }
 
-  const rotation = havocQuaternionToEulerZYXDegrees(worldQuaternion);
-  if (!rotation) return false;
+  if (typeof equipmentObject.hide === 'function') equipmentObject.hide(false);
+  prepareHavocEquipmentRenderer(equipmentRendererObject);
 
-  equipmentObject.setX(
-    worldPosition.x + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.x
-  );
-  equipmentObject.setY(
-    worldPosition.y + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.y
-  );
-  equipmentObject.setZ(
-    worldPosition.z + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.positionOffset.z
-  );
-
-  equipmentObject.setRotationX(
-    rotation.x + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.x
-  );
-  equipmentObject.setRotationY(
-    rotation.y + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.y
-  );
-  equipmentObject.setRotationZ(
-    rotation.z + HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.rotationOffsetDegrees.z
-  );
-
-  prepareHavocEquipmentRenderer(renderer);
-
-  binding.modelAttached = true;
+  const synced = applyHavocEquipmentWorldTransform(equipmentObject, binding, bone);
+  binding.modelAttached = synced;
+  binding.rendererParented = false;
   binding.activeBone = bone.name || boneName;
-  return true;
+  return synced;
 }
 
 function ensureHavocBrawlerGauntletBinding(runtimeScene, player, equipmentObject) {
   const state = initializeHavocEquipmentAttachments(runtimeScene);
-  const definition = getHavocEquipmentDefinition(
-    HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId
-  );
+  const definition = getHavocEquipmentDefinition(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId);
   if (!definition) {
-    console.warn(
-      '[Havoc Equipment] Missing definition:',
-      HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId
-    );
+    console.warn('[Havoc Equipment] Missing definition:', HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId);
     return null;
   }
 
@@ -267,27 +294,15 @@ function ensureHavocBrawlerGauntletBinding(runtimeScene, player, equipmentObject
   let binding = state.bindings[instanceId];
 
   if (!binding) {
-    const instance = createHavocEquipmentInstance(
-      HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId,
-      0
-    );
+    const instance = createHavocEquipmentInstance(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.testItemId, 0);
     if (!instance) return null;
-
     instance.instanceId = instanceId;
-
-    if (!attachHavocEquipmentInstance(runtimeScene, player, instance)) {
-      return null;
-    }
-
+    if (!attachHavocEquipmentInstance(runtimeScene, player, instance)) return null;
     binding = state.bindings[instanceId];
   }
 
   if (binding && binding.modelObjectName !== equipmentObject.getName()) {
-    console.warn(
-      '[Havoc Equipment] Model object mismatch:',
-      binding.modelObjectName,
-      equipmentObject.getName()
-    );
+    console.warn('[Havoc Equipment] Model object mismatch:', binding.modelObjectName, equipmentObject.getName());
     return null;
   }
 
@@ -298,11 +313,9 @@ function updateHavocEquipmentAttachments(runtimeScene) {
   if (!runtimeScene) return;
 
   const state = initializeHavocEquipmentAttachments(runtimeScene);
-  const players = runtimeScene.getObjects(
-    HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.playerObjectName
-  );
+  const players = runtimeScene.getObjects(HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.playerObjectName);
+  let equipmentObject = runtimeScene.getObjects('IronGauntlet')[0];
   const player = players && players[0];
-  let equipmentObject = runtimeScene.getObjects('IronGauntlet')[0] || null;
 
   if (!player) {
     if (!state.warnedMissingPlayer) {
@@ -327,48 +340,32 @@ function updateHavocEquipmentAttachments(runtimeScene) {
   state.warnedMissingPlayer = false;
   state.warnedMissingModel = false;
 
-  const renderer = typeof equipmentObject.get3DRendererObject === 'function'
+  const rendererObject = typeof equipmentObject.get3DRendererObject === 'function'
     ? equipmentObject.get3DRendererObject()
     : null;
 
-  if (!renderer) {
-    if (!state.warnedRenderer) {
-      state.warnedRenderer = true;
-      console.warn('[Havoc Equipment] IronGauntlet renderer is not ready yet.');
+  if (!rendererObject) {
+    if (!state.warnedAttachFailure) {
+      state.warnedAttachFailure = true;
+      console.warn('[Havoc Equipment] IronGauntlet exists but has no 3D renderer yet.');
     }
     return;
   }
 
-  state.warnedRenderer = false;
+  prepareHavocEquipmentRenderer(rendererObject);
 
-  const binding = ensureHavocBrawlerGauntletBinding(
-    runtimeScene,
-    player,
-    equipmentObject
-  );
+  const binding = ensureHavocBrawlerGauntletBinding(runtimeScene, player, equipmentObject);
   if (!binding) return;
 
-  const synced = syncHavocEquipmentToBone(
-    player,
-    equipmentObject,
-    binding
-  );
+  const synced = attachHavocEquipmentRendererToBone(runtimeScene, player, equipmentObject, binding);
 
-  if (!synced) {
-    binding.modelAttached = false;
-    binding.activeBone = null;
-
-    if (!state.warnedMissingBone) {
-      state.warnedMissingBone = true;
-      console.warn(
-        '[Havoc Equipment] Brawler hand bone not found:',
-        HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.activeHand === 'left'
-          ? binding.leftAnchor
-          : binding.rightAnchor
-      );
-    }
-    return;
+  if (!synced && !state.warnedMissingBone) {
+    state.warnedMissingBone = true;
+    console.warn('[Havoc Equipment] Right hand bone not found:', binding.rightAnchor);
   }
 
-  state.warnedMissingBone = false;
+  if (synced) {
+    state.warnedMissingBone = false;
+    state.warnedAttachFailure = false;
+  }
 }
