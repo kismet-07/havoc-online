@@ -116,13 +116,23 @@ function updateBrawlerCombat(runtimeScene, dt) {
   }
 
   if (combat.attacking) {
-    if (player.hasAnimationEnded()) {
+    const currentAnimation = player.getAnimationName();
+    const transitionLeadTime =
+      BRAWLER_CONFIG.combat.comboTransitionLeadTime?.[currentAnimation] || 0;
+    const animationDuration = player.getAnimationDuration();
+    const animationElapsedTime = player.getAnimationElapsedTime();
+    const readyForEarlyTransition =
+      transitionLeadTime > 0 &&
+      animationDuration > 0 &&
+      animationElapsedTime >= animationDuration - transitionLeadTime;
+
+    if (player.hasAnimationEnded() || readyForEarlyTransition) {
       combat.attacking = false;
       combat.approaching = false;
 
       if (combat.autoAttack) {
-        // Chain directly into the next combo attack. Do not pass through Idle,
-        // which would reset the character pose between every attack.
+        // Chain directly into the next combo attack. For Smash, transition
+        // slightly before the final held frame so there is no post-hit pause.
         startBrawlerBasicAttack(runtimeScene, player, combat);
       } else {
         // Only return to Idle when the player has actually stopped attacking.
