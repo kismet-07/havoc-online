@@ -1,7 +1,7 @@
 {
   "firstLayout": "",
   "gdVersion": {
-    "build": 282,
+    "build": 283,
     "major": 5,
     "minor": 6,
     "revision": 0
@@ -143,6 +143,13 @@
         "metadata": "",
         "name": "basic_iron_gauntlet.glb",
         "userAdded": true
+      },
+      {
+        "file": "Brawler_new.glb",
+        "kind": "model3D",
+        "metadata": "",
+        "name": "Brawler_new.glb",
+        "userAdded": false
       }
     ]
   },
@@ -203,38 +210,6 @@
         {
           "angle": 0,
           "customSize": false,
-          "height": 234.733717591712,
-          "layer": "",
-          "name": "Character",
-          "persistentUuid": "e828b67a-5607-4682-99ff-29533b7dfada",
-          "width": 83.29261053028817,
-          "x": 3008,
-          "y": 2304,
-          "z": 32,
-          "zOrder": 0,
-          "numberProperties": [],
-          "stringProperties": [],
-          "initialVariables": []
-        },
-        {
-          "angle": 0,
-          "customSize": false,
-          "flippedX": true,
-          "height": 39.97469748439186,
-          "layer": "",
-          "name": "Nurse",
-          "persistentUuid": "f72fe986-94b6-4815-b4ea-acee70d9ac2c",
-          "width": 43.83994894460461,
-          "x": 4064,
-          "y": 2368,
-          "zOrder": 0,
-          "numberProperties": [],
-          "stringProperties": [],
-          "initialVariables": []
-        },
-        {
-          "angle": 0,
-          "customSize": false,
           "height": 32,
           "layer": "",
           "name": "",
@@ -250,14 +225,14 @@
         {
           "angle": 0,
           "customSize": true,
-          "depth": 362,
-          "height": 239.62429430748293,
+          "depth": 128,
+          "height": 85,
           "layer": "",
           "name": "Killer_clown",
           "persistentUuid": "17de947f-bdd5-4e51-a790-3086a15a77db",
-          "width": 352,
+          "width": 124,
           "x": 3776,
-          "y": 3776,
+          "y": 2048,
           "z": 32,
           "zOrder": 0,
           "numberProperties": [],
@@ -339,6 +314,37 @@
           "width": 220,
           "x": -100000,
           "y": -100000,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 32,
+          "layer": "",
+          "name": "",
+          "persistentUuid": "8497e067-adab-41c8-9fb3-c8605e12f70c",
+          "width": 32,
+          "x": 0,
+          "y": 0,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 262.4413698190398,
+          "layer": "",
+          "name": "MainChar",
+          "persistentUuid": "518c685b-4557-4413-a454-aaed1352d4db",
+          "width": 61.643800769972145,
+          "x": 3808,
+          "y": 2144,
+          "z": 32,
           "zOrder": 0,
           "numberProperties": [],
           "stringProperties": [],
@@ -450,38 +456,6 @@
         },
         {
           "assetStoreId": "",
-          "name": "Nurse",
-          "persistentUuid": "6f344457-978e-4532-812b-f6e587bff414",
-          "type": "Scene3D::Model3DObject",
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "content": {
-            "centerLocation": "CenteredOnZ",
-            "crossfadeDuration": 0.10000000149011612,
-            "depth": 400,
-            "height": 400,
-            "isCastingShadow": true,
-            "isReceivingShadow": true,
-            "keepAspectRatio": true,
-            "materialType": "StandardWithoutMetalness",
-            "modelResourceName": "nurse.glb",
-            "originLocation": "ModelOrigin",
-            "rotationX": 90,
-            "rotationY": 0,
-            "rotationZ": 90,
-            "width": 400,
-            "animations": [
-              {
-                "loop": true,
-                "name": "Idle_Subtle",
-                "source": "Idle_Subtle"
-              }
-            ]
-          }
-        },
-        {
-          "assetStoreId": "",
           "name": "Killer_clown",
           "persistentUuid": "3337d193-979a-4c9f-9ea4-4df59518f2a7",
           "type": "Scene3D::Model3DObject",
@@ -491,8 +465,8 @@
           "content": {
             "centerLocation": "CenteredOnZ",
             "crossfadeDuration": 0.10000000149011612,
-            "depth": 400,
-            "height": 400,
+            "depth": 180,
+            "height": 180,
             "isCastingShadow": true,
             "isReceivingShadow": true,
             "keepAspectRatio": true,
@@ -502,7 +476,7 @@
             "rotationX": 90,
             "rotationY": 0,
             "rotationZ": 90,
-            "width": 400,
+            "width": 180,
             "animations": [
               {
                 "loop": true,
@@ -739,6 +713,43 @@
             "width": 100,
             "animations": []
           }
+        },
+        {
+          "assetStoreId": "",
+          "name": "MainChar",
+          "persistentUuid": "e4a8c9a9-e8cc-4df5-953b-1b8d1d73bb8a",
+          "type": "Scene3D::Model3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "centerLocation": "CenteredOnZ",
+            "crossfadeDuration": 0.10000000149011612,
+            "depth": 180,
+            "height": 180,
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "keepAspectRatio": true,
+            "materialType": "StandardWithoutMetalness",
+            "modelResourceName": "Brawler_new.glb",
+            "originLocation": "ModelOrigin",
+            "rotationX": 90,
+            "rotationY": 0,
+            "rotationZ": 90,
+            "width": 180,
+            "animations": [
+              {
+                "loop": false,
+                "name": "Brawler_Walk",
+                "source": "Brawler_Walk"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Run",
+                "source": "Brawler_Run"
+              }
+            ]
+          }
         }
       ],
       "objectsFolderStructure": {
@@ -749,9 +760,6 @@
           },
           {
             "objectName": "Floor"
-          },
-          {
-            "objectName": "Nurse"
           },
           {
             "objectName": "Killer_clown"
@@ -773,6 +781,9 @@
           },
           {
             "objectName": "IronGauntlet"
+          },
+          {
+            "objectName": "MainChar"
           }
         ]
       },
