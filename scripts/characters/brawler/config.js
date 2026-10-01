@@ -14,15 +14,15 @@ const BRAWLER_CONFIG = {
   combat: {
     attackRange: 450,
     animationSpeed: {
-      Attack1: 1.35,
-      Attack2: 1.35,
+      Brawler_Punching: 1.35,
+      Brawler_Smash: 1.35,
     },
   },
   animations: {
     idle: 'Brawler_Idle',
     walk: 'Brawler_Walk',
     run: 'Brawler_Run',
-    attack1: 'Brawler_Smash',
-    attack2: 'Brawler_Punching',
+    attack1: 'Brawler_Punching',
+    attack2: 'Brawler_Smash',
   },
 };
