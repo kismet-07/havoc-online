@@ -157,6 +157,13 @@
         "metadata": "",
         "name": "Brawler2.glb",
         "userAdded": false
+      },
+      {
+        "file": "Brawler3.glb",
+        "kind": "model3D",
+        "metadata": "",
+        "name": "Brawler3.glb",
+        "userAdded": false
       }
     ]
   },
@@ -347,10 +354,10 @@
           "height": 174.9609554669933,
           "layer": "",
           "name": "MainChar",
-          "persistentUuid": "efa78bcb-1400-4000-a472-70d49b47ee4f",
+          "persistentUuid": "26d7d194-89c0-43a2-a84b-e9f3b8f0f48c",
           "width": 41.09588459716136,
-          "x": 3616,
-          "y": 2176,
+          "x": 3392,
+          "y": 2144,
           "z": 22,
           "zOrder": 0,
           "numberProperties": [],
@@ -662,7 +669,7 @@
         {
           "assetStoreId": "",
           "name": "MainChar",
-          "persistentUuid": "85836ac4-ca3a-44db-b6a1-48fc378ca611",
+          "persistentUuid": "65d6beb4-63f8-4fa4-8b55-c6429527eecd",
           "type": "Scene3D::Model3DObject",
           "variables": [],
           "effects": [],
@@ -676,7 +683,7 @@
             "isReceivingShadow": true,
             "keepAspectRatio": true,
             "materialType": "StandardWithoutMetalness",
-            "modelResourceName": "Brawler2.glb",
+            "modelResourceName": "Brawler3.glb",
             "originLocation": "ModelOrigin",
             "rotationX": 90,
             "rotationY": 0,
@@ -684,9 +691,19 @@
             "width": 180,
             "animations": [
               {
-                "loop": false,
+                "loop": true,
                 "name": "Brawler_Idle",
                 "source": "Brawler_Idle"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Walk",
+                "source": "Brawler_Walk"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Run",
+                "source": "Brawler_Run"
               },
               {
                 "loop": false,
