@@ -2,7 +2,7 @@
  * Brawler animation helpers.
  *
  * This module owns animation names, transitions, and combat playback tuning.
- * The underlying GLB and animation names remain unchanged.
+ * Locomotion uses the Walk/Run clips from the Brawler GLB.
  */
 
 function setBrawlerAnimation(player, animationName, options) {
@@ -25,7 +25,11 @@ function setBrawlerAnimation(player, animationName, options) {
     player.setAnimationElapsedTime(0);
   }
 
-  if (options && typeof options.speedScale === 'number' && typeof player.setAnimationSpeedScale === 'function') {
+  if (
+    options &&
+    typeof options.speedScale === 'number' &&
+    typeof player.setAnimationSpeedScale === 'function'
+  ) {
     player.setAnimationSpeedScale(options.speedScale);
   }
 }
@@ -33,16 +37,14 @@ function setBrawlerAnimation(player, animationName, options) {
 function setBrawlerIdlePose(player) {
   if (!player) return;
 
-  // The current GLB has no dedicated idle clip. Keep the walk clip at frame 0
-  // without letting the locomotion animation advance while the character stands.
-  const idleAnimation = BRAWLER_CONFIG.animations.walk;
+  const idleAnimation = BRAWLER_CONFIG.animations.idle;
 
   if (player.getAnimationName() !== idleAnimation) {
     player.setAnimationName(idleAnimation);
   }
 
   if (typeof player.setAnimationSpeedScale === 'function') {
-    player.setAnimationSpeedScale(0);
+    player.setAnimationSpeedScale(1);
   }
 
   if (typeof player.setAnimationElapsedTime === 'function') {
