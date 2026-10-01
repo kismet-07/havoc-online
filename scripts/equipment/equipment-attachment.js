@@ -27,6 +27,8 @@ const HAVOC_EQUIPMENT_ATTACHMENT_CONFIG = Object.freeze({
   // The gauntlet reaches the correct hand but its local facing is reversed.
   // Rotate around the local X axis so the gauntlet's top and bottom are inverted.
   rotationOffsetDegrees: Object.freeze({ x: 180, y: 0, z: 0 }),
+  // Increase the existing model scale uniformly without changing its attachment position or rotation.
+  scaleMultiplier: 1.10,
 });
 
 function getHavocEquipmentAttachmentProfile(profileId) {
@@ -232,10 +234,11 @@ function applyHavocEquipmentWorldTransform(equipmentObject, binding, bone) {
   equipmentRendererObject.quaternion.copy(finalQuaternion);
 
   if (binding.baseScale && equipmentRendererObject.scale) {
+    const scaleMultiplier = HAVOC_EQUIPMENT_ATTACHMENT_CONFIG.scaleMultiplier;
     equipmentRendererObject.scale.set(
-      binding.baseScale.x,
-      binding.baseScale.y,
-      binding.baseScale.z
+      binding.baseScale.x * scaleMultiplier,
+      binding.baseScale.y * scaleMultiplier,
+      binding.baseScale.z * scaleMultiplier
     );
   }
 
