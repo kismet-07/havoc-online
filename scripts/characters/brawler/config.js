@@ -17,11 +17,11 @@ const BRAWLER_CONFIG = {
       'Brawler_Punching.001': 1.35,
       'Brawler_Smash.001': 1.35,
     },
-    // Start the next combo attack slightly before Smash reaches its final
-    // held frame. This removes the unnecessary pause after the hit while
-    // preserving the main impact/recovery motion.
+    // The Smash clip contains an unnecessary end hold after the impact.
+    // Transition a full second before the clip's reported end so the combo
+    // never waits through that held pose before the next Punching clip.
     comboTransitionLeadTime: {
-      'Brawler_Smash.001': 0.18,
+      'Brawler_Smash.001': 1.0,
     },
   },
   animations: {
