@@ -25,8 +25,8 @@ const HAVOC_EQUIPMENT_ATTACHMENT_CONFIG = Object.freeze({
   activeHand: 'right',
   positionOffset: Object.freeze({ x: 0, y: 0, z: 0 }),
   // The gauntlet reaches the correct hand but its local facing is reversed.
-  // Keep the position untouched and reverse only the attachment orientation.
-  rotationOffsetDegrees: Object.freeze({ x: 0, y: 180, z: 0 }),
+  // Rotate around the local X axis so the gauntlet's top and bottom are inverted.
+  rotationOffsetDegrees: Object.freeze({ x: 180, y: 0, z: 0 }),
 });
 
 function getHavocEquipmentAttachmentProfile(profileId) {
