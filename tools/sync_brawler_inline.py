@@ -26,7 +26,7 @@ SOURCE_FILES = [
 MARKER = '// HAVOC_BRAWLER_CHARACTER_V1'
 TARGET_ICON = 'TargetSelectionIcon'
 GAUNTLET_OBJECT = 'IronGauntlet'
-GAUNTLET_RESOURCE = 'brawler_starter_gauntlet_v2.glb'
+GAUNTLET_RESOURCE = 'basic_iron_gauntlet.glb'
 LEGACY_DIAGNOSTIC_OBJECT = 'GauntletDiagnostic'
 OBSOLETE = (
     'TargetSelectionArrowStem',
@@ -152,7 +152,7 @@ def ensure_gauntlet_object_definition(project: dict) -> None:
     else:
         content = existing.get('content', {})
         if existing.get('type') != 'Scene3D::Model3DObject' or content.get('modelResourceName') != GAUNTLET_RESOURCE:
-            raise SystemExit('Safety check failed: existing IronGauntlet object is not a Model3DObject using brawler_starter_gauntlet_v2.glb.')
+            raise SystemExit('Safety check failed: existing IronGauntlet object is not a Model3DObject using basic_iron_gauntlet.glb.')
 
     layout['objects'] = [obj for obj in objects if obj.get('name') != LEGACY_DIAGNOSTIC_OBJECT]
     layout['instances'] = [inst for inst in instances if inst.get('name') != LEGACY_DIAGNOSTIC_OBJECT]
@@ -248,7 +248,7 @@ def main() -> None:
     print('Brawler inline-code synchronization complete.')
     print('Included equipment data, manager, and stable renderer-local attachment runtime.')
     print('Runtime entry point updates the Brawler gauntlet attachment each frame.')
-    print('Registered IronGauntlet against brawler_starter_gauntlet_v2.glb.')
+    print('Registered IronGauntlet against basic_iron_gauntlet.glb.')
     print('Removed the obsolete world-space GauntletDiagnostic object.')
     print('Added one desktop gauntlet diagnostic only.')
     print('Equipment runtime does not parent the renderer to the skeleton.')
