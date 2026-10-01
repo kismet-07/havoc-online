@@ -119,10 +119,16 @@ function updateBrawlerCombat(runtimeScene, dt) {
     if (player.hasAnimationEnded()) {
       combat.attacking = false;
       combat.approaching = false;
-      setBrawlerAnimation(player, BRAWLER_CONFIG.animations.idle);
 
-      // Continue automatically without requiring another attack-button press.
-      combat.attackQueued = combat.autoAttack;
+      if (combat.autoAttack) {
+        // Chain directly into the next combo attack. Do not pass through Idle,
+        // which would reset the character pose between every attack.
+        startBrawlerBasicAttack(runtimeScene, player, combat);
+      } else {
+        // Only return to Idle when the player has actually stopped attacking.
+        combat.attackQueued = false;
+        setBrawlerAnimation(player, BRAWLER_CONFIG.animations.idle);
+      }
     }
     return;
   }
