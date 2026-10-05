@@ -4907,6 +4907,12 @@
                 "const input = game.getInputManager();",
                 "const world = scene.getLayer('');",
                 "const player = scene.getObjects('LoginBrawler')[0] || null;",
+                "",
+                "if (player && typeof player.setAnimationName === 'function') {",
+                "  if (player.getAnimationName() !== 'Brawler_Idle') player.setAnimationName('Brawler_Idle');",
+                "  if (typeof player.setAnimationSpeedScale === 'function') player.setAnimationSpeedScale(1);",
+                "}",
+                "",
                 "const right = scene.getObjects('LoginGauntletRight')[0] || null;",
                 "const left = scene.getObjects('LoginGauntletLeft')[0] || null;",
                 "const loginButton = scene.getObjects('LoginButton')[0] || null;",
@@ -5173,4 +5179,4 @@
   "externalEvents": [],
   "eventsFunctionsExtensions": [],
   "externalLayouts": []
-}
+}\n
