@@ -30,7 +30,6 @@ jobs:
                   'children': [{'objectName': name} for name in sorted(valid)]
               }
 
-          json.dumps(data, ensure_ascii=False, indent=2)
           path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           json.loads(path.read_text(encoding='utf-8'))
           print('GDevelop project JSON is valid.')
