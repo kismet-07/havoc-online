@@ -23,11 +23,13 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import os
           with open('Havoc Online.json', encoding='utf-8') as f:
               data = json.load(f)
           exists = any(layout.get('name') == 'Login' for layout in data.get('layouts', []))
-          with open('${GITHUB_OUTPUT}', 'a', encoding='utf-8') as out:
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
               out.write(f'exists={str(exists).lower()}\n')
+          print(f'Login layout exists: {exists}')
           PY
 
       - name: Patch login layout
