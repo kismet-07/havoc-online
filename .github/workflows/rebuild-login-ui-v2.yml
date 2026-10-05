@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'tools/rebuild_login_ui_v2.py'
+      - 'tools/trigger-login-ui-v2.txt'
       - '.github/workflows/rebuild-login-ui-v2.yml'
   workflow_dispatch:
 
