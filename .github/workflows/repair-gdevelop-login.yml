@@ -1,6 +1,7 @@
 name: Repair GDevelop Login Project
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - feature/havoc-login-ui
@@ -10,11 +11,10 @@ permissions:
 
 jobs:
   repair:
-    if: ${{ !contains(github.event.head_commit.message, 'Repair GDevelop login project structure') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate and repair GDevelop object folder structures
+      - name: Validate and repair GDevelop project structure
         run: |
           python - <<'PY'
           import json
@@ -23,16 +23,39 @@ jobs:
           path = Path('Havoc Online.json')
           data = json.loads(path.read_text(encoding='utf-8'))
 
-          for layout in data.get('layouts', []):
-              valid = {obj.get('name') for obj in layout.get('objects', []) if obj.get('name')}
+          layouts = data.get('layouts', [])
+          if not layouts:
+              raise RuntimeError('No GDevelop layouts found.')
+
+          for layout in layouts:
+              objects = layout.get('objects', [])
+              valid_names = [obj.get('name') for obj in objects if obj.get('name')]
+              valid = set(valid_names)
+
+              for instance in layout.get('instances', []):
+                  name = instance.get('name')
+                  if name and name not in valid:
+                      raise RuntimeError(
+                          f"Layout '{layout.get('name')}' has instance '{name}' without a matching object definition."
+                      )
+
               layout['objectsFolderStructure'] = {
                   'folderName': '__ROOT',
-                  'children': [{'objectName': name} for name in sorted(valid)]
+                  'children': [{'objectName': name} for name in valid_names]
               }
+
+          login = next((layout for layout in layouts if layout.get('name') == 'Login'), None)
+          if login is None:
+              raise RuntimeError('Login layout is missing.')
+
+          data['firstLayout'] = login.get('mangledName') or login.get('name')
 
           path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           json.loads(path.read_text(encoding='utf-8'))
-          print('GDevelop project JSON is valid.')
+          print('GDevelop project JSON validated and repaired successfully.')
+          print('Startup layout:', data['firstLayout'])
+          for layout in layouts:
+              print(layout.get('name'), 'objects:', len(layout.get('objects', [])))
           PY
 
       - name: Commit repaired project
