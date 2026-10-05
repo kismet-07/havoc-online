@@ -4866,31 +4866,67 @@
         "folderName": "__ROOT",
         "children": [
           {
-            "objectName": "Floor"
+            "objectName": "LoginFloor"
           },
           {
-            "objectName": "Killer_clown"
+            "objectName": "LoginBrawler"
           },
           {
-            "objectName": "FlagPole"
+            "objectName": "LoginGauntletRight"
           },
           {
-            "objectName": "MobileJoystickBase"
+            "objectName": "LoginGauntletLeft"
           },
           {
-            "objectName": "MobileJoystickKnob"
+            "objectName": "LoginBackground"
           },
           {
-            "objectName": "MobileAttackButton"
+            "objectName": "LoginPanel"
           },
           {
-            "objectName": "TargetSelectionIcon"
+            "objectName": "LoginButton"
           },
           {
-            "objectName": "IronGauntlet"
+            "objectName": "LoginUsername"
           },
           {
-            "objectName": "MainChar"
+            "objectName": "LoginPassword"
+          },
+          {
+            "objectName": "HavocLogo"
+          },
+          {
+            "objectName": "OnlineLogo"
+          },
+          {
+            "objectName": "LoginTitle"
+          },
+          {
+            "objectName": "LoginSubtitle"
+          },
+          {
+            "objectName": "UsernameLabel"
+          },
+          {
+            "objectName": "PasswordLabel"
+          },
+          {
+            "objectName": "LoginButtonText"
+          },
+          {
+            "objectName": "CreateAccountText"
+          },
+          {
+            "objectName": "ForgotPasswordText"
+          },
+          {
+            "objectName": "ServerStatusText"
+          },
+          {
+            "objectName": "VersionText"
+          },
+          {
+            "objectName": "LoginStatusText"
           }
         ]
       },
@@ -5179,4 +5215,4 @@
   "externalEvents": [],
   "eventsFunctionsExtensions": [],
   "externalLayouts": []
-}\n
+}
