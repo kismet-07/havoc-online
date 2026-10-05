@@ -1,0 +1,47 @@
+name: Rebuild HAVOC Login UI v2
+
+on:
+  push:
+    paths:
+      - 'tools/rebuild_login_ui_v2.py'
+      - '.github/workflows/rebuild-login-ui-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rebuild Login layout
+        run: python3 tools/rebuild_login_ui_v2.py
+
+      - name: Validate JSON
+        run: python3 - <<'PY'
+import json
+from pathlib import Path
+p = Path('Havoc Online.json')
+data = json.loads(p.read_text(encoding='utf-8'))
+assert data.get('firstLayout') == 'Login'
+login = next((x for x in data.get('layouts', []) if x.get('name') == 'Login'), None)
+assert login is not None
+assert len(login.get('events', [])) == 1
+assert login['events'][0].get('type') == 'BuiltinCommonInstructions::JsCode'
+print('JSON validation passed')
+PY
+
+      - name: Commit rebuilt project
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 'Havoc Online.json'
+          if git diff --cached --quiet; then
+            echo 'No project changes to commit.'
+          else
+            git commit -m 'Rebuild HAVOC login UI v2'
+            git push
+          fi
