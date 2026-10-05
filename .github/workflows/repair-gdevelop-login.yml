@@ -21,7 +21,18 @@ jobs:
           from pathlib import Path
 
           path = Path('Havoc Online.json')
-          data = json.loads(path.read_text(encoding='utf-8'))
+          raw = path.read_text(encoding='utf-8')
+
+          decoder = json.JSONDecoder()
+          start = len(raw) - len(raw.lstrip())
+          data, end = decoder.raw_decode(raw, start)
+          trailing = raw[end:].strip()
+
+          if trailing:
+              print(f'Warning: removing {len(trailing)} trailing characters after the first JSON document.')
+
+          if not isinstance(data, dict):
+              raise RuntimeError('GDevelop project root is not a JSON object.')
 
           layouts = data.get('layouts', [])
           if not layouts:
@@ -67,5 +78,5 @@ jobs:
             echo 'No repair changes required.'
             exit 0
           fi
-          git commit -m 'Repair GDevelop login project structure'
+          git commit -m 'Repair GDevelop login project JSON'
           git push
