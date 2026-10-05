@@ -1,0 +1,66 @@
+name: Build HAVOC ONLINE Login UI
+
+on:
+  push:
+    branches:
+      - feature/havoc-login-ui
+
+permissions:
+  contents: write
+
+jobs:
+  build-login-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Check whether login layout already exists
+        id: login-check
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          with open('Havoc Online.json', encoding='utf-8') as f:
+              data = json.load(f)
+          exists = any(layout.get('name') == 'Login' for layout in data.get('layouts', []))
+          with open('${GITHUB_OUTPUT}', 'a', encoding='utf-8') as out:
+              out.write(f'exists={str(exists).lower()}\n')
+          PY
+
+      - name: Patch login layout
+        if: steps.login-check.outputs.exists == 'false'
+        run: python tools/patch_login_ui.py
+
+      - name: Normalize login UI text instances
+        if: steps.login-check.outputs.exists == 'false'
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          path = 'Havoc Online.json'
+          with open(path, encoding='utf-8') as f:
+              data = json.load(f)
+          login = next(x for x in data['layouts'] if x.get('name') == 'Login')
+          text_names = {o['name'] for o in login['objects'] if o.get('type') == 'TextObject::Text'}
+          for inst in login.get('instances', []):
+              if inst.get('name') in text_names:
+                  inst['customSize'] = False
+                  inst['width'] = 0
+                  inst['height'] = 0
+          with open(path, 'w', encoding='utf-8') as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          PY
+
+      - name: Commit generated login UI
+        if: steps.login-check.outputs.exists == 'false'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Havoc Online.json"
+          git commit -m "Add HAVOC ONLINE login UI"
+          git push
