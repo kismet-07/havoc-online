@@ -1,5 +1,5 @@
 {
-  "firstLayout": "",
+  "firstLayout": "Login",
   "gdVersion": {
     "build": 283,
     "major": 5,
@@ -164,6 +164,30 @@
         "metadata": "",
         "name": "Brawler3.glb",
         "userAdded": false
+      },
+      {
+        "file": "assets/ui/havoc_login_background.svg",
+        "kind": "image",
+        "metadata": "",
+        "name": "havoc_login_background.svg",
+        "smoothed": true,
+        "userAdded": true
+      },
+      {
+        "file": "assets/ui/havoc_login_panel.svg",
+        "kind": "image",
+        "metadata": "",
+        "name": "havoc_login_panel.svg",
+        "smoothed": true,
+        "userAdded": true
+      },
+      {
+        "file": "assets/ui/havoc_login_button.svg",
+        "kind": "image",
+        "metadata": "",
+        "name": "havoc_login_button.svg",
+        "smoothed": true,
+        "userAdded": true
       }
     ]
   },
@@ -3922,6 +3946,1228 @@
           "type": "TextContainerCapability::TextContainerBehavior"
         }
       ]
+    },
+    {
+      "b": 85,
+      "disableInputWhenNotFocused": true,
+      "mangledName": "Login",
+      "name": "Login",
+      "r": 87,
+      "standardSortMethod": true,
+      "stopSoundsOnStartup": true,
+      "title": "HAVOC ONLINE",
+      "v": 85,
+      "uiSettings": {
+        "grid": true,
+        "gridType": "rectangular",
+        "gridWidth": 32,
+        "gridHeight": 32,
+        "gridDepth": 32,
+        "gridOffsetX": 0,
+        "gridOffsetY": 0,
+        "gridOffsetZ": 0,
+        "gridColor": 10401023,
+        "gridAlpha": 0.8,
+        "snap": true,
+        "zoomFactor": 0.546875,
+        "windowMask": true,
+        "selectedLayer": "",
+        "gameEditorMode": "embedded-game"
+      },
+      "objectsGroups": [],
+      "variables": [],
+      "instances": [
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 1100,
+          "layer": "",
+          "name": "LoginFloor",
+          "persistentUuid": "2b18418c-fb6c-4834-b036-bf0a577f3f8f",
+          "width": 1500,
+          "x": -250,
+          "y": -180,
+          "zOrder": -10,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 620,
+          "layer": "",
+          "name": "LoginBrawler",
+          "persistentUuid": "8db053e0-6712-4f4b-90c2-26455fb235c4",
+          "width": 360,
+          "x": 270,
+          "y": 335,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 180,
+          "layer": "",
+          "name": "LoginGauntletRight",
+          "persistentUuid": "d1cf409e-76fd-4dcc-8d7b-45d01c469478",
+          "width": 180,
+          "x": 270,
+          "y": 335,
+          "zOrder": 1,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 180,
+          "layer": "",
+          "name": "LoginGauntletLeft",
+          "persistentUuid": "bf8d48b6-6080-415b-8933-c8a6f8660829",
+          "width": 180,
+          "x": 270,
+          "y": 335,
+          "zOrder": 1,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 720,
+          "layer": "UI",
+          "name": "LoginBackground",
+          "persistentUuid": "38ab7fab-19bf-426b-b10d-675d30fb095d",
+          "width": 1280,
+          "x": 0,
+          "y": 0,
+          "zOrder": 0,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 560,
+          "layer": "UI",
+          "name": "LoginPanel",
+          "persistentUuid": "afa00c4b-af9c-41c7-be49-5fe7de73ee6c",
+          "width": 500,
+          "x": 740,
+          "y": 95,
+          "zOrder": 10,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "HavocLogo",
+          "persistentUuid": "c6caf2f6-b3b3-4d1e-96a2-127a8f613c31",
+          "width": 0,
+          "x": 805,
+          "y": 42,
+          "zOrder": 20,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "OnlineLogo",
+          "persistentUuid": "f1324878-7774-4e31-a8a1-5bf7a1cfffc3",
+          "width": 0,
+          "x": 965,
+          "y": 116,
+          "zOrder": 21,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "LoginTitle",
+          "persistentUuid": "658127b1-ba95-4e8b-823a-be3ef3abf627",
+          "width": 0,
+          "x": 915,
+          "y": 175,
+          "zOrder": 22,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "LoginSubtitle",
+          "persistentUuid": "3ca2033a-4063-4733-ac49-2b80c683eabc",
+          "width": 0,
+          "x": 865,
+          "y": 214,
+          "zOrder": 22,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "UsernameLabel",
+          "persistentUuid": "46ad1ca4-7951-43e2-b38e-fc0998ea69a1",
+          "width": 0,
+          "x": 790,
+          "y": 250,
+          "zOrder": 22,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 56,
+          "layer": "UI",
+          "name": "LoginUsername",
+          "persistentUuid": "59b21bee-58f3-471b-8b26-f0111b731509",
+          "width": 400,
+          "x": 790,
+          "y": 270,
+          "zOrder": 23,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "PasswordLabel",
+          "persistentUuid": "244c92f7-50b5-4f44-963e-6856c91c1fbe",
+          "width": 0,
+          "x": 790,
+          "y": 340,
+          "zOrder": 22,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 56,
+          "layer": "UI",
+          "name": "LoginPassword",
+          "persistentUuid": "2717b1d5-13df-4140-bb90-4f5a8149ddc8",
+          "width": 400,
+          "x": 790,
+          "y": 360,
+          "zOrder": 23,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "ForgotPasswordText",
+          "persistentUuid": "926f99ba-641f-413c-b729-e30e20525652",
+          "width": 0,
+          "x": 1030,
+          "y": 425,
+          "zOrder": 24,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 76,
+          "layer": "UI",
+          "name": "LoginButton",
+          "persistentUuid": "44ca48dd-3f91-4ab5-8449-7b87b3586b12",
+          "width": 440,
+          "x": 770,
+          "y": 455,
+          "zOrder": 23,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "LoginButtonText",
+          "persistentUuid": "29df952b-f9de-42b3-af4f-5b40efb7e74d",
+          "width": 0,
+          "x": 900,
+          "y": 478,
+          "zOrder": 24,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "CreateAccountText",
+          "persistentUuid": "c82a2aba-4854-4035-b0db-c008e405aad4",
+          "width": 0,
+          "x": 890,
+          "y": 560,
+          "zOrder": 24,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "LoginStatusText",
+          "persistentUuid": "d4d73aac-fd4d-421c-8b69-8fb59464f072",
+          "width": 0,
+          "x": 850,
+          "y": 595,
+          "zOrder": 24,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "ServerStatusText",
+          "persistentUuid": "364623d6-ca45-4cc5-8fbb-d68642fdc078",
+          "width": 0,
+          "x": 40,
+          "y": 675,
+          "zOrder": 24,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": false,
+          "height": 0,
+          "layer": "UI",
+          "name": "VersionText",
+          "persistentUuid": "f4f4857f-2fc1-48f5-9a0b-16bf0666e384",
+          "width": 0,
+          "x": 1160,
+          "y": 675,
+          "zOrder": 24,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        }
+      ],
+      "objects": [
+        {
+          "assetStoreId": "98e0b1ab2f5ff43f9a23361fe0b6dca0fbbe4ed6c6b513eac053b82b76721d67",
+          "name": "LoginFloor",
+          "persistentUuid": "7ce9f99c-7fa5-41c0-81c7-347c64e48939",
+          "type": "Scene3D::Cube3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "width": 100,
+            "height": 100,
+            "depth": 100,
+            "enableTextureTransparency": false,
+            "facesOrientation": "Y",
+            "frontFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "backFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "backFaceUpThroughWhichAxisRotation": "X",
+            "leftFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "rightFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "topFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "bottomFaceResourceName": "ambientcg-asphalt-019-color.jpg",
+            "frontFaceVisible": true,
+            "backFaceVisible": true,
+            "leftFaceVisible": true,
+            "rightFaceVisible": true,
+            "topFaceVisible": true,
+            "bottomFaceVisible": true,
+            "frontFaceResourceRepeat": true,
+            "backFaceResourceRepeat": true,
+            "leftFaceResourceRepeat": true,
+            "rightFaceResourceRepeat": true,
+            "topFaceResourceRepeat": true,
+            "bottomFaceResourceRepeat": true,
+            "tileScale": 0.2,
+            "materialType": "StandardWithoutMetalness",
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "tint": "255;255;255"
+          }
+        },
+        {
+          "assetStoreId": "",
+          "name": "LoginBrawler",
+          "persistentUuid": "54904480-9762-46a8-843d-dc6d62231360",
+          "type": "Scene3D::Model3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "centerLocation": "CenteredOnZ",
+            "crossfadeDuration": 0.10000000149011612,
+            "depth": 180,
+            "height": 180,
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "keepAspectRatio": true,
+            "materialType": "StandardWithoutMetalness",
+            "modelResourceName": "Brawler3.glb",
+            "originLocation": "ModelOrigin",
+            "rotationX": 90,
+            "rotationY": 0,
+            "rotationZ": 90,
+            "width": 180,
+            "animations": [
+              {
+                "loop": true,
+                "name": "Brawler_Idle",
+                "source": "Brawler_Idle"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Walk",
+                "source": "Brawler_Walk"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Run",
+                "source": "Brawler_Run"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Smash.001",
+                "source": "Brawler_Smash.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Punching.001",
+                "source": "Brawler_Punching.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Punch_Combo.001",
+                "source": "Brawler_Punch_Combo.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Flair.001",
+                "source": "Brawler_Flair.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Back_Flip_To_Uppercut.001",
+                "source": "Brawler_Back_Flip_To_Uppercut.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Quad_Punch.001",
+                "source": "Brawler_Quad_Punch.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Knee_Jabs_To_Uppercut.001",
+                "source": "Brawler_Knee_Jabs_To_Uppercut.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Armada.001",
+                "source": "Brawler_Armada.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Fireball.001",
+                "source": "Brawler_Fireball.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Kicking.001",
+                "source": "Brawler_Kicking.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Flying_Kick.001",
+                "source": "Brawler_Flying_Kick.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Chapa_Giratoria.001",
+                "source": "Brawler_Chapa_Giratoria.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Martelo.001",
+                "source": "Brawler_Martelo.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Hurricane_Kick.001",
+                "source": "Brawler_Hurricane_Kick.001"
+              },
+              {
+                "loop": false,
+                "name": "Brawler_Fight_Idle.001",
+                "source": "Brawler_Fight_Idle.001"
+              }
+            ]
+          }
+        },
+        {
+          "assetStoreId": "",
+          "name": "LoginGauntletRight",
+          "persistentUuid": "cfb84ca7-5a12-4a36-a4a2-33e0a51fbe55",
+          "type": "Scene3D::Model3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "centerLocation": "CenteredOnZ",
+            "crossfadeDuration": 0.10000000149011612,
+            "depth": 100,
+            "height": 100,
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "keepAspectRatio": true,
+            "materialType": "StandardWithoutMetalness",
+            "modelResourceName": "basic_iron_gauntlet.glb",
+            "originLocation": "ModelOrigin",
+            "rotationX": 90,
+            "rotationY": 0,
+            "rotationZ": 90,
+            "width": 100,
+            "animations": []
+          }
+        },
+        {
+          "assetStoreId": "",
+          "name": "LoginGauntletLeft",
+          "persistentUuid": "ec97b41d-35fc-4cd2-9c63-1d50a8d2e760",
+          "type": "Scene3D::Model3DObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "centerLocation": "CenteredOnZ",
+            "crossfadeDuration": 0.10000000149011612,
+            "depth": 100,
+            "height": 100,
+            "isCastingShadow": true,
+            "isReceivingShadow": true,
+            "keepAspectRatio": true,
+            "materialType": "StandardWithoutMetalness",
+            "modelResourceName": "basic_iron_gauntlet.glb",
+            "originLocation": "ModelOrigin",
+            "rotationX": 90,
+            "rotationY": 0,
+            "rotationZ": 90,
+            "width": 100,
+            "animations": []
+          }
+        },
+        {
+          "name": "LoginBackground",
+          "tags": "",
+          "type": "Sprite",
+          "updateIfNotVisible": false,
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "animations": [
+            {
+              "name": "",
+              "useMultipleDirections": false,
+              "directions": [
+                {
+                  "looping": false,
+                  "timeBetweenFrames": 0.08,
+                  "sprites": [
+                    {
+                      "hasCustomCollisionMask": false,
+                      "image": "havoc_login_background.svg",
+                      "points": [],
+                      "originPoint": {
+                        "name": "origine",
+                        "x": 0,
+                        "y": 0
+                      },
+                      "centerPoint": {
+                        "automatic": true,
+                        "name": "centre",
+                        "x": 0,
+                        "y": 0
+                      },
+                      "customCollisionMask": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "height": 560,
+          "name": "LoginPanel",
+          "tags": "",
+          "texture": "assets/ui/havoc_login_panel.svg",
+          "tiled": false,
+          "type": "TiledSpriteObject::TiledSprite",
+          "width": 500,
+          "variables": [],
+          "behaviors": [],
+          "effects": []
+        },
+        {
+          "height": 76,
+          "name": "LoginButton",
+          "tags": "",
+          "texture": "assets/ui/havoc_login_button.svg",
+          "tiled": false,
+          "type": "TiledSpriteObject::TiledSprite",
+          "width": 440,
+          "variables": [],
+          "behaviors": [],
+          "effects": []
+        },
+        {
+          "name": "LoginUsername",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "",
+            "placeholder": "Username",
+            "fontResourceName": "",
+            "fontSize": 22,
+            "inputType": "text",
+            "textColor": "235;238;245",
+            "textAlign": "left",
+            "fillColor": "8;11;18",
+            "fillOpacity": 235,
+            "borderColor": "105;116;135",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": false,
+            "disabled": false,
+            "paddingX": 18,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "name": "LoginPassword",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "",
+            "placeholder": "Password",
+            "fontResourceName": "",
+            "fontSize": 22,
+            "inputType": "password",
+            "textColor": "235;238;245",
+            "textAlign": "left",
+            "fillColor": "8;11;18",
+            "fillOpacity": 235,
+            "borderColor": "105;116;135",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": false,
+            "disabled": false,
+            "paddingX": 18,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "HavocLogo",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "HAVOC",
+          "font": "",
+          "characterSize": 68,
+          "color": {
+            "b": 238,
+            "g": 238,
+            "r": 242
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "OnlineLogo",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "ONLINE",
+          "font": "",
+          "characterSize": 25,
+          "color": {
+            "b": 125,
+            "g": 132,
+            "r": 150
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "LoginTitle",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "LOGIN",
+          "font": "",
+          "characterSize": 30,
+          "color": {
+            "b": 245,
+            "g": 245,
+            "r": 245
+          }
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "LoginSubtitle",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "Enter the world of HAVOC ONLINE.",
+          "font": "",
+          "characterSize": 15,
+          "color": {
+            "b": 145,
+            "g": 151,
+            "r": 164
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "UsernameLabel",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "USERNAME",
+          "font": "",
+          "characterSize": 13,
+          "color": {
+            "b": 145,
+            "g": 151,
+            "r": 164
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "PasswordLabel",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "PASSWORD",
+          "font": "",
+          "characterSize": 13,
+          "color": {
+            "b": 145,
+            "g": 151,
+            "r": 164
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "LoginButtonText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "LOGIN",
+          "font": "",
+          "characterSize": 24,
+          "color": {
+            "b": 255,
+            "g": 255,
+            "r": 255
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "CreateAccountText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "CREATE ACCOUNT",
+          "font": "",
+          "characterSize": 16,
+          "color": {
+            "b": 226,
+            "g": 231,
+            "r": 240
+          }
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "ForgotPasswordText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "Forgot Password?",
+          "font": "",
+          "characterSize": 14,
+          "color": {
+            "b": 160,
+            "g": 168,
+            "r": 184
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "ServerStatusText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "●  SERVER ONLINE",
+          "font": "",
+          "characterSize": 14,
+          "color": {
+            "b": 120,
+            "g": 230,
+            "r": 90
+          }
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "VersionText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "v0.1.0",
+          "font": "",
+          "characterSize": 13,
+          "color": {
+            "b": 135,
+            "g": 142,
+            "r": 156
+          }
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "LoginStatusText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "",
+          "font": "",
+          "characterSize": 14,
+          "color": {
+            "b": 225,
+            "g": 95,
+            "r": 75
+          }
+        }
+      ],
+      "objectsFolderStructure": {
+        "folderName": "__ROOT",
+        "children": [
+          {
+            "objectName": "Floor"
+          },
+          {
+            "objectName": "Killer_clown"
+          },
+          {
+            "objectName": "FlagPole"
+          },
+          {
+            "objectName": "MobileJoystickBase"
+          },
+          {
+            "objectName": "MobileJoystickKnob"
+          },
+          {
+            "objectName": "MobileAttackButton"
+          },
+          {
+            "objectName": "TargetSelectionIcon"
+          },
+          {
+            "objectName": "IronGauntlet"
+          },
+          {
+            "objectName": "MainChar"
+          }
+        ]
+      },
+      "events": [
+        {
+          "type": "BuiltinCommonInstructions::Standard",
+          "conditions": [],
+          "actions": [
+            {
+              "type": "BuiltinCommonInstructions::JsCode",
+              "inlineCode": [
+                "const scene = runtimeScene;",
+                "const game = scene.getGame();",
+                "const input = game.getInputManager();",
+                "const world = scene.getLayer('');",
+                "const player = scene.getObjects('LoginBrawler')[0] || null;",
+                "const right = scene.getObjects('LoginGauntletRight')[0] || null;",
+                "const left = scene.getObjects('LoginGauntletLeft')[0] || null;",
+                "const loginButton = scene.getObjects('LoginButton')[0] || null;",
+                "const status = scene.getObjects('LoginStatusText')[0] || null;",
+                "",
+                "if (!scene.__havocLogin) {",
+                "  scene.__havocLogin = { initialized: false, t: 0, rightFx: null, leftFx: null };",
+                "}",
+                "const state = scene.__havocLogin;",
+                "state.t += gdjs.evtTools.runtimeScene.getElapsedTimeInSeconds(scene);",
+                "",
+                "if (!state.initialized && world && player) {",
+                "  world.setCameraX(760);",
+                "  world.setCameraY(900);",
+                "  gdjs.scene3d.camera.setCameraZ(scene, 340, '', 0);",
+                "  gdjs.scene3d.camera.turnCameraTowardPosition(scene, 270, 335, 120, '', 0);",
+                "  player.setAngle(0);",
+                "  state.initialized = true;",
+                "}",
+                "",
+                "function findBone(root, names) {",
+                "  if (!root || !root.traverse) return null;",
+                "  const wanted = names.map(n => n.toLowerCase().replace(/[^a-z0-9]/g, ''));",
+                "  let found = null;",
+                "  root.traverse(node => {",
+                "    if (found || !node || !node.name) return;",
+                "    const normalized = node.name.toLowerCase().replace(/[^a-z0-9]/g, '');",
+                "    if (wanted.includes(normalized)) found = node;",
+                "  });",
+                "  return found;",
+                "}",
+                "",
+                "function attachAndGlow(item, boneNames, side) {",
+                "  if (!item || !player) return null;",
+                "  const pr = player.get3DRendererObject && player.get3DRendererObject();",
+                "  const ir = item.get3DRendererObject && item.get3DRendererObject();",
+                "  if (!pr || !ir || typeof THREE === 'undefined') return null;",
+                "  const bone = findBone(pr, boneNames);",
+                "  if (!bone) return null;",
+                "",
+                "  const fxKey = side === 'left' ? 'leftFx' : 'rightFx';",
+                "  if (!state[fxKey]) {",
+                "    const group = new THREE.Group();",
+                "    group.name = 'HavocLoginGauntletFX_' + side;",
+                "    const ringMaterial = new THREE.MeshBasicMaterial({",
+                "      color: 0xff3218,",
+                "      transparent: true,",
+                "      opacity: 0.62,",
+                "      blending: THREE.AdditiveBlending,",
+                "      depthWrite: false",
+                "    });",
+                "    for (let i = 0; i < 3; i++) {",
+                "      const ring = new THREE.Mesh(new THREE.TorusGeometry(34 + i * 10, 2.4, 10, 48), ringMaterial.clone());",
+                "      ring.rotation.x = Math.PI / 2 + i * 0.45;",
+                "      ring.rotation.y = i * 0.7;",
+                "      group.add(ring);",
+                "    }",
+                "    const light = new THREE.PointLight(0xff2b12, 7, 260, 2);",
+                "    group.add(light);",
+                "    ir.add(group);",
+                "    state[fxKey] = { group, light, materialNodes: [] };",
+                "",
+                "    ir.traverse(node => {",
+                "      if (!node || !node.isMesh || !node.material) return;",
+                "      const materials = Array.isArray(node.material) ? node.material : [node.material];",
+                "      materials.forEach(material => {",
+                "        if (!material || !material.emissive) return;",
+                "        material.emissive.setHex(0xff2412);",
+                "        material.emissiveIntensity = 2.8;",
+                "        state[fxKey].materialNodes.push(material);",
+                "      });",
+                "    });",
+                "  }",
+                "",
+                "  const boneWorld = new THREE.Vector3();",
+                "  const boneQuat = new THREE.Quaternion();",
+                "  bone.getWorldPosition(boneWorld);",
+                "  bone.getWorldQuaternion(boneQuat);",
+                "  const invParent = new THREE.Matrix4();",
+                "  const parent = ir.parent;",
+                "  if (parent) {",
+                "    parent.updateWorldMatrix(true, false);",
+                "    invParent.copy(parent.matrixWorld).invert();",
+                "    boneWorld.applyMatrix4(invParent);",
+                "  }",
+                "  ir.position.copy(boneWorld);",
+                "  ir.quaternion.copy(boneQuat);",
+                "  ir.scale.setScalar(1.10);",
+                "  ir.position.y += 18;",
+                "  ir.rotateX(Math.PI);",
+                "",
+                "  const pulse = 2.8 + Math.sin(state.t * 3.2) * 0.9;",
+                "  state[fxKey].light.intensity = 7 + Math.sin(state.t * 4.4) * 2.0;",
+                "  state[fxKey].group.rotation.z = state.t * (side === 'left' ? -1.6 : 1.6);",
+                "  state[fxKey].group.rotation.y = Math.sin(state.t * 1.7) * 0.4;",
+                "  state[fxKey].materialNodes.forEach(m => { m.emissiveIntensity = pulse; });",
+                "  state[fxKey].group.children.forEach((child, index) => {",
+                "    if (child.isMesh && child.material) {",
+                "      child.material.opacity = 0.45 + Math.sin(state.t * 4 + index) * 0.16;",
+                "      child.scale.setScalar(1 + Math.sin(state.t * 3 + index) * 0.08);",
+                "    }",
+                "  });",
+                "  return state[fxKey];",
+                "}",
+                "",
+                "attachAndGlow(right, ['mixamorigRightHand', 'rightHand'], 'right');",
+                "attachAndGlow(left, ['mixamorigLeftHand', 'leftHand'], 'left');",
+                "",
+                "if (loginButton) {",
+                "  const hovered = loginButton.cursorOnObject();",
+                "  loginButton.setOpacity(hovered ? 255 : 235);",
+                "  if (hovered) {",
+                "    loginButton.setScale(1.012);",
+                "  } else {",
+                "    loginButton.setScale(1);",
+                "  }",
+                "  if (hovered && input.isMouseButtonReleased(0) && status) {",
+                "    status.setString('AUTHENTICATION SERVICE NOT CONNECTED');",
+                "    status.setColor('225;95;75');",
+                "  }",
+                "}"
+              ],
+              "parameterObjects": "",
+              "useStrict": false,
+              "eventsSheetExpanded": true
+            }
+          ],
+          "events": []
+        }
+      ],
+      "layers": [
+        {
+          "ambientLightColorB": 200,
+          "ambientLightColorG": 200,
+          "ambientLightColorR": 200,
+          "camera2DPlaneMaxDrawingDistance": 5000,
+          "camera3DFarPlaneDistance": 10000,
+          "camera3DFieldOfView": 45,
+          "camera3DNearPlaneDistance": 3,
+          "cameraType": "",
+          "followBaseLayerCamera": false,
+          "isLightingLayer": false,
+          "isLocked": false,
+          "name": "",
+          "renderingType": "",
+          "visibility": true,
+          "cameras": [
+            {
+              "defaultSize": true,
+              "defaultViewport": true,
+              "height": 0,
+              "viewportBottom": 1,
+              "viewportLeft": 0,
+              "viewportRight": 1,
+              "viewportTop": 0,
+              "width": 0
+            }
+          ],
+          "effects": [
+            {
+              "effectType": "Scene3D::HemisphereLight",
+              "name": "3D Ambient Hemisphere Light",
+              "doubleParameters": {
+                "elevation": 40,
+                "intensity": 0.33,
+                "rotation": 300
+              },
+              "stringParameters": {
+                "groundColor": "127;127;127",
+                "skyColor": "255;255;255",
+                "top": "Z+"
+              },
+              "booleanParameters": {}
+            },
+            {
+              "effectType": "Scene3D::DirectionalLight",
+              "name": "3D Sun Light",
+              "doubleParameters": {
+                "distanceFromCamera": 1500,
+                "elevation": 40,
+                "frustumSize": 4000,
+                "intensity": 0.75,
+                "minimumShadowBias": 0,
+                "rotation": 300
+              },
+              "stringParameters": {
+                "color": "255;255;255",
+                "shadowQuality": "medium",
+                "top": "Z+"
+              },
+              "booleanParameters": {
+                "isCastingShadow": true
+              }
+            }
+          ]
+        },
+        {
+          "ambientLightColorB": 0,
+          "ambientLightColorG": 0,
+          "ambientLightColorR": 0,
+          "camera2DPlaneMaxDrawingDistance": 5000,
+          "camera3DFarPlaneDistance": 10000,
+          "camera3DFieldOfView": 45,
+          "camera3DNearPlaneDistance": 0.1,
+          "cameraType": "perspective",
+          "followBaseLayerCamera": false,
+          "isLightingLayer": false,
+          "isLocked": false,
+          "name": "UI",
+          "renderingType": "",
+          "visibility": true,
+          "cameras": [
+            {
+              "defaultSize": true,
+              "defaultViewport": true,
+              "height": 0,
+              "viewportBottom": 1,
+              "viewportLeft": 0,
+              "viewportRight": 1,
+              "viewportTop": 0,
+              "width": 0
+            }
+          ],
+          "effects": []
+        }
+      ],
+      "behaviorsSharedData": [
+        {
+          "name": "Animation",
+          "type": "AnimatableCapability::AnimatableBehavior"
+        },
+        {
+          "name": "Effect",
+          "type": "EffectCapability::EffectBehavior"
+        },
+        {
+          "name": "Flippable",
+          "type": "FlippableCapability::FlippableBehavior"
+        },
+        {
+          "name": "Object3D",
+          "type": "Scene3D::Base3DBehavior"
+        },
+        {
+          "name": "Opacity",
+          "type": "OpacityCapability::OpacityBehavior"
+        },
+        {
+          "name": "Resizable",
+          "type": "ResizableCapability::ResizableBehavior"
+        },
+        {
+          "name": "Scale",
+          "type": "ScalableCapability::ScalableBehavior"
+        },
+        {
+          "name": "Text",
+          "type": "TextContainerCapability::TextContainerBehavior"
+        }
+      ],
+      "persistentUuid": "8a0a1e88-46ca-4336-bf71-fb9541b8efd2"
     }
   ],
   "externalEvents": [],
