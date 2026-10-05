@@ -1,0 +1,64 @@
+name: Patch HAVOC Login Idle
+
+on:
+  push:
+    branches:
+      - feature/havoc-login-ui
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch login runtime
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          path = 'Havoc Online.json'
+          with open(path, encoding='utf-8') as f:
+              data = json.load(f)
+          login = next(x for x in data['layouts'] if x.get('name') == 'Login')
+          changed = False
+          for event in login.get('events', []):
+              for action in event.get('actions', []):
+                  if action.get('type') != 'BuiltinCommonInstructions::JsCode':
+                      continue
+                  code = action.get('inlineCode', [])
+                  marker = "if (player && typeof player.setAnimationName === 'function') {"
+                  if any(marker in line for line in code):
+                      continue
+                  insert_at = next((i + 1 for i, line in enumerate(code) if "const player = scene.getObjects('LoginBrawler')[0] || null;" in line), None)
+                  if insert_at is None:
+                      raise RuntimeError('Login runtime player declaration was not found.')
+                  code[insert_at:insert_at] = [
+                      '',
+                      "if (player && typeof player.setAnimationName === 'function') {",
+                      "  if (player.getAnimationName() !== 'Brawler_Idle') player.setAnimationName('Brawler_Idle');",
+                      "  if (typeof player.setAnimationSpeedScale === 'function') player.setAnimationSpeedScale(1);",
+                      "}",
+                      '',
+                  ]
+                  changed = True
+          if changed:
+              with open(path, 'w', encoding='utf-8') as f:
+                  json.dump(data, f, ensure_ascii=False, indent=2)
+                  f.write('\\n')
+          else:
+              print('Login idle patch already present.')
+          PY
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Havoc Online.json"
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Set Brawler idle animation on login"
+          git push
