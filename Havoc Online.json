@@ -4168,6 +4168,33 @@
           "color": "132;196;211"
         },
         {
+          "name": "LoginUsername",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "",
+            "placeholder": "Username",
+            "fontResourceName": "",
+            "fontSize": 20,
+            "inputType": "text",
+            "textColor": "235;238;245",
+            "textAlign": "left",
+            "fillColor": "8;11;18",
+            "fillOpacity": 245,
+            "borderColor": "63;160;183",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": false,
+            "disabled": false,
+            "paddingX": 16,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
           "bold": true,
           "italic": false,
           "name": "PasswordLabel",
@@ -4182,167 +4209,6 @@
           "font": "",
           "characterSize": 15,
           "color": "132;196;211"
-        },
-        {
-          "name": "LoginUsername",
-          "tags": "",
-          "type": "TextInput::TextInputObject",
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "content": {
-            "initialValue": "",
-            "placeholder": "Username",
-            "fontResourceName": "",
-            "fontSize": 20,
-            "inputType": "text",
-            "textColor": "235;238;245",
-            "textAlign": "left",
-            "fillColor": "8;11;18",
-            "fillOpacity": 245,
-            "borderColor": "63;160;183",
-            "borderOpacity": 255,
-            "borderWidth": 2,
-            "readOnly": false,
-            "disabled": false,
-            "paddingX": 16,
-            "paddingY": 8,
-            "spellCheck": false
-          }
-        },
-        {
-          "name": "LoginPassword",
-          "tags": "",
-          "type": "TextInput::TextInputObject",
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "content": {
-            "initialValue": "",
-            "placeholder": "Password",
-            "fontResourceName": "",
-            "fontSize": 20,
-            "inputType": "password",
-            "textColor": "235;238;245",
-            "textAlign": "left",
-            "fillColor": "8;11;18",
-            "fillOpacity": 245,
-            "borderColor": "63;160;183",
-            "borderOpacity": 255,
-            "borderWidth": 2,
-            "readOnly": false,
-            "disabled": false,
-            "paddingX": 16,
-            "paddingY": 8,
-            "spellCheck": false
-          }
-        },
-        {
-          "bold": true,
-          "italic": false,
-          "name": "LoginButtonText",
-          "smoothed": true,
-          "tags": "",
-          "type": "TextObject::Text",
-          "underlined": false,
-          "variables": [],
-          "behaviors": [],
-          "effects": [],
-          "string": "LOGIN",
-          "font": "",
-          "characterSize": 23,
-          "color": "225;251;255"
-        },
-        {
-          "bold": false,
-          "italic": false,
-          "name": "ForgotPasswordText",
-          "smoothed": true,
-          "tags": "",
-          "type": "TextObject::Text",
-          "underlined": false,
-          "variables": [],
-          "behaviors": [],
-          "effects": [],
-          "string": "FORGOT PASSWORD",
-          "font": "",
-          "characterSize": 14,
-          "color": "122;202;218"
-        },
-        {
-          "bold": false,
-          "italic": false,
-          "name": "CreateAccountText",
-          "smoothed": true,
-          "tags": "",
-          "type": "TextObject::Text",
-          "underlined": false,
-          "variables": [],
-          "behaviors": [],
-          "effects": [],
-          "string": "CREATE ACCOUNT",
-          "font": "",
-          "characterSize": 14,
-          "color": "122;202;218"
-        },
-        {
-          "bold": true,
-          "italic": false,
-          "name": "LoginStatusText",
-          "smoothed": true,
-          "tags": "",
-          "type": "TextObject::Text",
-          "underlined": false,
-          "variables": [],
-          "behaviors": [],
-          "effects": [],
-          "string": "●  SERVER ONLINE",
-          "font": "",
-          "characterSize": 14,
-          "color": "91;229;143"
-        },
-        {
-          "bold": false,
-          "italic": false,
-          "name": "VersionText",
-          "smoothed": true,
-          "tags": "",
-          "type": "TextObject::Text",
-          "underlined": false,
-          "variables": [],
-          "behaviors": [],
-          "effects": [],
-          "string": "v0.1.0",
-          "font": "",
-          "characterSize": 12,
-          "color": "110;130;145"
-        },
-        {
-          "name": "LoginUsername",
-          "tags": "",
-          "type": "TextInput::TextInputObject",
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "content": {
-            "initialValue": "",
-            "placeholder": "Username",
-            "fontResourceName": "",
-            "fontSize": 20,
-            "inputType": "text",
-            "textColor": "235;238;245",
-            "textAlign": "left",
-            "fillColor": "8;11;18",
-            "fillOpacity": 245,
-            "borderColor": "63;160;183",
-            "borderOpacity": 255,
-            "borderWidth": 2,
-            "readOnly": false,
-            "disabled": false,
-            "paddingX": 16,
-            "paddingY": 8,
-            "spellCheck": false
-          }
         },
         {
           "name": "LoginPassword",
@@ -4397,70 +4263,6 @@
             "paddingY": 8,
             "spellCheck": false
           }
-        },
-        {
-          "bold": true,
-          "italic": false,
-          "name": "LoginTitle",
-          "smoothed": true,
-          "tags": "",
-          "type": "TextObject::Text",
-          "underlined": false,
-          "variables": [],
-          "behaviors": [],
-          "effects": [],
-          "string": "HAVOC",
-          "font": "",
-          "characterSize": 52,
-          "color": "235;248;255"
-        },
-        {
-          "bold": true,
-          "italic": false,
-          "name": "LoginSubtitle",
-          "smoothed": true,
-          "tags": "",
-          "type": "TextObject::Text",
-          "underlined": false,
-          "variables": [],
-          "behaviors": [],
-          "effects": [],
-          "string": "ONLINE",
-          "font": "",
-          "characterSize": 18,
-          "color": "99;220;240"
-        },
-        {
-          "bold": true,
-          "italic": false,
-          "name": "UsernameLabel",
-          "smoothed": true,
-          "tags": "",
-          "type": "TextObject::Text",
-          "underlined": false,
-          "variables": [],
-          "behaviors": [],
-          "effects": [],
-          "string": "USERNAME",
-          "font": "",
-          "characterSize": 15,
-          "color": "132;196;211"
-        },
-        {
-          "bold": true,
-          "italic": false,
-          "name": "PasswordLabel",
-          "smoothed": true,
-          "tags": "",
-          "type": "TextObject::Text",
-          "underlined": false,
-          "variables": [],
-          "behaviors": [],
-          "effects": [],
-          "string": "PASSWORD",
-          "font": "",
-          "characterSize": 15,
-          "color": "132;196;211"
         },
         {
           "bold": false,
@@ -4631,49 +4433,16 @@
             "objectName": "UsernameLabel"
           },
           {
+            "objectName": "LoginUsername"
+          },
+          {
             "objectName": "PasswordLabel"
-          },
-          {
-            "objectName": "LoginUsername"
-          },
-          {
-            "objectName": "LoginPassword"
-          },
-          {
-            "objectName": "LoginButtonText"
-          },
-          {
-            "objectName": "ForgotPasswordText"
-          },
-          {
-            "objectName": "CreateAccountText"
-          },
-          {
-            "objectName": "LoginStatusText"
-          },
-          {
-            "objectName": "VersionText"
-          },
-          {
-            "objectName": "LoginUsername"
           },
           {
             "objectName": "LoginPassword"
           },
           {
             "objectName": "LoginButton"
-          },
-          {
-            "objectName": "LoginTitle"
-          },
-          {
-            "objectName": "LoginSubtitle"
-          },
-          {
-            "objectName": "UsernameLabel"
-          },
-          {
-            "objectName": "PasswordLabel"
           },
           {
             "objectName": "ForgotPasswordText"
