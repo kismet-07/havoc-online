@@ -4329,7 +4329,24 @@
           "color": "110;130;145"
         }
       ],
-      "events": [],
+      "events": [
+        {
+          "type": "BuiltinCommonInstructions::JsCode",
+          "inlineCode": [
+            "const inputManager = runtimeScene.getGame().getInputManager();",
+            "const mx = inputManager.getCursorX();",
+            "const my = inputManager.getCursorY();",
+            "const createAccount = runtimeScene.getObjects('CreateAccountText')[0];",
+            "const loginButton = runtimeScene.getObjects('LoginButton')[0];",
+            "const inside = (obj) => obj && mx >= obj.getX() && mx <= obj.getX()+obj.getWidth() && my >= obj.getY() && my <= obj.getY()+obj.getHeight();",
+            "const hover = inside(createAccount) || inside(loginButton);",
+            "if (typeof document !== 'undefined') document.body.style.cursor = hover ? 'pointer' : 'default';",
+            "if (gdjs.evtTools.input.isMouseButtonReleased(runtimeScene, 'Left') && inside(createAccount)) gdjs.evtTools.runtimeScene.replaceScene(runtimeScene, 'Registration', false);"
+          ],
+          "parameterObjects": "",
+          "useStrict": false
+        }
+      ],
       "layers": [
         {
           "ambientLightColorB": 200,
@@ -4459,6 +4476,628 @@
         ]
       },
       "g": 11
+    },
+    {
+      "b": 12,
+      "disableInputWhenNotFocused": true,
+      "mangledName": "Registration",
+      "name": "Registration",
+      "r": 7,
+      "standardSortMethod": true,
+      "stopSoundsOnStartup": true,
+      "title": "CREATE ACCOUNT",
+      "v": 18,
+      "uiSettings": {
+        "grid": true,
+        "gridType": "rectangular",
+        "gridWidth": 32,
+        "gridHeight": 32,
+        "gridDepth": 32,
+        "gridOffsetX": 0,
+        "gridOffsetY": 0,
+        "gridColor": 10401023,
+        "gridAlpha": 0.8,
+        "snap": true,
+        "zoomFactor": 0.75,
+        "windowMask": true,
+        "selectedLayer": "UI",
+        "gameEditorMode": "2d"
+      },
+      "objectsGroups": [],
+      "variables": [],
+      "instances": [
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 60,
+          "layer": "UI",
+          "name": "RegistrationTitle",
+          "persistentUuid": "00000000-0000-4000-8000-000000000201",
+          "width": 500,
+          "x": 410,
+          "y": 70,
+          "zOrder": 10,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 30,
+          "layer": "UI",
+          "name": "RegistrationSubtitle",
+          "persistentUuid": "00000000-0000-4000-8000-000000000202",
+          "width": 400,
+          "x": 412,
+          "y": 130,
+          "zOrder": 11,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 30,
+          "layer": "UI",
+          "name": "RegistrationUsernameLabel",
+          "persistentUuid": "00000000-0000-4000-8000-000000000203",
+          "width": 440,
+          "x": 400,
+          "y": 190,
+          "zOrder": 12,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 58,
+          "layer": "UI",
+          "name": "RegistrationUsername",
+          "persistentUuid": "00000000-0000-4000-8000-000000000204",
+          "width": 440,
+          "x": 400,
+          "y": 220,
+          "zOrder": 13,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 30,
+          "layer": "UI",
+          "name": "RegistrationEmailLabel",
+          "persistentUuid": "00000000-0000-4000-8000-000000000205",
+          "width": 440,
+          "x": 400,
+          "y": 295,
+          "zOrder": 14,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 58,
+          "layer": "UI",
+          "name": "RegistrationEmail",
+          "persistentUuid": "00000000-0000-4000-8000-000000000206",
+          "width": 440,
+          "x": 400,
+          "y": 325,
+          "zOrder": 15,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 30,
+          "layer": "UI",
+          "name": "RegistrationPasswordLabel",
+          "persistentUuid": "00000000-0000-4000-8000-000000000207",
+          "width": 440,
+          "x": 400,
+          "y": 400,
+          "zOrder": 16,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 58,
+          "layer": "UI",
+          "name": "RegistrationPassword",
+          "persistentUuid": "00000000-0000-4000-8000-000000000208",
+          "width": 440,
+          "x": 400,
+          "y": 430,
+          "zOrder": 17,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 70,
+          "layer": "UI",
+          "name": "RegisterButton",
+          "persistentUuid": "00000000-0000-4000-8000-000000000209",
+          "width": 440,
+          "x": 400,
+          "y": 510,
+          "zOrder": 18,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 55,
+          "layer": "UI",
+          "name": "BackToLoginButton",
+          "persistentUuid": "00000000-0000-4000-8000-000000000210",
+          "width": 440,
+          "x": 400,
+          "y": 600,
+          "zOrder": 19,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 25,
+          "layer": "UI",
+          "name": "RegistrationStatusText",
+          "persistentUuid": "00000000-0000-4000-8000-000000000211",
+          "width": 440,
+          "x": 400,
+          "y": 660,
+          "zOrder": 20,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 25,
+          "layer": "UI",
+          "name": "RegistrationVersionText",
+          "persistentUuid": "00000000-0000-4000-8000-000000000212",
+          "width": 80,
+          "x": 1160,
+          "y": 680,
+          "zOrder": 20,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        }
+      ],
+      "objects": [
+        {
+          "bold": true,
+          "italic": false,
+          "name": "RegistrationTitle",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "CREATE ACCOUNT",
+          "font": "",
+          "characterSize": 42,
+          "color": "235;248;255"
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "RegistrationSubtitle",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "JOIN HAVOC ONLINE",
+          "font": "",
+          "characterSize": 18,
+          "color": "99;220;240"
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "RegistrationUsernameLabel",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "USERNAME",
+          "font": "",
+          "characterSize": 15,
+          "color": "132;196;211"
+        },
+        {
+          "name": "RegistrationUsername",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "",
+            "placeholder": "Username",
+            "fontResourceName": "",
+            "fontSize": 20,
+            "inputType": "text",
+            "textColor": "235;238;245",
+            "textAlign": "left",
+            "fillColor": "8;11;18",
+            "fillOpacity": 245,
+            "borderColor": "63;160;183",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": false,
+            "disabled": false,
+            "paddingX": 16,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "RegistrationEmailLabel",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "EMAIL ADDRESS",
+          "font": "",
+          "characterSize": 15,
+          "color": "132;196;211"
+        },
+        {
+          "name": "RegistrationEmail",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "",
+            "placeholder": "Email address",
+            "fontResourceName": "",
+            "fontSize": 20,
+            "inputType": "email",
+            "textColor": "235;238;245",
+            "textAlign": "left",
+            "fillColor": "8;11;18",
+            "fillOpacity": 245,
+            "borderColor": "63;160;183",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": false,
+            "disabled": false,
+            "paddingX": 16,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "RegistrationPasswordLabel",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "PASSWORD",
+          "font": "",
+          "characterSize": 15,
+          "color": "132;196;211"
+        },
+        {
+          "name": "RegistrationPassword",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "",
+            "placeholder": "Password",
+            "fontResourceName": "",
+            "fontSize": 20,
+            "inputType": "password",
+            "textColor": "235;238;245",
+            "textAlign": "left",
+            "fillColor": "8;11;18",
+            "fillOpacity": 245,
+            "borderColor": "63;160;183",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": false,
+            "disabled": false,
+            "paddingX": 16,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "name": "RegisterButton",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "CREATE ACCOUNT",
+            "placeholder": "",
+            "fontResourceName": "",
+            "fontSize": 22,
+            "inputType": "text",
+            "textColor": "225;251;255",
+            "textAlign": "center",
+            "fillColor": "13;53;66",
+            "fillOpacity": 255,
+            "borderColor": "99;228;255",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": true,
+            "disabled": false,
+            "paddingX": 12,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "name": "BackToLoginButton",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "BACK TO LOGIN",
+            "placeholder": "",
+            "fontResourceName": "",
+            "fontSize": 22,
+            "inputType": "text",
+            "textColor": "225;251;255",
+            "textAlign": "center",
+            "fillColor": "13;53;66",
+            "fillOpacity": 255,
+            "borderColor": "99;228;255",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": true,
+            "disabled": false,
+            "paddingX": 12,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "RegistrationStatusText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "",
+          "font": "",
+          "characterSize": 14,
+          "color": "235;238;245"
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "RegistrationVersionText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "v0.1.0",
+          "font": "",
+          "characterSize": 12,
+          "color": "110;130;145"
+        }
+      ],
+      "events": [
+        {
+          "type": "BuiltinCommonInstructions::JsCode",
+          "inlineCode": [
+            "const inputManager = runtimeScene.getGame().getInputManager();",
+            "const mx = inputManager.getCursorX();",
+            "const my = inputManager.getCursorY();",
+            "const registerButton = runtimeScene.getObjects('RegisterButton')[0];",
+            "const backButton = runtimeScene.getObjects('BackToLoginButton')[0];",
+            "const inside = (obj) => obj && mx >= obj.getX() && mx <= obj.getX()+obj.getWidth() && my >= obj.getY() && my <= obj.getY()+obj.getHeight();",
+            "const hovering = inside(registerButton) || inside(backButton);",
+            "if (typeof document !== 'undefined') document.body.style.cursor = hovering ? 'pointer' : 'default';",
+            "if (gdjs.evtTools.input.isMouseButtonReleased(runtimeScene, 'Left')) {",
+            "  if (inside(backButton)) { gdjs.evtTools.runtimeScene.replaceScene(runtimeScene, 'Login', false); return; }",
+            "  if (inside(registerButton)) {",
+            "    const username = runtimeScene.getObjects('RegistrationUsername')[0];",
+            "    const email = runtimeScene.getObjects('RegistrationEmail')[0];",
+            "    const password = runtimeScene.getObjects('RegistrationPassword')[0];",
+            "    const status = runtimeScene.getObjects('RegistrationStatusText')[0];",
+            "    const u = username ? username.getString() : '';",
+            "    const e = email ? email.getString() : '';",
+            "    const p = password ? password.getString() : '';",
+            "    if (!u || !e || !p) { if(status) status.setString('Please complete all fields.'); return; }",
+            "    if(status) status.setString('Registration backend not connected yet.');",
+            "  }",
+            "}"
+          ],
+          "parameterObjects": "",
+          "useStrict": false
+        }
+      ],
+      "layers": [
+        {
+          "ambientLightColorB": 200,
+          "ambientLightColorG": 200,
+          "ambientLightColorR": 200,
+          "camera2DPlaneMaxDrawingDistance": 5000,
+          "camera3DFarPlaneDistance": 10000,
+          "camera3DFieldOfView": 45,
+          "camera3DNearPlaneDistance": 3,
+          "cameraType": "",
+          "followBaseLayerCamera": false,
+          "isLightingLayer": false,
+          "isLocked": false,
+          "name": "",
+          "renderingType": "",
+          "visibility": true,
+          "cameras": [
+            {
+              "defaultSize": true,
+              "defaultViewport": true,
+              "height": 0,
+              "viewportBottom": 1,
+              "viewportLeft": 0,
+              "viewportRight": 1,
+              "viewportTop": 0,
+              "width": 0
+            }
+          ],
+          "effects": []
+        },
+        {
+          "ambientLightColorB": 200,
+          "ambientLightColorG": 200,
+          "ambientLightColorR": 200,
+          "camera2DPlaneMaxDrawingDistance": 5000,
+          "camera3DFarPlaneDistance": 10000,
+          "camera3DFieldOfView": 45,
+          "camera3DNearPlaneDistance": 3,
+          "cameraType": "",
+          "followBaseLayerCamera": true,
+          "isLightingLayer": false,
+          "isLocked": false,
+          "name": "UI",
+          "renderingType": "",
+          "visibility": true,
+          "cameras": [
+            {
+              "defaultSize": true,
+              "defaultViewport": true,
+              "height": 0,
+              "viewportBottom": 1,
+              "viewportLeft": 0,
+              "viewportRight": 1,
+              "viewportTop": 0,
+              "width": 0
+            }
+          ],
+          "effects": []
+        }
+      ],
+      "behaviorsSharedData": [
+        {
+          "name": "Animation",
+          "type": "AnimatableCapability::AnimatableBehavior"
+        },
+        {
+          "name": "Effect",
+          "type": "EffectCapability::EffectBehavior"
+        },
+        {
+          "name": "Flippable",
+          "type": "FlippableCapability::FlippableBehavior"
+        },
+        {
+          "name": "Opacity",
+          "type": "OpacityCapability::OpacityBehavior"
+        },
+        {
+          "name": "Resizable",
+          "type": "ResizableCapability::ResizableBehavior"
+        },
+        {
+          "name": "Scale",
+          "type": "ScalableCapability::ScalableBehavior"
+        },
+        {
+          "name": "Text",
+          "type": "TextContainerCapability::TextContainerBehavior"
+        }
+      ],
+      "objectsFolderStructure": {
+        "folderName": "__ROOT",
+        "children": [
+          {
+            "objectName": "RegistrationTitle"
+          },
+          {
+            "objectName": "RegistrationSubtitle"
+          },
+          {
+            "objectName": "RegistrationUsernameLabel"
+          },
+          {
+            "objectName": "RegistrationUsername"
+          },
+          {
+            "objectName": "RegistrationEmailLabel"
+          },
+          {
+            "objectName": "RegistrationEmail"
+          },
+          {
+            "objectName": "RegistrationPasswordLabel"
+          },
+          {
+            "objectName": "RegistrationPassword"
+          },
+          {
+            "objectName": "RegisterButton"
+          },
+          {
+            "objectName": "BackToLoginButton"
+          },
+          {
+            "objectName": "RegistrationStatusText"
+          },
+          {
+            "objectName": "RegistrationVersionText"
+          }
+        ]
+      }
     }
   ],
   "externalEvents": [],
