@@ -166,18 +166,18 @@
         "userAdded": false
       },
       {
-        "file": "assets/ui/havoc_button_primary.svg",
+        "file": "assets/ui/havoc_button_primary.png",
         "kind": "image",
         "metadata": "",
-        "name": "havoc_button_primary.svg",
+        "name": "havoc_button_primary.png",
         "smoothed": true,
         "userAdded": true
       },
       {
-        "file": "assets/ui/havoc_button_secondary.svg",
+        "file": "assets/ui/havoc_button_secondary.png",
         "kind": "image",
         "metadata": "",
-        "name": "havoc_button_secondary.svg",
+        "name": "havoc_button_secondary.png",
         "smoothed": true,
         "userAdded": true
       }
@@ -4336,7 +4336,7 @@
           "height": 70,
           "name": "LoginButtonBackground",
           "tags": "",
-          "texture": "assets/ui/havoc_button_primary.svg",
+          "texture": "assets/ui/havoc_button_primary.png",
           "tiled": false,
           "type": "TiledSpriteObject::TiledSprite",
           "width": 440,
@@ -4952,7 +4952,7 @@
           "height": 70,
           "name": "RegisterButtonBackground",
           "tags": "",
-          "texture": "assets/ui/havoc_button_primary.svg",
+          "texture": "assets/ui/havoc_button_primary.png",
           "tiled": false,
           "type": "TiledSpriteObject::TiledSprite",
           "width": 440,
@@ -4980,7 +4980,7 @@
           "height": 55,
           "name": "BackToLoginButtonBackground",
           "tags": "",
-          "texture": "assets/ui/havoc_button_secondary.svg",
+          "texture": "assets/ui/havoc_button_secondary.png",
           "tiled": false,
           "type": "TiledSpriteObject::TiledSprite",
           "width": 440,
