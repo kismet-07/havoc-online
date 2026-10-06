@@ -82,14 +82,36 @@ def add_resource(data, file_path, kind, name):
 def replace_texture(layout, object_name, texture):
     obj = object_def(layout, object_name)
     if not obj:
-        return
+        raise RuntimeError(f"Object '{object_name}' is missing from Login layout.")
+
+    changed = False
+
     if 'texture' in obj:
         obj['texture'] = texture
+        changed = True
+
     content = obj.get('content')
     if isinstance(content, dict):
         for key in ('texture', 'textureResourceName', 'resourceName'):
             if key in content:
                 content[key] = texture
+                changed = True
+
+    # GDevelop Sprite objects store their image inside:
+    # animations -> directions -> sprites -> image.
+    animations = obj.get('animations')
+    if isinstance(animations, list):
+        for animation in animations:
+            for direction in animation.get('directions', []):
+                for sprite in direction.get('sprites', []):
+                    if 'image' in sprite:
+                        sprite['image'] = texture
+                        changed = True
+
+    if not changed:
+        raise RuntimeError(
+            f"Object '{object_name}' does not expose a recognized texture/image field."
+        )
 
 
 def main():
