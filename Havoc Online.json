@@ -164,6 +164,22 @@
         "metadata": "",
         "name": "Brawler3.glb",
         "userAdded": false
+      },
+      {
+        "file": "assets/ui/havoc_button_primary.svg",
+        "kind": "image",
+        "metadata": "",
+        "name": "havoc_button_primary.svg",
+        "smoothed": true,
+        "userAdded": true
+      },
+      {
+        "file": "assets/ui/havoc_button_secondary.svg",
+        "kind": "image",
+        "metadata": "",
+        "name": "havoc_button_secondary.svg",
+        "smoothed": true,
+        "userAdded": true
       }
     ]
   },
@@ -4045,21 +4061,6 @@
         {
           "angle": 0,
           "customSize": true,
-          "height": 70,
-          "layer": "UI",
-          "name": "LoginButton",
-          "persistentUuid": "00000000-0000-4000-8000-000000000107",
-          "width": 440,
-          "x": 420,
-          "y": 465,
-          "zOrder": 16,
-          "numberProperties": [],
-          "stringProperties": [],
-          "initialVariables": []
-        },
-        {
-          "angle": 0,
-          "customSize": true,
           "height": 30,
           "layer": "UI",
           "name": "ForgotPasswordText",
@@ -4112,6 +4113,36 @@
           "width": 80,
           "x": 1160,
           "y": 680,
+          "zOrder": 17,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 70,
+          "layer": "UI",
+          "name": "LoginButtonBackground",
+          "persistentUuid": "00000000-0000-4000-8000-000000000301",
+          "width": 440,
+          "x": 420,
+          "y": 465,
+          "zOrder": 16,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 70,
+          "layer": "UI",
+          "name": "LoginButtonText",
+          "persistentUuid": "00000000-0000-4000-8000-000000000302",
+          "width": 440,
+          "x": 420,
+          "y": 465,
           "zOrder": 17,
           "numberProperties": [],
           "stringProperties": [],
@@ -4238,33 +4269,6 @@
           }
         },
         {
-          "name": "LoginButton",
-          "tags": "",
-          "type": "TextInput::TextInputObject",
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "content": {
-            "initialValue": "LOGIN",
-            "placeholder": "",
-            "fontResourceName": "",
-            "fontSize": 22,
-            "inputType": "text",
-            "textColor": "225;251;255",
-            "textAlign": "center",
-            "fillColor": "13;53;66",
-            "fillOpacity": 255,
-            "borderColor": "99;228;255",
-            "borderOpacity": 255,
-            "borderWidth": 2,
-            "readOnly": true,
-            "disabled": false,
-            "paddingX": 12,
-            "paddingY": 8,
-            "spellCheck": false
-          }
-        },
-        {
           "bold": false,
           "italic": false,
           "name": "ForgotPasswordText",
@@ -4327,21 +4331,51 @@
           "font": "",
           "characterSize": 12,
           "color": "110;130;145"
+        },
+        {
+          "height": 70,
+          "name": "LoginButtonBackground",
+          "tags": "",
+          "texture": "assets/ui/havoc_button_primary.svg",
+          "tiled": false,
+          "type": "TiledSpriteObject::TiledSprite",
+          "width": 440,
+          "variables": [],
+          "behaviors": [],
+          "effects": []
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "LoginButtonText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "LOGIN",
+          "font": "",
+          "characterSize": 22,
+          "color": "225;251;255"
         }
       ],
       "events": [
         {
           "type": "BuiltinCommonInstructions::JsCode",
           "inlineCode": [
-            "const inputManager = runtimeScene.getGame().getInputManager();",
-            "const mx = inputManager.getCursorX();",
-            "const my = inputManager.getCursorY();",
+            "const input = runtimeScene.getGame().getInputManager();",
+            "const mx = input.getCursorX(); const my = input.getCursorY();",
             "const createAccount = runtimeScene.getObjects('CreateAccountText')[0];",
-            "const loginButton = runtimeScene.getObjects('LoginButton')[0];",
+            "const loginButton = runtimeScene.getObjects('LoginButtonBackground')[0];",
             "const inside = (obj) => obj && mx >= obj.getX() && mx <= obj.getX()+obj.getWidth() && my >= obj.getY() && my <= obj.getY()+obj.getHeight();",
-            "const hover = inside(createAccount) || inside(loginButton);",
-            "if (typeof document !== 'undefined') document.body.style.cursor = hover ? 'pointer' : 'default';",
-            "if (gdjs.evtTools.input.isMouseButtonReleased(runtimeScene, 'Left') && inside(createAccount)) gdjs.evtTools.runtimeScene.replaceScene(runtimeScene, 'Registration', false);"
+            "const hovering = inside(createAccount) || inside(loginButton);",
+            "const canvas = runtimeScene.getGame().getRenderer().getCanvas();",
+            "if (canvas) canvas.style.cursor = hovering ? 'pointer' : 'default';",
+            "if (gdjs.evtTools.input.isMouseButtonReleased(runtimeScene,'Left')) {",
+            "  if (inside(createAccount)) gdjs.evtTools.runtimeScene.replaceScene(runtimeScene,'Registration',false);",
+            "}"
           ],
           "parameterObjects": "",
           "useStrict": false
@@ -4459,9 +4493,6 @@
             "objectName": "LoginPassword"
           },
           {
-            "objectName": "LoginButton"
-          },
-          {
             "objectName": "ForgotPasswordText"
           },
           {
@@ -4472,6 +4503,12 @@
           },
           {
             "objectName": "VersionText"
+          },
+          {
+            "objectName": "LoginButtonBackground"
+          },
+          {
+            "objectName": "LoginButtonText"
           }
         ]
       },
@@ -4629,36 +4666,6 @@
         {
           "angle": 0,
           "customSize": true,
-          "height": 70,
-          "layer": "UI",
-          "name": "RegisterButton",
-          "persistentUuid": "00000000-0000-4000-8000-000000000209",
-          "width": 440,
-          "x": 400,
-          "y": 510,
-          "zOrder": 18,
-          "numberProperties": [],
-          "stringProperties": [],
-          "initialVariables": []
-        },
-        {
-          "angle": 0,
-          "customSize": true,
-          "height": 55,
-          "layer": "UI",
-          "name": "BackToLoginButton",
-          "persistentUuid": "00000000-0000-4000-8000-000000000210",
-          "width": 440,
-          "x": 400,
-          "y": 600,
-          "zOrder": 19,
-          "numberProperties": [],
-          "stringProperties": [],
-          "initialVariables": []
-        },
-        {
-          "angle": 0,
-          "customSize": true,
           "height": 25,
           "layer": "UI",
           "name": "RegistrationStatusText",
@@ -4682,6 +4689,66 @@
           "x": 1160,
           "y": 680,
           "zOrder": 20,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 70,
+          "layer": "UI",
+          "name": "RegisterButtonBackground",
+          "persistentUuid": "00000000-0000-4000-8000-000000000303",
+          "width": 440,
+          "x": 400,
+          "y": 510,
+          "zOrder": 18,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 70,
+          "layer": "UI",
+          "name": "RegisterButtonText",
+          "persistentUuid": "00000000-0000-4000-8000-000000000304",
+          "width": 440,
+          "x": 400,
+          "y": 510,
+          "zOrder": 19,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 55,
+          "layer": "UI",
+          "name": "BackToLoginButtonBackground",
+          "persistentUuid": "00000000-0000-4000-8000-000000000305",
+          "width": 440,
+          "x": 400,
+          "y": 600,
+          "zOrder": 20,
+          "numberProperties": [],
+          "stringProperties": [],
+          "initialVariables": []
+        },
+        {
+          "angle": 0,
+          "customSize": true,
+          "height": 55,
+          "layer": "UI",
+          "name": "BackToLoginButtonText",
+          "persistentUuid": "00000000-0000-4000-8000-000000000306",
+          "width": 440,
+          "x": 400,
+          "y": 600,
+          "zOrder": 21,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
@@ -4850,60 +4917,6 @@
           }
         },
         {
-          "name": "RegisterButton",
-          "tags": "",
-          "type": "TextInput::TextInputObject",
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "content": {
-            "initialValue": "CREATE ACCOUNT",
-            "placeholder": "",
-            "fontResourceName": "",
-            "fontSize": 22,
-            "inputType": "text",
-            "textColor": "225;251;255",
-            "textAlign": "center",
-            "fillColor": "13;53;66",
-            "fillOpacity": 255,
-            "borderColor": "99;228;255",
-            "borderOpacity": 255,
-            "borderWidth": 2,
-            "readOnly": true,
-            "disabled": false,
-            "paddingX": 12,
-            "paddingY": 8,
-            "spellCheck": false
-          }
-        },
-        {
-          "name": "BackToLoginButton",
-          "tags": "",
-          "type": "TextInput::TextInputObject",
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "content": {
-            "initialValue": "BACK TO LOGIN",
-            "placeholder": "",
-            "fontResourceName": "",
-            "fontSize": 22,
-            "inputType": "text",
-            "textColor": "225;251;255",
-            "textAlign": "center",
-            "fillColor": "13;53;66",
-            "fillOpacity": 255,
-            "borderColor": "99;228;255",
-            "borderOpacity": 255,
-            "borderWidth": 2,
-            "readOnly": true,
-            "disabled": false,
-            "paddingX": 12,
-            "paddingY": 8,
-            "spellCheck": false
-          }
-        },
-        {
           "bold": false,
           "italic": false,
           "name": "RegistrationStatusText",
@@ -4934,32 +4947,83 @@
           "font": "",
           "characterSize": 12,
           "color": "110;130;145"
+        },
+        {
+          "height": 70,
+          "name": "RegisterButtonBackground",
+          "tags": "",
+          "texture": "assets/ui/havoc_button_primary.svg",
+          "tiled": false,
+          "type": "TiledSpriteObject::TiledSprite",
+          "width": 440,
+          "variables": [],
+          "behaviors": [],
+          "effects": []
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "RegisterButtonText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "CREATE ACCOUNT",
+          "font": "",
+          "characterSize": 22,
+          "color": "225;251;255"
+        },
+        {
+          "height": 55,
+          "name": "BackToLoginButtonBackground",
+          "tags": "",
+          "texture": "assets/ui/havoc_button_secondary.svg",
+          "tiled": false,
+          "type": "TiledSpriteObject::TiledSprite",
+          "width": 440,
+          "variables": [],
+          "behaviors": [],
+          "effects": []
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "BackToLoginButtonText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "BACK TO LOGIN",
+          "font": "",
+          "characterSize": 18,
+          "color": "122;202;218"
         }
       ],
       "events": [
         {
           "type": "BuiltinCommonInstructions::JsCode",
           "inlineCode": [
-            "const inputManager = runtimeScene.getGame().getInputManager();",
-            "const mx = inputManager.getCursorX();",
-            "const my = inputManager.getCursorY();",
-            "const registerButton = runtimeScene.getObjects('RegisterButton')[0];",
-            "const backButton = runtimeScene.getObjects('BackToLoginButton')[0];",
+            "const input = runtimeScene.getGame().getInputManager();",
+            "const mx = input.getCursorX(); const my = input.getCursorY();",
+            "const registerButton = runtimeScene.getObjects('RegisterButtonBackground')[0];",
+            "const backButton = runtimeScene.getObjects('BackToLoginButtonBackground')[0];",
             "const inside = (obj) => obj && mx >= obj.getX() && mx <= obj.getX()+obj.getWidth() && my >= obj.getY() && my <= obj.getY()+obj.getHeight();",
             "const hovering = inside(registerButton) || inside(backButton);",
-            "if (typeof document !== 'undefined') document.body.style.cursor = hovering ? 'pointer' : 'default';",
-            "if (gdjs.evtTools.input.isMouseButtonReleased(runtimeScene, 'Left')) {",
-            "  if (inside(backButton)) { gdjs.evtTools.runtimeScene.replaceScene(runtimeScene, 'Login', false); return; }",
+            "const canvas = runtimeScene.getGame().getRenderer().getCanvas();",
+            "if (canvas) canvas.style.cursor = hovering ? 'pointer' : 'default';",
+            "if (gdjs.evtTools.input.isMouseButtonReleased(runtimeScene,'Left')) {",
+            "  if (inside(backButton)) { gdjs.evtTools.runtimeScene.replaceScene(runtimeScene,'Login',false); return; }",
             "  if (inside(registerButton)) {",
-            "    const username = runtimeScene.getObjects('RegistrationUsername')[0];",
-            "    const email = runtimeScene.getObjects('RegistrationEmail')[0];",
-            "    const password = runtimeScene.getObjects('RegistrationPassword')[0];",
-            "    const status = runtimeScene.getObjects('RegistrationStatusText')[0];",
-            "    const u = username ? username.getString() : '';",
-            "    const e = email ? email.getString() : '';",
-            "    const p = password ? password.getString() : '';",
-            "    if (!u || !e || !p) { if(status) status.setString('Please complete all fields.'); return; }",
-            "    if(status) status.setString('Registration backend not connected yet.');",
+            "    const username=runtimeScene.getObjects('RegistrationUsername')[0], email=runtimeScene.getObjects('RegistrationEmail')[0], password=runtimeScene.getObjects('RegistrationPassword')[0], status=runtimeScene.getObjects('RegistrationStatusText')[0];",
+            "    const u=username?username.getString():'', e=email?email.getString():'', p=password?password.getString():'';",
+            "    if(!u||!e||!p){if(status)status.setString('Please complete all fields.');return;}",
+            "    if(status)status.setString('Registration backend not connected yet.');",
             "  }",
             "}"
           ],
@@ -5085,16 +5149,22 @@
             "objectName": "RegistrationPassword"
           },
           {
-            "objectName": "RegisterButton"
-          },
-          {
-            "objectName": "BackToLoginButton"
-          },
-          {
             "objectName": "RegistrationStatusText"
           },
           {
             "objectName": "RegistrationVersionText"
+          },
+          {
+            "objectName": "RegisterButtonBackground"
+          },
+          {
+            "objectName": "RegisterButtonText"
+          },
+          {
+            "objectName": "BackToLoginButtonBackground"
+          },
+          {
+            "objectName": "BackToLoginButtonText"
           }
         ]
       }
