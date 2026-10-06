@@ -164,30 +164,6 @@
         "metadata": "",
         "name": "Brawler3.glb",
         "userAdded": false
-      },
-      {
-        "file": "assets/ui/havoc_login_2d_background.svg",
-        "kind": "image",
-        "metadata": "",
-        "name": "havoc_login_2d_background.svg",
-        "smoothed": true,
-        "userAdded": true
-      },
-      {
-        "file": "assets/ui/havoc_login_2d_panel.svg",
-        "kind": "image",
-        "metadata": "",
-        "name": "havoc_login_2d_panel.svg",
-        "smoothed": true,
-        "userAdded": true
-      },
-      {
-        "file": "assets/ui/havoc_login_2d_button.svg",
-        "kind": "image",
-        "metadata": "",
-        "name": "havoc_login_2d_button.svg",
-        "smoothed": true,
-        "userAdded": true
       }
     ]
   },
@@ -3948,11 +3924,11 @@
       ]
     },
     {
-      "b": 12,
+      "b": 18,
       "disableInputWhenNotFocused": true,
       "mangledName": "Login",
       "name": "Login",
-      "r": 14,
+      "r": 7,
       "standardSortMethod": true,
       "stopSoundsOnStartup": true,
       "title": "HAVOC ONLINE",
@@ -3979,28 +3955,13 @@
         {
           "angle": 0,
           "customSize": true,
-          "height": 720,
+          "height": 70,
           "layer": "UI",
-          "name": "LoginBackground",
-          "persistentUuid": "0ab3c5a1-ea1d-4217-b7d6-ad64a9213dc3",
-          "width": 1280,
-          "x": 0,
-          "y": 0,
-          "zOrder": 0,
-          "numberProperties": [],
-          "stringProperties": [],
-          "initialVariables": []
-        },
-        {
-          "angle": 0,
-          "customSize": true,
-          "height": 560,
-          "layer": "UI",
-          "name": "LoginPanel",
-          "persistentUuid": "24927c4f-9d35-4354-b1a9-e5a781e4cb40",
-          "width": 520,
-          "x": 720,
-          "y": 80,
+          "name": "LoginTitle",
+          "persistentUuid": "00000000-0000-4000-8000-000000000101",
+          "width": 400,
+          "x": 440,
+          "y": 100,
           "zOrder": 10,
           "numberProperties": [],
           "stringProperties": [],
@@ -4008,45 +3969,30 @@
         },
         {
           "angle": 0,
-          "customSize": false,
-          "height": 0,
-          "layer": "UI",
-          "name": "LoginTitle",
-          "persistentUuid": "12eeb9be-90c7-4d36-8b91-86b6878becd9",
-          "width": 0,
-          "x": 790,
-          "y": 118,
-          "zOrder": 20,
-          "numberProperties": [],
-          "stringProperties": [],
-          "initialVariables": []
-        },
-        {
-          "angle": 0,
-          "customSize": false,
-          "height": 0,
+          "customSize": true,
+          "height": 30,
           "layer": "UI",
           "name": "LoginSubtitle",
-          "persistentUuid": "c15a3928-357e-43d8-abcd-c4d7f0c2f11d",
-          "width": 0,
-          "x": 793,
-          "y": 178,
-          "zOrder": 20,
+          "persistentUuid": "00000000-0000-4000-8000-000000000102",
+          "width": 200,
+          "x": 442,
+          "y": 165,
+          "zOrder": 11,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
         },
         {
           "angle": 0,
-          "customSize": false,
-          "height": 0,
+          "customSize": true,
+          "height": 30,
           "layer": "UI",
           "name": "UsernameLabel",
-          "persistentUuid": "e27433c1-4789-47f8-bdd8-2f681943cc7d",
-          "width": 0,
-          "x": 780,
+          "persistentUuid": "00000000-0000-4000-8000-000000000103",
+          "width": 440,
+          "x": 420,
           "y": 235,
-          "zOrder": 20,
+          "zOrder": 12,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
@@ -4057,26 +4003,26 @@
           "height": 58,
           "layer": "UI",
           "name": "LoginUsername",
-          "persistentUuid": "1110ce1d-e36c-4f88-a727-c63b452d9461",
+          "persistentUuid": "00000000-0000-4000-8000-000000000104",
           "width": 440,
-          "x": 780,
-          "y": 260,
-          "zOrder": 21,
+          "x": 420,
+          "y": 265,
+          "zOrder": 13,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
         },
         {
           "angle": 0,
-          "customSize": false,
-          "height": 0,
+          "customSize": true,
+          "height": 30,
           "layer": "UI",
           "name": "PasswordLabel",
-          "persistentUuid": "2d9692b6-8ce3-4564-84df-0345bcd91b53",
-          "width": 0,
-          "x": 780,
-          "y": 340,
-          "zOrder": 20,
+          "persistentUuid": "00000000-0000-4000-8000-000000000105",
+          "width": 440,
+          "x": 420,
+          "y": 345,
+          "zOrder": 14,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
@@ -4087,11 +4033,11 @@
           "height": 58,
           "layer": "UI",
           "name": "LoginPassword",
-          "persistentUuid": "3557afc7-a819-445d-b8c6-b8024c057829",
+          "persistentUuid": "00000000-0000-4000-8000-000000000106",
           "width": 440,
-          "x": 780,
-          "y": 365,
-          "zOrder": 21,
+          "x": 420,
+          "y": 375,
+          "zOrder": 15,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
@@ -4102,212 +4048,77 @@
           "height": 70,
           "layer": "UI",
           "name": "LoginButton",
-          "persistentUuid": "d8534694-b173-4349-8a46-9b6632c3d7b0",
+          "persistentUuid": "00000000-0000-4000-8000-000000000107",
           "width": 440,
-          "x": 780,
-          "y": 455,
-          "zOrder": 22,
+          "x": 420,
+          "y": 465,
+          "zOrder": 16,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
         },
         {
           "angle": 0,
-          "customSize": false,
-          "height": 0,
-          "layer": "UI",
-          "name": "LoginButtonText",
-          "persistentUuid": "b54c8b6e-e7ae-474d-a3fc-22fb8bd5ef25",
-          "width": 0,
-          "x": 928,
-          "y": 478,
-          "zOrder": 23,
-          "numberProperties": [],
-          "stringProperties": [],
-          "initialVariables": []
-        },
-        {
-          "angle": 0,
-          "customSize": false,
-          "height": 0,
+          "customSize": true,
+          "height": 30,
           "layer": "UI",
           "name": "ForgotPasswordText",
-          "persistentUuid": "8c574c5e-8b78-496e-895f-9d0fa0ccfafb",
-          "width": 0,
-          "x": 780,
+          "persistentUuid": "00000000-0000-4000-8000-000000000108",
+          "width": 200,
+          "x": 420,
           "y": 555,
-          "zOrder": 23,
+          "zOrder": 17,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
         },
         {
           "angle": 0,
-          "customSize": false,
-          "height": 0,
+          "customSize": true,
+          "height": 30,
           "layer": "UI",
           "name": "CreateAccountText",
-          "persistentUuid": "509a3fc7-fc59-4a56-8506-4f29f5df5aff",
-          "width": 0,
-          "x": 1050,
+          "persistentUuid": "00000000-0000-4000-8000-000000000109",
+          "width": 200,
+          "x": 660,
           "y": 555,
-          "zOrder": 23,
+          "zOrder": 17,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
         },
         {
           "angle": 0,
-          "customSize": false,
-          "height": 0,
+          "customSize": true,
+          "height": 30,
           "layer": "UI",
           "name": "LoginStatusText",
-          "persistentUuid": "bc6fba7b-ce1a-4f09-8344-b29a5ac9b1de",
-          "width": 0,
-          "x": 780,
-          "y": 610,
-          "zOrder": 23,
+          "persistentUuid": "00000000-0000-4000-8000-000000000110",
+          "width": 250,
+          "x": 420,
+          "y": 620,
+          "zOrder": 17,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
         },
         {
           "angle": 0,
-          "customSize": false,
-          "height": 0,
+          "customSize": true,
+          "height": 25,
           "layer": "UI",
           "name": "VersionText",
-          "persistentUuid": "397f1b6a-956a-4433-b2a5-7a21e97bf5c1",
-          "width": 0,
-          "x": 1170,
-          "y": 675,
-          "zOrder": 23,
+          "persistentUuid": "00000000-0000-4000-8000-000000000111",
+          "width": 80,
+          "x": 1160,
+          "y": 680,
+          "zOrder": 17,
           "numberProperties": [],
           "stringProperties": [],
           "initialVariables": []
         }
       ],
       "objects": [
-        {
-          "name": "LoginBackground",
-          "tags": "",
-          "type": "Sprite",
-          "updateIfNotVisible": false,
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "animations": [
-            {
-              "name": "",
-              "useMultipleDirections": false,
-              "directions": [
-                {
-                  "looping": false,
-                  "timeBetweenFrames": 0.08,
-                  "sprites": [
-                    {
-                      "hasCustomCollisionMask": false,
-                      "image": "assets/ui/havoc_login_2d_background.svg",
-                      "points": [],
-                      "originPoint": {
-                        "name": "origine",
-                        "x": 0,
-                        "y": 0
-                      },
-                      "centerPoint": {
-                        "automatic": true,
-                        "name": "centre",
-                        "x": 0,
-                        "y": 0
-                      },
-                      "customCollisionMask": []
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "LoginPanel",
-          "tags": "",
-          "type": "Sprite",
-          "updateIfNotVisible": false,
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "animations": [
-            {
-              "name": "",
-              "useMultipleDirections": false,
-              "directions": [
-                {
-                  "looping": false,
-                  "timeBetweenFrames": 0.08,
-                  "sprites": [
-                    {
-                      "hasCustomCollisionMask": false,
-                      "image": "assets/ui/havoc_login_2d_panel.svg",
-                      "points": [],
-                      "originPoint": {
-                        "name": "origine",
-                        "x": 0,
-                        "y": 0
-                      },
-                      "centerPoint": {
-                        "automatic": true,
-                        "name": "centre",
-                        "x": 0,
-                        "y": 0
-                      },
-                      "customCollisionMask": []
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "LoginButton",
-          "tags": "",
-          "type": "Sprite",
-          "updateIfNotVisible": false,
-          "variables": [],
-          "effects": [],
-          "behaviors": [],
-          "animations": [
-            {
-              "name": "",
-              "useMultipleDirections": false,
-              "directions": [
-                {
-                  "looping": false,
-                  "timeBetweenFrames": 0.08,
-                  "sprites": [
-                    {
-                      "hasCustomCollisionMask": false,
-                      "image": "assets/ui/havoc_login_2d_button.svg",
-                      "points": [],
-                      "originPoint": {
-                        "name": "origine",
-                        "x": 0,
-                        "y": 0
-                      },
-                      "centerPoint": {
-                        "automatic": true,
-                        "name": "centre",
-                        "x": 0,
-                        "y": 0
-                      },
-                      "customCollisionMask": []
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
         {
           "bold": true,
           "italic": false,
@@ -4505,6 +4316,215 @@
           "font": "",
           "characterSize": 12,
           "color": "110;130;145"
+        },
+        {
+          "name": "LoginUsername",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "",
+            "placeholder": "Username",
+            "fontResourceName": "",
+            "fontSize": 20,
+            "inputType": "text",
+            "textColor": "235;238;245",
+            "textAlign": "left",
+            "fillColor": "8;11;18",
+            "fillOpacity": 245,
+            "borderColor": "63;160;183",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": false,
+            "disabled": false,
+            "paddingX": 16,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "name": "LoginPassword",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "",
+            "placeholder": "Password",
+            "fontResourceName": "",
+            "fontSize": 20,
+            "inputType": "password",
+            "textColor": "235;238;245",
+            "textAlign": "left",
+            "fillColor": "8;11;18",
+            "fillOpacity": 245,
+            "borderColor": "63;160;183",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": false,
+            "disabled": false,
+            "paddingX": 16,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "name": "LoginButton",
+          "tags": "",
+          "type": "TextInput::TextInputObject",
+          "variables": [],
+          "effects": [],
+          "behaviors": [],
+          "content": {
+            "initialValue": "LOGIN",
+            "placeholder": "",
+            "fontResourceName": "",
+            "fontSize": 22,
+            "inputType": "text",
+            "textColor": "225;251;255",
+            "textAlign": "center",
+            "fillColor": "13;53;66",
+            "fillOpacity": 255,
+            "borderColor": "99;228;255",
+            "borderOpacity": 255,
+            "borderWidth": 2,
+            "readOnly": true,
+            "disabled": false,
+            "paddingX": 12,
+            "paddingY": 8,
+            "spellCheck": false
+          }
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "LoginTitle",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "HAVOC",
+          "font": "",
+          "characterSize": 52,
+          "color": "235;248;255"
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "LoginSubtitle",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "ONLINE",
+          "font": "",
+          "characterSize": 18,
+          "color": "99;220;240"
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "UsernameLabel",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "USERNAME",
+          "font": "",
+          "characterSize": 15,
+          "color": "132;196;211"
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "PasswordLabel",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "PASSWORD",
+          "font": "",
+          "characterSize": 15,
+          "color": "132;196;211"
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "ForgotPasswordText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "FORGOT PASSWORD",
+          "font": "",
+          "characterSize": 14,
+          "color": "122;202;218"
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "CreateAccountText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "CREATE ACCOUNT",
+          "font": "",
+          "characterSize": 14,
+          "color": "122;202;218"
+        },
+        {
+          "bold": true,
+          "italic": false,
+          "name": "LoginStatusText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "●  SERVER ONLINE",
+          "font": "",
+          "characterSize": 14,
+          "color": "91;229;143"
+        },
+        {
+          "bold": false,
+          "italic": false,
+          "name": "VersionText",
+          "smoothed": true,
+          "tags": "",
+          "type": "TextObject::Text",
+          "underlined": false,
+          "variables": [],
+          "behaviors": [],
+          "effects": [],
+          "string": "v0.1.0",
+          "font": "",
+          "characterSize": 12,
+          "color": "110;130;145"
         }
       ],
       "events": [],
@@ -4602,15 +4622,6 @@
         "folderName": "__ROOT",
         "children": [
           {
-            "objectName": "LoginBackground"
-          },
-          {
-            "objectName": "LoginPanel"
-          },
-          {
-            "objectName": "LoginButton"
-          },
-          {
             "objectName": "LoginTitle"
           },
           {
@@ -4642,9 +4653,43 @@
           },
           {
             "objectName": "VersionText"
+          },
+          {
+            "objectName": "LoginUsername"
+          },
+          {
+            "objectName": "LoginPassword"
+          },
+          {
+            "objectName": "LoginButton"
+          },
+          {
+            "objectName": "LoginTitle"
+          },
+          {
+            "objectName": "LoginSubtitle"
+          },
+          {
+            "objectName": "UsernameLabel"
+          },
+          {
+            "objectName": "PasswordLabel"
+          },
+          {
+            "objectName": "ForgotPasswordText"
+          },
+          {
+            "objectName": "CreateAccountText"
+          },
+          {
+            "objectName": "LoginStatusText"
+          },
+          {
+            "objectName": "VersionText"
           }
         ]
-      }
+      },
+      "g": 11
     }
   ],
   "externalEvents": [],
