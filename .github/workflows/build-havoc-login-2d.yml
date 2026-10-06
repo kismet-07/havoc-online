@@ -1,0 +1,49 @@
+name: Build HAVOC 2D Login
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/create_havoc_login_2d.py"
+      - ".github/workflows/build-havoc-login-2d.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-login:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build 2D Login
+        run: python3 tools/create_havoc_login_2d.py
+
+      - name: Validate project
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("Havoc Online.json").read_text(encoding="utf-8"))
+          assert data["firstLayout"] == "Login"
+          login = next(x for x in data["layouts"] if x["name"] == "Login")
+          assert login["uiSettings"]["gameEditorMode"] == "2d"
+          assert not login.get("events")
+          names = {x["name"] for x in login["objects"]}
+          required = {"LoginBackground","LoginPanel","LoginButton","LoginUsername","LoginPassword"}
+          assert required <= names
+          print("2D login validation passed.")
+          PY
+
+      - name: Commit project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Havoc Online.json"
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Add HAVOC 2D login scene"
+            git push
+          fi
